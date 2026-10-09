@@ -1,0 +1,1887 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "FHIR API",
+    "description": "FHIR R4 and R5 view of the EHR. Sections show who calls each endpoint: payers during CRD, payer DTR apps, and the Payer Gateway (/internal).",
+    "version": "v1"
+  },
+  "paths": {
+    "/fhir/r4/metadata": {
+      "get": {
+        "tags": [
+          "0. Metadata - CapabilityStatement (anyone)"
+        ],
+        "summary": "Returns the CapabilityStatement of this FHIR server.",
+        "responses": {
+          "200": {
+            "description": "A FHIR CapabilityStatement (content type application/fhir+json): the resource types, their search parameters and the SMART authorize / token URLs."
+          }
+        }
+      }
+    },
+    "/fhir/r5/metadata": {
+      "get": {
+        "tags": [
+          "0. Metadata - CapabilityStatement (anyone)"
+        ],
+        "summary": "Returns the CapabilityStatement of this FHIR server.",
+        "responses": {
+          "200": {
+            "description": "A FHIR CapabilityStatement (content type application/fhir+json): the resource types, their search parameters and the SMART authorize / token URLs."
+          }
+        }
+      }
+    },
+    "/fhir/r4/{type}/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
+        ],
+        "summary": "Reads one resource by type and id.\nTypes: Patient, Coverage, Practitioner, PractitionerRole (id \"role-{practitionerId}\"), Organization, Location,\nServiceRequest, DeviceRequest, MedicationRequest, Appointment, Encounter, DocumentReference, Binary.",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "description": "Required. FHIR resource type, case sensitive (e.g. \"Patient\").",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Patient"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. Resource id (the EHR id), e.g. pat-1, cov-1, ord-1-hd, doc-1-labs.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pat-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource as FHIR JSON (content type application/fhir+json), e.g. { \"resourceType\": \"Patient\", \"id\": \"pat-1\", ... }."
+          },
+          "400": {
+            "description": "The resource type is not supported. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-supported\", \"diagnostics\": \"Resource type Foo is not supported.\" } ] }."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-found\", \"diagnostics\": \"Patient/pat-9 was not found.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r5/{type}/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
+        ],
+        "summary": "Reads one resource by type and id.\nTypes: Patient, Coverage, Practitioner, PractitionerRole (id \"role-{practitionerId}\"), Organization, Location,\nServiceRequest, DeviceRequest, MedicationRequest, Appointment, Encounter, DocumentReference, Binary.",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "description": "Required. FHIR resource type, case sensitive (e.g. \"Patient\").",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Patient"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. Resource id (the EHR id), e.g. pat-1, cov-1, ord-1-hd, doc-1-labs.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pat-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource as FHIR JSON (content type application/fhir+json), e.g. { \"resourceType\": \"Patient\", \"id\": \"pat-1\", ... }."
+          },
+          "400": {
+            "description": "The resource type is not supported. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-supported\", \"diagnostics\": \"Resource type Foo is not supported.\" } ] }."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-found\", \"diagnostics\": \"Patient/pat-9 was not found.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/{type}": {
+      "get": {
+        "tags": [
+          "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
+        ],
+        "summary": "Searches one resource type and returns a \"searchset\" Bundle.\nRequired: _id for Patient, Practitioner, PractitionerRole, Organization, Location, the order types and Appointment;\npatient for Coverage, Observation, Condition, Procedure, DocumentReference; _id or patient for Encounter.",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "description": "Required. FHIR resource type, case sensitive (e.g. \"Coverage\").",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Coverage"
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "One or more ids, comma separated: _id=ord-cpap,ord-visit",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Patient id or \"Patient/id\".",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Same as patient (some clients send subject).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "beneficiary",
+            "in": "query",
+            "description": "Same as patient (Coverage searches may send beneficiary).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "Codes, comma separated, as system|code: http://loinc.org|39156-5",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Observation category, e.g. laboratory or vital-signs.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Lower date bound: date=ge2026-01-01 (only ge/gt are used).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Coverage status, e.g. active.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clinical-status",
+            "in": "query",
+            "description": "Condition clinical status, e.g. active.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "DocumentReference type as system|code: http://loinc.org|18748-4",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Related resources to add to the Bundle, repeatable:\n_include=DeviceRequest:patient&_include=DeviceRequest:requester",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type \"searchset\" (content type application/fhir+json): total = number of matches, entry = the resources found plus the ones added by _include. Nothing found = total 0 and no entry (still 200)."
+          },
+          "400": {
+            "description": "The resource type is not supported, or the parameter this type needs (_id or patient) is missing. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"Coverage search requires the patient parameter, e.g. Coverage?patient=pat-1.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r5/{type}": {
+      "get": {
+        "tags": [
+          "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
+        ],
+        "summary": "Searches one resource type and returns a \"searchset\" Bundle.\nRequired: _id for Patient, Practitioner, PractitionerRole, Organization, Location, the order types and Appointment;\npatient for Coverage, Observation, Condition, Procedure, DocumentReference; _id or patient for Encounter.",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "description": "Required. FHIR resource type, case sensitive (e.g. \"Coverage\").",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Coverage"
+          },
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "One or more ids, comma separated: _id=ord-cpap,ord-visit",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Patient id or \"Patient/id\".",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Same as patient (some clients send subject).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "beneficiary",
+            "in": "query",
+            "description": "Same as patient (Coverage searches may send beneficiary).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "Codes, comma separated, as system|code: http://loinc.org|39156-5",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Observation category, e.g. laboratory or vital-signs.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Lower date bound: date=ge2026-01-01 (only ge/gt are used).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Coverage status, e.g. active.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clinical-status",
+            "in": "query",
+            "description": "Condition clinical status, e.g. active.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "DocumentReference type as system|code: http://loinc.org|18748-4",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Related resources to add to the Bundle, repeatable:\n_include=DeviceRequest:patient&_include=DeviceRequest:requester",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type \"searchset\" (content type application/fhir+json): total = number of matches, entry = the resources found plus the ones added by _include. Nothing found = total 0 and no entry (still 200)."
+          },
+          "400": {
+            "description": "The resource type is not supported, or the parameter this type needs (_id or patient) is missing. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"Coverage search requires the patient parameter, e.g. Coverage?patient=pat-1.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/QuestionnaireResponse": {
+      "post": {
+        "tags": [
+          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+        ],
+        "summary": "Creates a new form. Any id in the body is replaced by a server id. Returns 201 + Location header.",
+        "description": "Must be filled in the body: resourceType = \"QuestionnaireResponse\" and subject.reference = \"Patient/{patient id}\".\nThe order and the coverage the form is for are read from the DTR \"qr-context\" extensions, when present.",
+        "requestBody": {
+          "description": "Required. A FHIR QuestionnaireResponse (subject = Patient/{id} is required).",
+          "content": {
+            "application/fhir+json": {
+              "schema": { },
+              "example": {
+                "resourceType": "QuestionnaireResponse",
+                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
+                "status": "in-progress",
+                "subject": {
+                  "reference": "Patient/pat-1"
+                },
+                "authored": "2026-10-07T18:36:05Z",
+                "author": {
+                  "reference": "Practitioner/prac-1"
+                },
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "ServiceRequest/ord-1-hd"
+                    }
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "Coverage/cov-1"
+                    }
+                  }
+                ],
+                "item": [
+                  {
+                    "linkId": "egfr",
+                    "text": "Most recent eGFR (mL/min/1.73 m2)",
+                    "answer": [
+                      {
+                        "valueDecimal": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "application/json": {
+              "schema": { },
+              "example": {
+                "resourceType": "QuestionnaireResponse",
+                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
+                "status": "in-progress",
+                "subject": {
+                  "reference": "Patient/pat-1"
+                },
+                "authored": "2026-10-07T18:36:05Z",
+                "author": {
+                  "reference": "Practitioner/prac-1"
+                },
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "ServiceRequest/ord-1-hd"
+                    }
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "Coverage/cov-1"
+                    }
+                  }
+                ],
+                "item": [
+                  {
+                    "linkId": "egfr",
+                    "text": "Most recent eGFR (mL/min/1.73 m2)",
+                    "answer": [
+                      {
+                        "valueDecimal": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Saved. Body: the form as stored, with its new id; the Location header has its URL."
+          },
+          "400": {
+            "description": "The body is not a QuestionnaireResponse, or subject does not point to a patient. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse.subject must reference a Patient, e.g. 'Patient/pat-1'.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+        ],
+        "summary": "Returns all forms of a patient as a searchset Bundle (newest first).",
+        "parameters": [
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Required. Patient id or \"Patient/id\", e.g. pat-1.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type \"searchset\" with the forms of the patient (total 0 and no entry when there are none)."
+          },
+          "400": {
+            "description": "The patient parameter is missing. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse search requires the patient parameter.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r5/QuestionnaireResponse": {
+      "post": {
+        "tags": [
+          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+        ],
+        "summary": "Creates a new form. Any id in the body is replaced by a server id. Returns 201 + Location header.",
+        "description": "Must be filled in the body: resourceType = \"QuestionnaireResponse\" and subject.reference = \"Patient/{patient id}\".\nThe order and the coverage the form is for are read from the DTR \"qr-context\" extensions, when present.",
+        "requestBody": {
+          "description": "Required. A FHIR QuestionnaireResponse (subject = Patient/{id} is required).",
+          "content": {
+            "application/fhir+json": {
+              "schema": { },
+              "example": {
+                "resourceType": "QuestionnaireResponse",
+                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
+                "status": "in-progress",
+                "subject": {
+                  "reference": "Patient/pat-1"
+                },
+                "authored": "2026-10-07T18:36:05Z",
+                "author": {
+                  "reference": "Practitioner/prac-1"
+                },
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "ServiceRequest/ord-1-hd"
+                    }
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "Coverage/cov-1"
+                    }
+                  }
+                ],
+                "item": [
+                  {
+                    "linkId": "egfr",
+                    "text": "Most recent eGFR (mL/min/1.73 m2)",
+                    "answer": [
+                      {
+                        "valueDecimal": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "application/json": {
+              "schema": { },
+              "example": {
+                "resourceType": "QuestionnaireResponse",
+                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
+                "status": "in-progress",
+                "subject": {
+                  "reference": "Patient/pat-1"
+                },
+                "authored": "2026-10-07T18:36:05Z",
+                "author": {
+                  "reference": "Practitioner/prac-1"
+                },
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "ServiceRequest/ord-1-hd"
+                    }
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "Coverage/cov-1"
+                    }
+                  }
+                ],
+                "item": [
+                  {
+                    "linkId": "egfr",
+                    "text": "Most recent eGFR (mL/min/1.73 m2)",
+                    "answer": [
+                      {
+                        "valueDecimal": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Saved. Body: the form as stored, with its new id; the Location header has its URL."
+          },
+          "400": {
+            "description": "The body is not a QuestionnaireResponse, or subject does not point to a patient. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse.subject must reference a Patient, e.g. 'Patient/pat-1'.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+        ],
+        "summary": "Returns all forms of a patient as a searchset Bundle (newest first).",
+        "parameters": [
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Required. Patient id or \"Patient/id\", e.g. pat-1.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type \"searchset\" with the forms of the patient (total 0 and no entry when there are none)."
+          },
+          "400": {
+            "description": "The patient parameter is missing. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse search requires the patient parameter.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/QuestionnaireResponse/{id}": {
+      "put": {
+        "tags": [
+          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+        ],
+        "summary": "Creates (201) or replaces (200) the form with this id. The body id, if present, must equal the URL id.",
+        "description": "Must be filled in the body: resourceType = \"QuestionnaireResponse\" and subject.reference = \"Patient/{patient id}\".\nSend the whole form each time: it replaces the stored one.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. Form id chosen by the caller, e.g. \"qr-frm-235b7ad69e85\".",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "qr-frm-235b7ad69e85"
+          }
+        ],
+        "requestBody": {
+          "description": "Required. A FHIR QuestionnaireResponse.",
+          "content": {
+            "application/fhir+json": {
+              "schema": { },
+              "example": {
+                "resourceType": "QuestionnaireResponse",
+                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
+                "status": "in-progress",
+                "subject": {
+                  "reference": "Patient/pat-1"
+                },
+                "authored": "2026-10-07T18:36:05Z",
+                "author": {
+                  "reference": "Practitioner/prac-1"
+                },
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "ServiceRequest/ord-1-hd"
+                    }
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "Coverage/cov-1"
+                    }
+                  }
+                ],
+                "item": [
+                  {
+                    "linkId": "egfr",
+                    "text": "Most recent eGFR (mL/min/1.73 m2)",
+                    "answer": [
+                      {
+                        "valueDecimal": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "application/json": {
+              "schema": { },
+              "example": {
+                "resourceType": "QuestionnaireResponse",
+                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
+                "status": "in-progress",
+                "subject": {
+                  "reference": "Patient/pat-1"
+                },
+                "authored": "2026-10-07T18:36:05Z",
+                "author": {
+                  "reference": "Practitioner/prac-1"
+                },
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "ServiceRequest/ord-1-hd"
+                    }
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "Coverage/cov-1"
+                    }
+                  }
+                ],
+                "item": [
+                  {
+                    "linkId": "egfr",
+                    "text": "Most recent eGFR (mL/min/1.73 m2)",
+                    "answer": [
+                      {
+                        "valueDecimal": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Replaced. Body: the form as stored."
+          },
+          "201": {
+            "description": "Created (the id was new). Body: the form as stored."
+          },
+          "400": {
+            "description": "The body is not a QuestionnaireResponse, or subject does not point to a patient, or the id in the body is not the id in the URL. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse.subject must reference a Patient, e.g. 'Patient/pat-1'.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+        ],
+        "summary": "Returns one stored form exactly as it was saved.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. Form id.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "qr-frm-235b7ad69e85"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The FHIR QuestionnaireResponse (content type application/fhir+json)."
+          },
+          "404": {
+            "description": "No form with this id. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-found\", \"diagnostics\": \"QuestionnaireResponse/qr-9 was not found.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r5/QuestionnaireResponse/{id}": {
+      "put": {
+        "tags": [
+          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+        ],
+        "summary": "Creates (201) or replaces (200) the form with this id. The body id, if present, must equal the URL id.",
+        "description": "Must be filled in the body: resourceType = \"QuestionnaireResponse\" and subject.reference = \"Patient/{patient id}\".\nSend the whole form each time: it replaces the stored one.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. Form id chosen by the caller, e.g. \"qr-frm-235b7ad69e85\".",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "qr-frm-235b7ad69e85"
+          }
+        ],
+        "requestBody": {
+          "description": "Required. A FHIR QuestionnaireResponse.",
+          "content": {
+            "application/fhir+json": {
+              "schema": { },
+              "example": {
+                "resourceType": "QuestionnaireResponse",
+                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
+                "status": "in-progress",
+                "subject": {
+                  "reference": "Patient/pat-1"
+                },
+                "authored": "2026-10-07T18:36:05Z",
+                "author": {
+                  "reference": "Practitioner/prac-1"
+                },
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "ServiceRequest/ord-1-hd"
+                    }
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "Coverage/cov-1"
+                    }
+                  }
+                ],
+                "item": [
+                  {
+                    "linkId": "egfr",
+                    "text": "Most recent eGFR (mL/min/1.73 m2)",
+                    "answer": [
+                      {
+                        "valueDecimal": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "application/json": {
+              "schema": { },
+              "example": {
+                "resourceType": "QuestionnaireResponse",
+                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
+                "status": "in-progress",
+                "subject": {
+                  "reference": "Patient/pat-1"
+                },
+                "authored": "2026-10-07T18:36:05Z",
+                "author": {
+                  "reference": "Practitioner/prac-1"
+                },
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "ServiceRequest/ord-1-hd"
+                    }
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
+                    "valueReference": {
+                      "reference": "Coverage/cov-1"
+                    }
+                  }
+                ],
+                "item": [
+                  {
+                    "linkId": "egfr",
+                    "text": "Most recent eGFR (mL/min/1.73 m2)",
+                    "answer": [
+                      {
+                        "valueDecimal": 9
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Replaced. Body: the form as stored."
+          },
+          "201": {
+            "description": "Created (the id was new). Body: the form as stored."
+          },
+          "400": {
+            "description": "The body is not a QuestionnaireResponse, or subject does not point to a patient, or the id in the body is not the id in the URL. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse.subject must reference a Patient, e.g. 'Patient/pat-1'.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+        ],
+        "summary": "Returns one stored form exactly as it was saved.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. Form id.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "qr-frm-235b7ad69e85"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The FHIR QuestionnaireResponse (content type application/fhir+json)."
+          },
+          "404": {
+            "description": "No form with this id. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-found\", \"diagnostics\": \"QuestionnaireResponse/qr-9 was not found.\" } ] }."
+          },
+          "502": {
+            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/.well-known/smart-configuration": {
+      "get": {
+        "tags": [
+          "3. SMART launch context - called by payer DTR apps"
+        ],
+        "summary": "SMART discovery document. The app calls this first, with the \"iss\" it received.",
+        "responses": {
+          "200": {
+            "description": "The SMART configuration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartConfigurationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fhir/r5/.well-known/smart-configuration": {
+      "get": {
+        "tags": [
+          "3. SMART launch context - called by payer DTR apps"
+        ],
+        "summary": "SMART discovery document. The app calls this first, with the \"iss\" it received.",
+        "responses": {
+          "200": {
+            "description": "The SMART configuration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartConfigurationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fhir/r4/auth/authorize": {
+      "get": {
+        "tags": [
+          "3. SMART launch context - called by payer DTR apps"
+        ],
+        "summary": "Authorize (query string). Redirects (302) to redirect_uri?code=...&state=...",
+        "parameters": [
+          {
+            "name": "response_type",
+            "in": "query",
+            "description": "Required. Must be \"code\".",
+            "schema": {
+              "type": "string",
+              "example": "code"
+            },
+            "example": "code"
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "description": "The app's client id (not checked).",
+            "schema": {
+              "type": "string",
+              "example": "dtr-app"
+            },
+            "example": "dtr-app"
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "description": "Required. Where the code is sent: the app's redirect URL.",
+            "schema": {
+              "type": "string",
+              "example": "http://localhost:5174/callback"
+            },
+            "example": "http://localhost:5174/callback"
+          },
+          {
+            "name": "launch",
+            "in": "query",
+            "description": "Required. Launch id the app received from the EHR launch (the \"launch\" URL parameter; created by POST /internal/smart-launches).",
+            "schema": {
+              "type": "string",
+              "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
+            },
+            "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "Requested scopes, separated by a space. Empty = \"launch patient/*.rs patient/QuestionnaireResponse.cu\".",
+            "schema": {
+              "type": "string",
+              "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
+            },
+            "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Random value from the app, returned unchanged with the code.",
+            "schema": {
+              "type": "string",
+              "example": "af0ifjsldkj"
+            },
+            "example": "af0ifjsldkj"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the app with a code (or error=invalid_request for an unknown launch)."
+          },
+          "400": {
+            "description": "redirect_uri missing.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "3. SMART launch context - called by payer DTR apps"
+        ],
+        "summary": "Authorize sent as a form post (SMART \"authorize-post\"). Same answers as the GET.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "response_type": {
+                    "type": "string",
+                    "description": "Required. Must be \"code\".",
+                    "example": "code"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "The app's client id (not checked).",
+                    "example": "dtr-app"
+                  },
+                  "redirect_uri": {
+                    "type": "string",
+                    "description": "Required. Where the code is sent: the app's redirect URL.",
+                    "example": "http://localhost:5174/callback"
+                  },
+                  "launch": {
+                    "type": "string",
+                    "description": "Required. Launch id the app received from the EHR launch (the \"launch\" URL parameter; created by POST /internal/smart-launches).",
+                    "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Requested scopes, separated by a space. Empty = \"launch patient/*.rs patient/QuestionnaireResponse.cu\".",
+                    "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Random value from the app, returned unchanged with the code.",
+                    "example": "af0ifjsldkj"
+                  }
+                }
+              },
+              "encoding": {
+                "response_type": {
+                  "style": "form"
+                },
+                "client_id": {
+                  "style": "form"
+                },
+                "redirect_uri": {
+                  "style": "form"
+                },
+                "launch": {
+                  "style": "form"
+                },
+                "scope": {
+                  "style": "form"
+                },
+                "state": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Redirect to the app with a code (or an error)."
+          },
+          "400": {
+            "description": "redirect_uri missing.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fhir/r5/auth/authorize": {
+      "get": {
+        "tags": [
+          "3. SMART launch context - called by payer DTR apps"
+        ],
+        "summary": "Authorize (query string). Redirects (302) to redirect_uri?code=...&state=...",
+        "parameters": [
+          {
+            "name": "response_type",
+            "in": "query",
+            "description": "Required. Must be \"code\".",
+            "schema": {
+              "type": "string",
+              "example": "code"
+            },
+            "example": "code"
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "description": "The app's client id (not checked).",
+            "schema": {
+              "type": "string",
+              "example": "dtr-app"
+            },
+            "example": "dtr-app"
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "description": "Required. Where the code is sent: the app's redirect URL.",
+            "schema": {
+              "type": "string",
+              "example": "http://localhost:5174/callback"
+            },
+            "example": "http://localhost:5174/callback"
+          },
+          {
+            "name": "launch",
+            "in": "query",
+            "description": "Required. Launch id the app received from the EHR launch (the \"launch\" URL parameter; created by POST /internal/smart-launches).",
+            "schema": {
+              "type": "string",
+              "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
+            },
+            "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "Requested scopes, separated by a space. Empty = \"launch patient/*.rs patient/QuestionnaireResponse.cu\".",
+            "schema": {
+              "type": "string",
+              "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
+            },
+            "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Random value from the app, returned unchanged with the code.",
+            "schema": {
+              "type": "string",
+              "example": "af0ifjsldkj"
+            },
+            "example": "af0ifjsldkj"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the app with a code (or error=invalid_request for an unknown launch)."
+          },
+          "400": {
+            "description": "redirect_uri missing.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "3. SMART launch context - called by payer DTR apps"
+        ],
+        "summary": "Authorize sent as a form post (SMART \"authorize-post\"). Same answers as the GET.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "response_type": {
+                    "type": "string",
+                    "description": "Required. Must be \"code\".",
+                    "example": "code"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "The app's client id (not checked).",
+                    "example": "dtr-app"
+                  },
+                  "redirect_uri": {
+                    "type": "string",
+                    "description": "Required. Where the code is sent: the app's redirect URL.",
+                    "example": "http://localhost:5174/callback"
+                  },
+                  "launch": {
+                    "type": "string",
+                    "description": "Required. Launch id the app received from the EHR launch (the \"launch\" URL parameter; created by POST /internal/smart-launches).",
+                    "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Requested scopes, separated by a space. Empty = \"launch patient/*.rs patient/QuestionnaireResponse.cu\".",
+                    "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "Random value from the app, returned unchanged with the code.",
+                    "example": "af0ifjsldkj"
+                  }
+                }
+              },
+              "encoding": {
+                "response_type": {
+                  "style": "form"
+                },
+                "client_id": {
+                  "style": "form"
+                },
+                "redirect_uri": {
+                  "style": "form"
+                },
+                "launch": {
+                  "style": "form"
+                },
+                "scope": {
+                  "style": "form"
+                },
+                "state": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Redirect to the app with a code (or an error)."
+          },
+          "400": {
+            "description": "redirect_uri missing.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fhir/r4/auth/token": {
+      "post": {
+        "tags": [
+          "3. SMART launch context - called by payer DTR apps"
+        ],
+        "summary": "Exchanges the one-time code for the launch context: patient, encounter, fhirUser, fhirContext (orders, coverage)\nand appContext (from the payer's CRD card). The access_token is a random value; no endpoint checks it.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "description": "Required. Must be \"authorization_code\".",
+                    "example": "authorization_code"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Required. The code from authorize. It works once only.",
+                    "example": "Jx3n0Yd2kQ8mVw5ZrT1uLb7c"
+                  },
+                  "redirect_uri": {
+                    "type": "string",
+                    "description": "The same redirect_uri as in authorize (not checked).",
+                    "example": "http://localhost:5174/callback"
+                  }
+                }
+              },
+              "encoding": {
+                "grant_type": {
+                  "style": "form"
+                },
+                "code": {
+                  "style": "form"
+                },
+                "redirect_uri": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Launch context.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Wrong grant type, or unknown / used / expired code.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fhir/r5/auth/token": {
+      "post": {
+        "tags": [
+          "3. SMART launch context - called by payer DTR apps"
+        ],
+        "summary": "Exchanges the one-time code for the launch context: patient, encounter, fhirUser, fhirContext (orders, coverage)\nand appContext (from the payer's CRD card). The access_token is a random value; no endpoint checks it.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "description": "Required. Must be \"authorization_code\".",
+                    "example": "authorization_code"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Required. The code from authorize. It works once only.",
+                    "example": "Jx3n0Yd2kQ8mVw5ZrT1uLb7c"
+                  },
+                  "redirect_uri": {
+                    "type": "string",
+                    "description": "The same redirect_uri as in authorize (not checked).",
+                    "example": "http://localhost:5174/callback"
+                  }
+                }
+              },
+              "encoding": {
+                "grant_type": {
+                  "style": "form"
+                },
+                "code": {
+                  "style": "form"
+                },
+                "redirect_uri": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Launch context.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Wrong grant type, or unknown / used / expired code.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/access-tokens": {
+      "post": {
+        "tags": [
+          "4. Internal - called by the Payer Gateway only"
+        ],
+        "summary": "Issues a short-lived access token for one patient, in the CDS Hooks \"fhirAuthorization\" shape.\nThe gateway sends it to the payer inside the CRD hook call, so the payer can read extra data that was not in the\nprefetch. The token is issued and kept (ITokenService), but no endpoint of this API checks it: authentication\nis added outside this code.",
+        "requestBody": {
+          "description": "Required. subject (payer) and patientId must be filled; scope and minutes are optional.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The token, ready to send as fhirAuthorization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "subject or patientId is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/smart-launches": {
+      "post": {
+        "tags": [
+          "4. Internal - called by the Payer Gateway only"
+        ],
+        "summary": "Creates a SMART launch context for a DTR app (patient, user, encounter, orders/coverage, appContext).\nThe gateway then redirects the browser to {DTR app}?iss={iss}&launch={launchId}.\n\"iss\" is the R4 base URL, or the R5 base URL when the request says fhirVersion = \"r5\".",
+        "requestBody": {
+          "description": "Required. patientId must be filled; user, encounter, fhirContext, appContext and fhirVersion are optional.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmartLaunchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The launch id and iss.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartLaunchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "patientId is missing, or fhirVersion is not \"r4\" or \"r5\".",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessTokenRequest": {
+        "required": [
+          "patientId",
+          "subject"
+        ],
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "Required. Who will use the token, normally the payer's id.",
+            "example": "PAYER001"
+          },
+          "patientId": {
+            "type": "string",
+            "description": "Required. The only patient the token may read (EHR patient id).",
+            "example": "pat-1"
+          },
+          "scope": {
+            "type": "string",
+            "description": "SMART scopes, separated by a space. Empty = read access to the patient's data (SmartScopes.PayerDefault).",
+            "nullable": true,
+            "example": "patient/Patient.rs patient/Coverage.rs patient/Observation.rs"
+          },
+          "minutes": {
+            "type": "integer",
+            "description": "Token lifetime in minutes, from 1 to 15 (a smaller or larger value is changed to 1 or 15).",
+            "format": "int32",
+            "default": 5,
+            "example": 5
+          }
+        },
+        "additionalProperties": false,
+        "description": "Body of POST /internal/access-tokens (sent by the Payer Gateway)."
+      },
+      "AccessTokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "The token (a random value).",
+            "example": "xhpE4XN-Z8MoI7ODwmf6JEQDnr6LFW60GmyUhVJCycw"
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Always \"Bearer\".",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Seconds until the token expires.",
+            "format": "int32",
+            "example": 300
+          },
+          "scope": {
+            "type": "string",
+            "description": "The scopes the token was given.",
+            "example": "patient/Patient.rs patient/Coverage.rs patient/Observation.rs"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Who the token was issued to (the payer id).",
+            "example": "PAYER001"
+          },
+          "patient": {
+            "type": "string",
+            "description": "The patient the token is limited to.",
+            "example": "pat-1"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response of POST /internal/access-tokens.\nSame shape as the CDS Hooks \"fhirAuthorization\" object, so the Payer Gateway can pass it to the payer unchanged."
+      },
+      "FhirContextItem": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "description": "\"Type/id\" of a resource the form is for.",
+            "example": "ServiceRequest/ord-1-hd"
+          }
+        },
+        "additionalProperties": false,
+        "description": "One entry of the SMART \"fhirContext\" array in the token response."
+      },
+      "OAuthError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error code, e.g. invalid_request, invalid_grant, unsupported_grant_type.",
+            "example": "invalid_request"
+          },
+          "error_description": {
+            "type": "string",
+            "description": "What went wrong, in plain text.",
+            "nullable": true,
+            "example": "subject and patientId are required."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Standard OAuth 2.0 error body returned by the authorize, token and /internal endpoints."
+      },
+      "SmartConfigurationResponse": {
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "description": "FHIR base URL of this API (the \"iss\" the app was launched with).",
+            "example": "http://localhost:5100/fhir/r4"
+          },
+          "authorization_endpoint": {
+            "type": "string",
+            "description": "Where the app asks for a code.",
+            "example": "http://localhost:5100/fhir/r4/auth/authorize"
+          },
+          "token_endpoint": {
+            "type": "string",
+            "description": "Where the app exchanges the code for the launch context.",
+            "example": "http://localhost:5100/fhir/r4/auth/token"
+          },
+          "grant_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Only \"authorization_code\"."
+          },
+          "token_endpoint_auth_methods_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "\"none\": no client authentication."
+          },
+          "code_challenge_methods_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "PKCE method named for SMART clients (PKCE values are not checked)."
+          },
+          "response_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Only \"code\"."
+          },
+          "scopes_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Scopes an app may ask for (scopes are not checked)."
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "SMART capabilities of this server."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Body of GET /fhir/r4/.well-known/smart-configuration (SMART App Launch discovery document)."
+      },
+      "SmartLaunchRequest": {
+        "required": [
+          "patientId"
+        ],
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "description": "Required. Patient the DTR form is for (EHR patient id).",
+            "example": "pat-1"
+          },
+          "userPractitionerId": {
+            "type": "string",
+            "description": "Logged-in clinician (becomes fhirUser = Practitioner/{id}).",
+            "nullable": true,
+            "example": "prac-1"
+          },
+          "encounterId": {
+            "type": "string",
+            "description": "Current encounter, if any.",
+            "nullable": true,
+            "example": "enc-1"
+          },
+          "fhirContext": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "References handed to the DTR app as fhirContext: the orders and the coverage the form is for.",
+            "example": [
+              "ServiceRequest/ord-1-hd",
+              "Coverage/cov-1"
+            ]
+          },
+          "appContext": {
+            "type": "string",
+            "description": "appContext from the payer's CRD card (which questionnaires to load, coverage-assertion-id). Passed to the app unchanged.",
+            "nullable": true,
+            "example": "{\"coverage-assertion-id\":\"702644806bf74c70aa65d2ca1a4a34b1\",\"questionnaire\":[\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\"]}"
+          },
+          "fhirVersion": {
+            "type": "string",
+            "description": "FHIR release the DTR app works with: \"r4\" (default) or \"r5\". Decides the \"iss\" returned, i.e. whether the app\nreads /fhir/r4 or /fhir/r5.",
+            "nullable": true,
+            "example": "r4"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Body of POST /internal/smart-launches (sent by the Payer Gateway when a user opens a DTR link)."
+      },
+      "SmartLaunchResponse": {
+        "type": "object",
+        "properties": {
+          "launchId": {
+            "type": "string",
+            "description": "Opaque launch id the DTR app sends back to /fhir/r4/auth/authorize.",
+            "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
+          },
+          "iss": {
+            "type": "string",
+            "description": "FHIR base URL of this API (the SMART \"iss\").",
+            "example": "http://localhost:5100/fhir/r4"
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "The launch must be used before this time.",
+            "format": "date-time",
+            "example": "2026-10-07T18:50:40.2202026+00:00"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response of POST /internal/smart-launches.\nThe Payer Gateway redirects the browser to {dtrAppUrl}?iss={Iss}&launch={LaunchId}."
+      },
+      "SmartTokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "A random value. No endpoint of this API checks it.",
+            "example": "p0Qm3s8dYw1cV7r2Kx9TbA4nL6eJ5hGf"
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Always \"Bearer\".",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Lifetime reported to the app, in seconds.",
+            "format": "int32",
+            "example": 3600
+          },
+          "scope": {
+            "type": "string",
+            "description": "The scopes the app asked for (or the default DTR scopes).",
+            "example": "launch patient/*.rs patient/QuestionnaireResponse.cu"
+          },
+          "patient": {
+            "type": "string",
+            "description": "Patient in context.",
+            "example": "pat-1"
+          },
+          "encounter": {
+            "type": "string",
+            "description": "Encounter in context, if any.",
+            "nullable": true,
+            "example": "enc-1"
+          },
+          "fhirUser": {
+            "type": "string",
+            "description": "Logged-in user, e.g. \"Practitioner/prac-1\".",
+            "nullable": true,
+            "example": "Practitioner/prac-1"
+          },
+          "fhirContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FhirContextItem"
+            },
+            "description": "Orders and coverage the form is for: [{ \"reference\": \"ServiceRequest/ord-1-hd\" }]."
+          },
+          "appContext": {
+            "type": "string",
+            "description": "appContext from the payer's CRD card.",
+            "nullable": true,
+            "example": "{\"coverage-assertion-id\":\"702644806bf74c70aa65d2ca1a4a34b1\",\"questionnaire\":[\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\"]}"
+          },
+          "need_patient_banner": {
+            "type": "boolean",
+            "description": "Always false: the app must show its own patient banner.",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response of POST /fhir/r4/auth/token: the access token plus the SMART launch context."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "0. Metadata - CapabilityStatement (anyone)"
+    },
+    {
+      "name": "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
+    },
+    {
+      "name": "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
+    },
+    {
+      "name": "3. SMART launch context - called by payer DTR apps"
+    },
+    {
+      "name": "4. Internal - called by the Payer Gateway only"
+    }
+  ]
+}

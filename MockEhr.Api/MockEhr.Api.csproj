@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Test stand-in for the provider's EHR REST APIs (port 5090). Not deployed.
+       Serves the read APIs the FHIR API converts, the EHR data API (api/prior-auth-data) through which the
+       Payer Gateway and the FHIR API store their data in the EHR database, and add / edit APIs for the
+       React EHR app. Data is stored in Data/ehr-data.json. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>MockEhr.Api</RootNamespace>
+    <!-- XML comments are shown in Swagger UI -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- the data file changes at runtime; do not let "dotnet watch" restart on it -->
+    <Watch Remove="Data\**" />
+    <Content Remove="Data\**" />
+  </ItemGroup>
+
+</Project>

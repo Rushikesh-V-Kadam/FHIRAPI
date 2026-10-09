@@ -1,0 +1,190 @@
+###############################################################################################
+# FHIR API - one request per endpoint (Visual Studio / VS Code REST Client)
+# Start MockEhr.Api (5090) and FHIRAPI (5100) first. Explanations: ../docs/FHIRAPI-Guide.md
+###############################################################################################
+
+@fhir = http://localhost:5100/fhir/r4
+@fhir5 = http://localhost:5100/fhir/r5
+@root = http://localhost:5100
+
+### 1. CapabilityStatement (public)
+GET {{fhir}}/metadata
+
+### 2. SMART discovery (public)
+GET {{fhir}}/.well-known/smart-configuration
+
+### 3. Read one resource
+GET {{fhir}}/Patient/pat-1
+
+###
+GET {{fhir}}/DeviceRequest/ord-cpap
+
+### Coverage by id works after the order (or a Coverage search) was read - see CoveragePatientIndex
+GET {{fhir}}/Coverage/cov-1
+
+###
+GET {{fhir}}/PractitionerRole/role-prac-1
+
+###
+GET {{fhir}}/DocumentReference/doc-knee-xray
+
+###
+GET {{fhir}}/Binary/doc-knee-xray
+
+### 4. Search
+GET {{fhir}}/Coverage?patient=pat-1&status=active
+
+###
+GET {{fhir}}/DeviceRequest?_id=ord-cpap&_include=DeviceRequest:patient&_include=DeviceRequest:requester&_include=DeviceRequest:insurance
+
+###
+GET {{fhir}}/ServiceRequest?_id=ord-mri-lumbar,ord-mri-brain&_include=ServiceRequest:requester:PractitionerRole
+
+###
+GET {{fhir}}/Observation?patient=pat-1&code=http://loinc.org|39156-5,http://loinc.org|59408-5
+
+###
+GET {{fhir}}/Condition?patient=pat-1&clinical-status=active
+
+###
+GET {{fhir}}/DocumentReference?patient=pat-1&type=http://loinc.org|18748-4
+
+### Missing parameter -> 400 OperationOutcome that says what to add
+GET {{fhir}}/Observation
+
+### 5. Save a DTR form with a known id (201 first time, 200 after)
+PUT {{fhir}}/QuestionnaireResponse/qr-cpap-1
+Content-Type: application/fhir+json
+
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "qr-cpap-1",
+  "meta": { "profile": [ "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse" ] },
+  "extension": [
+    { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "DeviceRequest/ord-cpap" } },
+    { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "Coverage/cov-1" } }
+  ],
+  "questionnaire": "http://example.org/fhir/Questionnaire/cpap-e0601",
+  "status": "completed",
+  "subject": { "reference": "Patient/pat-1" },
+  "authored": "2026-10-01T11:00:00Z",
+  "author": { "reference": "Practitioner/prac-1" },
+  "item": [
+    { "linkId": "sleep-study", "item": [
+      { "linkId": "sleep-study-date", "answer": [ { "valueDate": "2026-08-10" } ] },
+      { "linkId": "ahi", "answer": [ { "valueDecimal": 32,
+        "extension": [ { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin",
+                         "extension": [ { "url": "source", "valueCode": "auto" } ] } ] } ] }
+    ] },
+    { "linkId": "face-to-face", "answer": [ { "valueBoolean": true } ] },
+    { "linkId": "attestation", "answer": [ { "valueBoolean": true } ] }
+  ]
+}
+
+### 6. Create a DTR form, server assigns the id (201 + Location)
+POST {{fhir}}/QuestionnaireResponse
+Content-Type: application/fhir+json
+
+{
+  "resourceType": "QuestionnaireResponse",
+  "questionnaire": "http://example.org/fhir/Questionnaire/cpap-e0601",
+  "status": "in-progress",
+  "subject": { "reference": "Patient/pat-1" },
+  "item": [ { "linkId": "face-to-face", "answer": [ { "valueBoolean": true } ] } ]
+}
+
+### 7. Read a form / all forms of a patient
+GET {{fhir}}/QuestionnaireResponse/qr-cpap-1
+
+###
+GET {{fhir}}/QuestionnaireResponse?patient=pat-1
+
+### What the EHR received (mock EHR)
+GET http://localhost:5090/api/patients/pat-1/questionnaire-responses
+
+
+###############################################################################################
+# Payer Gateway calls (/internal)
+###############################################################################################
+
+### 8. fhirAuthorization token for a payer (the gateway sends it in the CRD hook call)
+POST {{root}}/internal/access-tokens
+Content-Type: application/json
+
+{ "subject": "MOCK-DAVINCI", "patientId": "pat-1", "minutes": 5 }
+
+### 9. SMART launch for the DTR app
+# @name launch
+POST {{root}}/internal/smart-launches
+Content-Type: application/json
+
+{
+  "patientId": "pat-1",
+  "userPractitionerId": "prac-1",
+  "encounterId": "enc-1",
+  "fhirContext": [ "DeviceRequest/ord-cpap", "Coverage/cov-1" ],
+  "appContext": "{\"questionnaire\":[\"http://example.org/fhir/Questionnaire/cpap-e0601\"]}"
+}
+
+
+###############################################################################################
+# SMART launch context as the DTR app gets it (no authentication: PKCE and client_id are not checked)
+###############################################################################################
+
+### 10. Authorize -> 302; copy "code" from the Location header into @code below
+# @no-redirect
+GET {{fhir}}/auth/authorize?response_type=code&client_id=dtr-app&redirect_uri=http://localhost/callback&launch={{launch.response.body.launchId}}&scope=launch%20patient/*.rs&state=abc123
+
+###
+@code = paste-code-here
+
+### 11. Token: code -> patient, encounter, fhirUser, fhirContext, appContext
+POST {{fhir}}/auth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&code={{code}}&redirect_uri=http://localhost/callback
+
+###############################################################################################
+# FHIR R5 view: the same data under /fhir/r5, converted to R5 (Versioning/R5Converter)
+###############################################################################################
+
+### 12. R5 CapabilityStatement (fhirVersion 5.0.0)
+GET {{fhir5}}/metadata
+
+### 13. R5 resources: compare with the R4 calls above
+GET {{fhir5}}/Coverage/cov-1
+
+###
+GET {{fhir5}}/ServiceRequest?_id=ord-1-hd&_include=ServiceRequest:patient&_include=ServiceRequest:requester
+
+###
+GET {{fhir5}}/Encounter?patient=pat-1
+
+### 14. Save a form through R5; it is stored once and readable through R4 and R5
+PUT {{fhir5}}/QuestionnaireResponse/qr-r5-1
+Content-Type: application/fhir+json
+
+{
+  "resourceType": "QuestionnaireResponse",
+  "questionnaire": "http://example.org/fhir/Questionnaire/cpap-e0601",
+  "status": "in-progress",
+  "subject": { "reference": "Patient/pat-1" },
+  "item": [ { "linkId": "1", "text": "AHI", "answer": [ { "valueDecimal": 22 } ] } ]
+}
+
+###
+GET {{fhir}}/QuestionnaireResponse/qr-r5-1
+
+### 15. SMART launch for an R5 DTR app: iss is the R5 base URL
+POST {{root}}/internal/smart-launches
+Content-Type: application/json
+
+{
+  "patientId": "pat-1",
+  "userPractitionerId": "prac-1",
+  "fhirContext": [ "DeviceRequest/ord-cpap", "Coverage/cov-1" ],
+  "fhirVersion": "r5"
+}
+
+### 16. R5 SMART discovery
+GET {{fhir5}}/.well-known/smart-configuration
