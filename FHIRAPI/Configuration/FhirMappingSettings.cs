@@ -2,7 +2,8 @@ namespace FHIRAPI.Configuration;
 
 /// <summary>
 /// Identifier systems used when EHR data is converted to FHIR (appsettings section "FhirMapping").
-/// Agree these values with each payer.
+/// MrnSystem and DocumentIdSystem belong to the provider. PayerIdSystem and MemberIdSystem are optional: payers
+/// normally do not give them, so they are empty and no "system" is sent with the payer id and the member id.
 /// </summary>
 public class FhirMappingSettings
 {
@@ -15,9 +16,15 @@ public class FhirMappingSettings
     /// <summary>System for EHR document ids (DocumentReference.identifier).</summary>
     public string DocumentIdSystem { get; set; } = "http://provider.example.org/fhir/sid/document-id";
 
-    /// <summary>System for payer ids (Coverage.payor.identifier).</summary>
-    public string PayerIdSystem { get; set; } = "http://example.org/payer-ids";
+    /// <summary>
+    /// Optional. System for payer ids (Coverage.payor.identifier.system). Empty (the default) = the payer id is sent
+    /// without a system. Set it only when a payer tells you which system its payer id must carry.
+    /// </summary>
+    public string PayerIdSystem { get; set; } = string.Empty;
 
-    /// <summary>System for member ids (Coverage.identifier).</summary>
-    public string MemberIdSystem { get; set; } = "http://example.org/member-ids";
+    /// <summary>
+    /// Optional. System for member ids (Coverage.identifier.system). Empty (the default) = the member id is sent
+    /// without a system. Set it only when a payer tells you which system its member ids must carry.
+    /// </summary>
+    public string MemberIdSystem { get; set; } = string.Empty;
 }

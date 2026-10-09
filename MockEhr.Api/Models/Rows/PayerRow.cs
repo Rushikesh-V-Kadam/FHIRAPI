@@ -1,11 +1,12 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace MockEhr.Api.Models.Rows;
 
 /// <summary>
 /// One payer = one row of table PA_PAYER. Returned by GET api/prior-auth-data/payers.
 /// The EHR team maintains these rows; the Payer Gateway only reads them (at start-up and every few minutes).
 /// One JSON property = one column: payerName = PAYER_NAME, baseUrl = BASE_URL.
+/// Only payerName and baseUrl must be filled. Every other property may be null or left out; the gateway then uses
+/// its default. The payer's own id and the member id are not kept here: they come from the patient's insurance
+/// (GET api/patients/{id}/insurances: payerId and memberId).
 /// </summary>
 public class PayerRow
 {
@@ -17,24 +18,19 @@ public class PayerRow
     /// <example>Mock Da Vinci Payer</example>
     public string? DisplayName { get; set; }
 
-    /// <summary>false = configured but switched off (the gateway answers "payer not configured"). Column ENABLED, NUMBER(1): 1 = true, 0 = false.</summary>
+    /// <summary>false = configured but switched off (the gateway answers "payer not configured"). Empty = true. Column ENABLED, NUMBER(1): 1 = true, 0 = false.</summary>
     /// <example>true</example>
-    [Required]
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>The payer's own id, sent to the payer in PAS and CDex. Column PAYER_IDENTIFIER, VARCHAR2(64).</summary>
-    /// <example>PAYER001</example>
-    public string? PayerIdentifier { get; set; }
+    public bool? Enabled { get; set; }
 
     /// <summary>Payer base URL. Column BASE_URL, VARCHAR2(500).</summary>
     /// <example>http://localhost:5080</example>
     public string BaseUrl { get; set; } = string.Empty;
 
-    /// <summary>CDS Hooks path under baseUrl (CRD). Empty = "cds-services". Column CDS_SERVICES_PATH, VARCHAR2(200).</summary>
+    /// <summary>CDS Hooks path under baseUrl (CRD). Empty = "cds-services"; "/" = no extra path (the payer's CDS Hooks address is baseUrl itself). Column CDS_SERVICES_PATH, VARCHAR2(200).</summary>
     /// <example>cds-services</example>
     public string? CdsServicesPath { get; set; }
 
-    /// <summary>FHIR path under baseUrl (DTR, PAS, CDex). Empty = "fhir". Column FHIR_PATH, VARCHAR2(200).</summary>
+    /// <summary>FHIR path under baseUrl (DTR, PAS, CDex). Empty = "fhir"; "/" = no extra path (the payer's FHIR address is baseUrl itself). Column FHIR_PATH, VARCHAR2(200).</summary>
     /// <example>fhir</example>
     public string? FhirPath { get; set; }
 
@@ -69,14 +65,6 @@ public class PayerRow
     /// <summary>Not read by the gateway (kept for the authentication layer): secret the payer sends with notifications. SENSITIVE. Column NOTIFICATION_SECRET, VARCHAR2(200).</summary>
     /// <example></example>
     public string? NotificationSecret { get; set; }
-
-    /// <summary>Identifier system the payer expects for member ids. Column MEMBER_ID_SYSTEM, VARCHAR2(500).</summary>
-    /// <example>http://example.org/member-ids</example>
-    public string? MemberIdSystem { get; set; }
-
-    /// <summary>Identifier system the payer expects for its payer id. Column PAYER_ID_SYSTEM, VARCHAR2(500).</summary>
-    /// <example>http://example.org/payer-ids</example>
-    public string? PayerIdSystem { get; set; }
 
     /// <summary>Seconds to wait for the payer at order-sign. Empty or 0 = 5. Column CRD_TIMEOUT_SECONDS, NUMBER(4).</summary>
     /// <example>10</example>

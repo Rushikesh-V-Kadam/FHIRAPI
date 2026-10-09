@@ -346,7 +346,6 @@ GET /fhir/r4/DocumentReference?patient=pat-1&type=http://loinc.org|18748-4
       "meta": { "profile": [ "http://hl7.org/fhir/us/davinci-crd/StructureDefinition/profile-coverage" ] },
       "identifier": [ {
         "type": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "MB", "display": "Member Number" } ] },
-        "system": "http://example.org/member-ids",
         "value": "MBR-1001"
       } ],
       "status": "active",
@@ -355,7 +354,7 @@ GET /fhir/r4/DocumentReference?patient=pat-1&type=http://loinc.org|18748-4
       "beneficiary": { "reference": "Patient/pat-1" },
       "relationship": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship", "code": "self" } ] },
       "period": { "start": "2026-01-01", "end": "2027-12-31" },
-      "payor": [ { "identifier": { "system": "http://example.org/payer-ids", "value": "PAYER001" }, "display": "Mock Da Vinci Payer" } ],
+      "payor": [ { "identifier": { "value": "PAYER001" }, "display": "Mock Da Vinci Payer" } ],
       "class": [
         { "type": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/coverage-class", "code": "plan" } ] }, "value": "GOLD-PPO", "name": "Gold PPO" },
         { "type": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/coverage-class", "code": "group" } ] }, "value": "GRP-500" }
@@ -872,7 +871,7 @@ Each class lives in its own file, with the same name as the class.
 | Folder | What's inside |
 |---|---|
 | `Program.cs` | Dependency-injection wiring and the request pipeline, nothing else |
-| `Configuration/` | One settings class per `appsettings.json` section (`EhrSettings`, `FhirServerSettings`, `FhirMappingSettings`, `StorageSettings`) |
+| `Configuration/` | One settings class per `appsettings.json` section (`EhrSettings`, `FhirServerSettings`, `FhirMappingSettings`, `StorageSettings`). In `FhirMapping`, `MemberIdSystem` and `PayerIdSystem` are optional and empty by default: the member id and the payer id of an insurance are sent without a "system" unless a payer gives one |
 | `Constants/` | URIs and fixed values: code systems, profiles, DTR extension URLs, issue codes, headers, default scopes |
 | `Controllers/` | One controller per area: `MetadataController`, `FhirResourceController` (read + search), `QuestionnaireResponseController`, `SmartAuthController`, `InternalController` |
 | `Middleware/` | `FhirExceptionHandler` (every error → OperationOutcome, so controllers have no try/catch), correlation id middleware and handler |

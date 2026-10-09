@@ -323,7 +323,6 @@ public static class SeedData
         row["payerName"] = "MockPayer";
         row["displayName"] = "Mock Da Vinci Payer";
         row["enabled"] = true;
-        row["payerIdentifier"] = "PAYER001";
         row["baseUrl"] = "http://localhost:5080";
         row["cdsServicesPath"] = "cds-services";
         row["fhirPath"] = "fhir";
@@ -335,8 +334,6 @@ public static class SeedData
         row["signCdsHooksRequests"] = true;
         row["useSubscriptions"] = true;
         row["notificationSecret"] = null;
-        row["memberIdSystem"] = "http://example.org/member-ids";
-        row["payerIdSystem"] = "http://example.org/payer-ids";
         row["crdTimeoutSeconds"] = 300;
         row["timeoutSeconds"] = 300;
         row["fhirVersion"] = "R4";

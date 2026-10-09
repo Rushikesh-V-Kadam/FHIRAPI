@@ -66,7 +66,7 @@ public class AdministrativeMapper
         {
             Id = source.CoverageId,
             Status = string.IsNullOrEmpty(source.Status) ? "active" : source.Status.ToLowerInvariant(),
-            SubscriberId = source.MemberId,
+            SubscriberId = string.IsNullOrWhiteSpace(source.MemberId) ? null : source.MemberId,
             Beneficiary = new ResourceReference("Patient", source.PatientId),
             Relationship = CodeSystemMapper.Relationship(source.RelationshipToSubscriber),
             Type = string.IsNullOrEmpty(source.CoverageType) ? null : new CodeableConcept(CodeSystems.ActCode, source.CoverageType)
@@ -76,17 +76,35 @@ public class AdministrativeMapper
         if (source.EffectiveDate != null || source.TerminationDate != null)
             coverage.Period = new Period { Start = source.EffectiveDate, End = source.TerminationDate };
 
-        coverage.Identifier.Add(new Identifier(_settings.MemberIdSystem, source.MemberId)
+        // Member id (identifier of type MB). Its "system" is sent only when FhirMapping:MemberIdSystem is set;
+        // an insurance without member id gets no identifier (an identifier without value is not valid FHIR).
+        if (!string.IsNullOrWhiteSpace(source.MemberId))
         {
-            Type = new CodeableConcept(CodeSystems.V2IdentifierType, "MB", "Member Number")
-        });
+            var memberIdentifier = new Identifier
+            {
+                Type = new CodeableConcept(CodeSystems.V2IdentifierType, "MB", "Member Number"),
+                Value = source.MemberId
+            };
+            if (!string.IsNullOrWhiteSpace(_settings.MemberIdSystem))
+            {
+                memberIdentifier.System = _settings.MemberIdSystem;
+            }
+            coverage.Identifier.Add(memberIdentifier);
+        }
 
-        // The Payer Gateway routes to the right payer using this payer id
-        coverage.Payor.Add(new ResourceReference
+        // The payer: its name, and the payer id the EHR keeps with the insurance (sent by the Payer Gateway as the
+        // payer id in PAS and CDex). The "system" of the payer id is sent only when FhirMapping:PayerIdSystem is set;
+        // an insurance without payer id gets only the name.
+        var payor = new ResourceReference { Display = source.PayerName };
+        if (!string.IsNullOrWhiteSpace(source.PayerId))
         {
-            Identifier = new Identifier(_settings.PayerIdSystem, source.PayerId),
-            Display = source.PayerName
-        });
+            payor.Identifier = new Identifier { Value = source.PayerId };
+            if (!string.IsNullOrWhiteSpace(_settings.PayerIdSystem))
+            {
+                payor.Identifier.System = _settings.PayerIdSystem;
+            }
+        }
+        coverage.Payor.Add(payor);
 
         if (!string.IsNullOrEmpty(source.PlanId))
         {
