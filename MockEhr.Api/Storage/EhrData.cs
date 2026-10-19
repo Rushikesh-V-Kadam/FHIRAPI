@@ -4,8 +4,8 @@ using MockEhr.Api.Models;
 namespace MockEhr.Api.Storage;
 
 /// <summary>
-/// Everything the mock EHR stores. The whole object is saved as one JSON file (MockEhr:DataFile,
-/// default Data/ehr-data.json). On the first start the file does not exist and SeedData fills it.
+/// Everything the mock EHR stores. Each list is saved in its own JSON file in the Data folder (see EhrDataFiles).
+/// On the first start there are no files yet and SeedData fills it from the test data in Data/TestData.
 /// </summary>
 public class EhrData
 {

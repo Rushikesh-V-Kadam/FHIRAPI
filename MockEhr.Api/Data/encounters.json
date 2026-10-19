@@ -1,0 +1,382 @@
+[
+  {
+    "encounterId": "enc-1",
+    "patientId": "pat-1",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-09-28T09:30:00Z",
+    "practitionerId": "prac-1",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-2",
+    "patientId": "pat-2",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-09-26T11:00:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-3",
+    "patientId": "pat-3",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-09-27T13:00:00Z",
+    "practitionerId": "prac-1",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-4",
+    "patientId": "pat-4",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-09-28T15:00:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-5",
+    "patientId": "pat-5",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-09-27T10:00:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N17.9",
+        "codeSystem": "ICD10CM",
+        "display": "Acute kidney failure, unspecified"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-6",
+    "patientId": "pat-6",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-09-25T09:00:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-7",
+    "patientId": "pat-7",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-09-28T15:00:00Z",
+    "practitionerId": "prac-1",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-8",
+    "patientId": "pat-8",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-12T09:00:00Z",
+    "practitionerId": "prac-1",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-9",
+    "patientId": "pat-9",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-12T10:30:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-10",
+    "patientId": "pat-10",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-13T08:30:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-2",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-11",
+    "patientId": "pat-11",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-13T13:00:00Z",
+    "practitionerId": "prac-1",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-12",
+    "patientId": "pat-12",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-14T11:00:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N17.9",
+        "codeSystem": "ICD10CM",
+        "display": "Acute kidney failure, unspecified"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-13",
+    "patientId": "pat-13",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-14T15:00:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-2",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-14",
+    "patientId": "pat-14",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-15T09:00:00Z",
+    "practitionerId": "prac-1",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-15",
+    "patientId": "pat-15",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-15T14:00:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-2",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-16",
+    "patientId": "pat-16",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-16T09:00:00Z",
+    "practitionerId": "prac-1",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-17",
+    "patientId": "pat-17",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-16T10:30:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-2",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-18",
+    "patientId": "pat-18",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-16T13:00:00Z",
+    "practitionerId": "prac-1",
+    "organizationId": "org-1",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ]
+  },
+  {
+    "encounterId": "enc-19",
+    "patientId": "pat-19",
+    "status": "in-progress",
+    "encounterClass": "AMB",
+    "typeCode": "99214",
+    "typeCodeSystem": "CPT",
+    "typeDisplay": "Nephrology office visit",
+    "startDateTime": "2026-10-16T15:00:00Z",
+    "practitionerId": "prac-3",
+    "organizationId": "org-2",
+    "locationId": "loc-office",
+    "reasonDiagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ]
+  }
+]

@@ -1,0 +1,3057 @@
+{
+  "info": {
+    "_postman_id": "8301abdf-9fe7-4168-82b4-66b08853ad8d",
+    "name": "FHIR API - test collection",
+    "description": "Tests for the FHIR R4 API (http://localhost:5100/fhir/r4), using the Mock EHR test data (MockEhr.Api/Data/TestData). Reset the Mock EHR first (POST http://localhost:5090/api/admin/reset) so the expected totals match. Run the whole collection with the Collection Runner; folders 2, 15 and 16 save ids in collection variables, so run their requests in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Metadata",
+      "description": "CapabilityStatement: what this FHIR server supports. Anyone may call it.",
+      "item": [
+        {
+          "name": "CapabilityStatement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is CapabilityStatement\", function () { pm.expect(body.resourceType).to.eql(\"CapabilityStatement\"); });",
+                  "pm.test(\"fhirVersion is 4.0.1\", function () { pm.expect(body.fhirVersion).to.eql(\"4.0.1\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/metadata",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metadata"
+              ]
+            },
+            "description": "Returns the CapabilityStatement of the server (FHIR R4 4.0.1)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Patient",
+      "description": "Read a patient by id, or search with _id (one id or several, comma separated = OR).",
+      "item": [
+        {
+          "name": "Read Patient pat-1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Patient\", function () { pm.expect(body.resourceType).to.eql(\"Patient\"); });",
+                  "pm.test(\"id is pat-1\", function () { pm.expect(body.id).to.eql(\"pat-1\"); });",
+                  "pm.test(\"name is Hayes\", function () { pm.expect(JSON.stringify(body.name)).to.include(\"Hayes\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Patient/pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Patient",
+                "pat-1"
+              ]
+            },
+            "description": "Robert Hayes, the main test patient."
+          }
+        },
+        {
+          "name": "Search Patient by _id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"every match is a Patient\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Patient\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Patient?_id=pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Patient"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "pat-1"
+                }
+              ]
+            },
+            "description": "Search with one id."
+          }
+        },
+        {
+          "name": "Search Patient by several _id (comma = OR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 3\", function () { pm.expect(body.total).to.eql(3); });",
+                  "pm.test(\"every match is a Patient\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Patient\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Patient?_id=pat-1,pat-2,pat-3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Patient"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "pat-1,pat-2,pat-3"
+                }
+              ]
+            },
+            "description": "Comma separated values mean OR: returns all three patients."
+          }
+        },
+        {
+          "name": "Read Patient - not found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () { pm.response.to.have.status(404); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Patient/pat-999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Patient",
+                "pat-999"
+              ]
+            },
+            "description": "Unknown id: 404 with an OperationOutcome."
+          }
+        },
+        {
+          "name": "Search Patient without _id (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Patient",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Patient"
+              ]
+            },
+            "description": "Patient search requires _id: 400 with an OperationOutcome."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Coverage",
+      "description": "Coverage ids are built by the FHIR API from patient + payer + policy number (cov-{patientId}-{hash}), so the first request saves the id in the collection variable coverageId for the read request.",
+      "item": [
+        {
+          "name": "Search Coverage by patient (saves coverageId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"every match is a Coverage\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Coverage\"); }); });",
+                  "if (body.entry && body.entry.length > 0) { pm.collectionVariables.set(\"coverageId\", body.entry[0].resource.id); }",
+                  "pm.test(\"Coverage id has the form cov-pat-1-...\", function () { pm.expect(pm.collectionVariables.get(\"coverageId\")).to.match(/^cov-pat-1-[0-9a-f]{16}$/); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage?patient={{patientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "{{patientId}}"
+                }
+              ]
+            },
+            "description": "pat-1 has one active coverage. The test saves its id in coverageId."
+          }
+        },
+        {
+          "name": "Read Coverage by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Coverage\", function () { pm.expect(body.resourceType).to.eql(\"Coverage\"); });",
+                  "pm.test(\"id is the saved coverageId\", function () { pm.expect(body.id).to.eql(pm.collectionVariables.get(\"coverageId\")); });",
+                  "pm.test(\"status is active\", function () { pm.expect(body.status).to.eql(\"active\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage/{{coverageId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage",
+                "{{coverageId}}"
+              ]
+            },
+            "description": "Reads the coverage found by the search above (run it first)."
+          }
+        },
+        {
+          "name": "Search active Coverage",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"every match is a Coverage\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Coverage\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage?patient=pat-1&status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "Only active coverages."
+          }
+        },
+        {
+          "name": "Search Coverage - two coverages (pat-11)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 2\", function () { pm.expect(body.total).to.eql(2); });",
+                  "pm.test(\"every match is a Coverage\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Coverage\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage?patient=pat-11",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-11"
+                }
+              ]
+            },
+            "description": "William Johnson has a primary and a secondary coverage."
+          }
+        },
+        {
+          "name": "Search Coverage - cancelled coverage not active (pat-14)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 0\", function () { pm.expect(body.total).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage?patient=pat-14&status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-14"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "Nancy Adams' coverage was cancelled on 2026-09-30, so no active coverage is found."
+          }
+        },
+        {
+          "name": "Search Coverage with beneficiary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"every match is a Coverage\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Coverage\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage?beneficiary=Patient/pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage"
+              ],
+              "query": [
+                {
+                  "key": "beneficiary",
+                  "value": "Patient/pat-1"
+                }
+              ]
+            },
+            "description": "beneficiary (with the Patient/ prefix) works like patient."
+          }
+        },
+        {
+          "name": "Read Coverage - not found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () { pm.response.to.have.status(404); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage/cov-pat-1-0000000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage",
+                "cov-pat-1-0000000000000000"
+              ]
+            },
+            "description": "No insurance has this id."
+          }
+        },
+        {
+          "name": "Search Coverage without patient (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coverage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coverage"
+              ]
+            },
+            "description": "Coverage search requires patient."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Practitioner",
+      "description": "Doctors with their NPI.",
+      "item": [
+        {
+          "name": "Read Practitioner prac-1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Practitioner\", function () { pm.expect(body.resourceType).to.eql(\"Practitioner\"); });",
+                  "pm.test(\"id is prac-1\", function () { pm.expect(body.id).to.eql(\"prac-1\"); });",
+                  "pm.test(\"NPI 1111111112 present\", function () { pm.expect(JSON.stringify(body.identifier)).to.include(\"1111111112\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Practitioner/prac-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Practitioner",
+                "prac-1"
+              ]
+            },
+            "description": "Dr. Maria Santos, nephrologist."
+          }
+        },
+        {
+          "name": "Search Practitioner by several _id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 2\", function () { pm.expect(body.total).to.eql(2); });",
+                  "pm.test(\"every match is a Practitioner\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Practitioner\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Practitioner?_id=prac-1,prac-3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Practitioner"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "prac-1,prac-3"
+                }
+              ]
+            },
+            "description": "Both nephrologists."
+          }
+        },
+        {
+          "name": "Read Practitioner - not found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () { pm.response.to.have.status(404); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Practitioner/prac-999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Practitioner",
+                "prac-999"
+              ]
+            },
+            "description": "Unknown id."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. PractitionerRole",
+      "description": "PractitionerRole ids are role-{practitionerId}.",
+      "item": [
+        {
+          "name": "Read PractitionerRole role-prac-1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is PractitionerRole\", function () { pm.expect(body.resourceType).to.eql(\"PractitionerRole\"); });",
+                  "pm.test(\"id is role-prac-1\", function () { pm.expect(body.id).to.eql(\"role-prac-1\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/PractitionerRole/role-prac-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "PractitionerRole",
+                "role-prac-1"
+              ]
+            },
+            "description": "Role (organization + specialty) of prac-1."
+          }
+        },
+        {
+          "name": "Search PractitionerRole by _id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 2\", function () { pm.expect(body.total).to.eql(2); });",
+                  "pm.test(\"every match is a PractitionerRole\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"PractitionerRole\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/PractitionerRole?_id=role-prac-1,role-prac-3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "PractitionerRole"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "role-prac-1,role-prac-3"
+                }
+              ]
+            },
+            "description": "Two roles."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Organization",
+      "description": "Parent organizations (org-1, org-2: tax id, no NPI) and facility organizations (facility-{locationId}: the facility NPI), used as the PAS requesting provider.",
+      "item": [
+        {
+          "name": "Read Organization org-1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Organization\", function () { pm.expect(body.resourceType).to.eql(\"Organization\"); });",
+                  "pm.test(\"id is org-1\", function () { pm.expect(body.id).to.eql(\"org-1\"); });",
+                  "pm.test(\"tax id present\", function () { pm.expect(JSON.stringify(body.identifier)).to.include(\"12-3456789\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Organization/org-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Organization",
+                "org-1"
+              ]
+            },
+            "description": "Demo Dialysis Center - Main (tax id 12-3456789)."
+          }
+        },
+        {
+          "name": "Read facility Organization facility-loc-main",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Organization\", function () { pm.expect(body.resourceType).to.eql(\"Organization\"); });",
+                  "pm.test(\"id is facility-loc-main\", function () { pm.expect(body.id).to.eql(\"facility-loc-main\"); });",
+                  "pm.test(\"facility NPI 1999999992 present\", function () { pm.expect(JSON.stringify(body.identifier)).to.include(\"1999999992\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Organization/facility-loc-main",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Organization",
+                "facility-loc-main"
+              ]
+            },
+            "description": "The Main in-center unit as an Organization, with its own NPI."
+          }
+        },
+        {
+          "name": "Search Organization by several _id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 2\", function () { pm.expect(body.total).to.eql(2); });",
+                  "pm.test(\"every match is a Organization\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Organization\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Organization?_id=org-1,org-2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Organization"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "org-1,org-2"
+                }
+              ]
+            },
+            "description": "Both parent organizations."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Location",
+      "description": "Facilities (in-center units and the nephrology office).",
+      "item": [
+        {
+          "name": "Read Location loc-main",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Location\", function () { pm.expect(body.resourceType).to.eql(\"Location\"); });",
+                  "pm.test(\"id is loc-main\", function () { pm.expect(body.id).to.eql(\"loc-main\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Location/loc-main",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Location",
+                "loc-main"
+              ]
+            },
+            "description": "Main in-center unit, place of service 65."
+          }
+        },
+        {
+          "name": "Search Location by several _id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 3\", function () { pm.expect(body.total).to.eql(3); });",
+                  "pm.test(\"every match is a Location\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Location\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Location?_id=loc-main,loc-lakeside,loc-office",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Location"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "loc-main,loc-lakeside,loc-office"
+                }
+              ]
+            },
+            "description": "All three locations."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. ServiceRequest",
+      "description": "Service orders (orderType service). A medication order is not a ServiceRequest.",
+      "item": [
+        {
+          "name": "Read ServiceRequest ord-1-hd",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is ServiceRequest\", function () { pm.expect(body.resourceType).to.eql(\"ServiceRequest\"); });",
+                  "pm.test(\"id is ord-1-hd\", function () { pm.expect(body.id).to.eql(\"ord-1-hd\"); });",
+                  "pm.test(\"code 90935\", function () { pm.expect(JSON.stringify(body.code)).to.include(\"90935\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ServiceRequest/ord-1-hd",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ServiceRequest",
+                "ord-1-hd"
+              ]
+            },
+            "description": "In-center hemodialysis renewal for pat-1 (CPT 90935)."
+          }
+        },
+        {
+          "name": "Search ServiceRequest by several _id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 3\", function () { pm.expect(body.total).to.eql(3); });",
+                  "pm.test(\"every match is a ServiceRequest\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"ServiceRequest\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ServiceRequest?_id=ord-1-hd,ord-2-training,ord-16-avf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ServiceRequest"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "ord-1-hd,ord-2-training,ord-16-avf"
+                }
+              ]
+            },
+            "description": "Three service orders."
+          }
+        },
+        {
+          "name": "Search ServiceRequest with _include",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"includes the Patient\", function () { pm.expect(body.entry.some(function (e) { return e.resource.resourceType === \"Patient\"; })).to.be.true; });",
+                  "pm.test(\"includes the requester\", function () { pm.expect(body.entry.some(function (e) { return e.search && e.search.mode === \"include\" && e.resource.resourceType !== \"Patient\"; })).to.be.true; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ServiceRequest?_id=ord-1-hd&_include=ServiceRequest:patient&_include=ServiceRequest:requester",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ServiceRequest"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "ord-1-hd"
+                },
+                {
+                  "key": "_include",
+                  "value": "ServiceRequest:patient"
+                },
+                {
+                  "key": "_include",
+                  "value": "ServiceRequest:requester"
+                }
+              ]
+            },
+            "description": "The order plus its patient and requester (entries with search.mode include)."
+          }
+        },
+        {
+          "name": "Read medication order as ServiceRequest (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () { pm.response.to.have.status(404); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ServiceRequest/ord-1-retacrit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ServiceRequest",
+                "ord-1-retacrit"
+              ]
+            },
+            "description": "ord-1-retacrit is a medication order, so it is only a MedicationRequest."
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. MedicationRequest",
+      "description": "Medication orders (orderType medication).",
+      "item": [
+        {
+          "name": "Read MedicationRequest ord-1-retacrit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is MedicationRequest\", function () { pm.expect(body.resourceType).to.eql(\"MedicationRequest\"); });",
+                  "pm.test(\"id is ord-1-retacrit\", function () { pm.expect(body.id).to.eql(\"ord-1-retacrit\"); });",
+                  "pm.test(\"code Q5105\", function () { pm.expect(JSON.stringify(body)).to.include(\"Q5105\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/MedicationRequest/ord-1-retacrit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "MedicationRequest",
+                "ord-1-retacrit"
+              ]
+            },
+            "description": "Retacrit for pat-1 (HCPCS Q5105)."
+          }
+        },
+        {
+          "name": "Search MedicationRequest by several _id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 3\", function () { pm.expect(body.total).to.eql(3); });",
+                  "pm.test(\"every match is a MedicationRequest\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"MedicationRequest\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/MedicationRequest?_id=ord-1-retacrit,ord-1-parsabiv,ord-11-mircera",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "MedicationRequest"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "ord-1-retacrit,ord-1-parsabiv,ord-11-mircera"
+                }
+              ]
+            },
+            "description": "Three medication orders."
+          }
+        },
+        {
+          "name": "Search MedicationRequest with _include",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"includes the Patient\", function () { pm.expect(body.entry.some(function (e) { return e.resource.resourceType === \"Patient\"; })).to.be.true; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/MedicationRequest?_id=ord-1-retacrit&_include=MedicationRequest:patient&_include=MedicationRequest:requester",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "MedicationRequest"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "ord-1-retacrit"
+                },
+                {
+                  "key": "_include",
+                  "value": "MedicationRequest:patient"
+                },
+                {
+                  "key": "_include",
+                  "value": "MedicationRequest:requester"
+                }
+              ]
+            },
+            "description": "The order plus its patient and requester."
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Encounter",
+      "description": "Visits. Search with _id or patient.",
+      "item": [
+        {
+          "name": "Read Encounter enc-1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Encounter\", function () { pm.expect(body.resourceType).to.eql(\"Encounter\"); });",
+                  "pm.test(\"id is enc-1\", function () { pm.expect(body.id).to.eql(\"enc-1\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Encounter/enc-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Encounter",
+                "enc-1"
+              ]
+            },
+            "description": "Nephrology office visit of pat-1."
+          }
+        },
+        {
+          "name": "Search Encounter by patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"every match is a Encounter\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Encounter\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Encounter?patient=pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Encounter"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                }
+              ]
+            },
+            "description": "Visits of pat-1."
+          }
+        },
+        {
+          "name": "Search Encounter by several _id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 2\", function () { pm.expect(body.total).to.eql(2); });",
+                  "pm.test(\"every match is a Encounter\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Encounter\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Encounter?_id=enc-1,enc-2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Encounter"
+              ],
+              "query": [
+                {
+                  "key": "_id",
+                  "value": "enc-1,enc-2"
+                }
+              ]
+            },
+            "description": "Two visits."
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Observation",
+      "description": "Lab results (LOINC). Search requires patient; code takes system|code values, comma separated = OR.",
+      "item": [
+        {
+          "name": "Search Observation by patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 10\", function () { pm.expect(body.total).to.eql(10); });",
+                  "pm.test(\"every match is a Observation\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Observation\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Observation?patient=pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Observation"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                }
+              ]
+            },
+            "description": "All monthly labs of pat-1."
+          }
+        },
+        {
+          "name": "Search Observation by one code (hemoglobin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"every match is a Observation\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Observation\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Observation?patient=pat-1&code=http://loinc.org|718-7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Observation"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                },
+                {
+                  "key": "code",
+                  "value": "http://loinc.org|718-7"
+                }
+              ]
+            },
+            "description": "Hemoglobin only."
+          }
+        },
+        {
+          "name": "Search Observation by two codes (comma = OR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 2\", function () { pm.expect(body.total).to.eql(2); });",
+                  "pm.test(\"every match is a Observation\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Observation\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Observation?patient=pat-1&code=http://loinc.org|718-7,http://loinc.org|2276-4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Observation"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                },
+                {
+                  "key": "code",
+                  "value": "http://loinc.org|718-7,http://loinc.org|2276-4"
+                }
+              ]
+            },
+            "description": "Hemoglobin OR ferritin."
+          }
+        },
+        {
+          "name": "Search Observation by category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 10\", function () { pm.expect(body.total).to.eql(10); });",
+                  "pm.test(\"every match is a Observation\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Observation\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Observation?patient=pat-1&category=laboratory",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Observation"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                },
+                {
+                  "key": "category",
+                  "value": "laboratory"
+                }
+              ]
+            },
+            "description": "Laboratory results."
+          }
+        },
+        {
+          "name": "Search Observation - patient without labs (pat-7)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 0\", function () { pm.expect(body.total).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Observation?patient=pat-7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Observation"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-7"
+                }
+              ]
+            },
+            "description": "Thomas Reed has no labs."
+          }
+        },
+        {
+          "name": "Search Observation without patient (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Observation?code=http://loinc.org|718-7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Observation"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "http://loinc.org|718-7"
+                }
+              ]
+            },
+            "description": "patient is required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Condition",
+      "description": "Diagnoses (ICD-10).",
+      "item": [
+        {
+          "name": "Search Condition by patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 4\", function () { pm.expect(body.total).to.eql(4); });",
+                  "pm.test(\"every match is a Condition\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Condition\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Condition?patient=pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Condition"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                }
+              ]
+            },
+            "description": "Problem list of pat-1."
+          }
+        },
+        {
+          "name": "Search active Condition",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 4\", function () { pm.expect(body.total).to.eql(4); });",
+                  "pm.test(\"every match is a Condition\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Condition\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Condition?patient=pat-1&clinical-status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Condition"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                },
+                {
+                  "key": "clinical-status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "Active diagnoses only."
+          }
+        },
+        {
+          "name": "Search Condition without patient (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Condition",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Condition"
+              ]
+            },
+            "description": "patient is required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Procedure",
+      "description": "Procedures (CPT).",
+      "item": [
+        {
+          "name": "Search Procedure by patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"every match is a Procedure\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"Procedure\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Procedure?patient=pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Procedure"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                }
+              ]
+            },
+            "description": "AV fistula creation of pat-1."
+          }
+        },
+        {
+          "name": "Search Procedure - patient without procedures (pat-5)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 0\", function () { pm.expect(body.total).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Procedure?patient=pat-5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Procedure"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-5"
+                }
+              ]
+            },
+            "description": "None."
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. DocumentReference",
+      "description": "Clinical documents. attachment.url points to Binary/{id}; the file itself is read from Binary.",
+      "item": [
+        {
+          "name": "Read DocumentReference doc-1-access (PDF)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is DocumentReference\", function () { pm.expect(body.resourceType).to.eql(\"DocumentReference\"); });",
+                  "pm.test(\"id is doc-1-access\", function () { pm.expect(body.id).to.eql(\"doc-1-access\"); });",
+                  "const attachment = body.content[0].attachment;",
+                  "pm.test(\"type is LOINC 18748-4\", function () { pm.expect(JSON.stringify(body.type)).to.include(\"18748-4\"); });",
+                  "pm.test(\"attachment is a PDF\", function () { pm.expect(attachment.contentType).to.eql(\"application/pdf\"); });",
+                  "pm.test(\"attachment.url points to Binary/doc-1-access\", function () { pm.expect(attachment.url).to.match(/Binary\\/doc-1-access$/); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/DocumentReference/doc-1-access",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "DocumentReference",
+                "doc-1-access"
+              ]
+            },
+            "description": "Vascular access ultrasound of pat-1."
+          }
+        },
+        {
+          "name": "Search DocumentReference by patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 4\", function () { pm.expect(body.total).to.eql(4); });",
+                  "pm.test(\"every match is a DocumentReference\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"DocumentReference\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/DocumentReference?patient=pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "DocumentReference"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                }
+              ]
+            },
+            "description": "All documents of pat-1."
+          }
+        },
+        {
+          "name": "Search DocumentReference by type (lab report)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"total is 1\", function () { pm.expect(body.total).to.eql(1); });",
+                  "pm.test(\"every match is a DocumentReference\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"DocumentReference\"); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/DocumentReference?patient=pat-1&type=http://loinc.org|11502-2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "DocumentReference"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                },
+                {
+                  "key": "type",
+                  "value": "http://loinc.org|11502-2"
+                }
+              ]
+            },
+            "description": "What CDex uses: documents of the LOINC type the payer asked for."
+          }
+        },
+        {
+          "name": "Read DocumentReference - not found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () { pm.response.to.have.status(404); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/DocumentReference/doc-999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "DocumentReference",
+                "doc-999"
+              ]
+            },
+            "description": "Unknown id."
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Binary",
+      "description": "The file of a document, Base64 encoded in data. The Payer Gateway copies data into the DocumentReference it sends to the payer.",
+      "item": [
+        {
+          "name": "Read Binary doc-1-access (PDF)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Binary\", function () { pm.expect(body.resourceType).to.eql(\"Binary\"); });",
+                  "pm.test(\"id is doc-1-access\", function () { pm.expect(body.id).to.eql(\"doc-1-access\"); });",
+                  "pm.test(\"contentType is application/pdf\", function () { pm.expect(body.contentType).to.eql(\"application/pdf\"); });",
+                  "pm.test(\"data is a Base64 PDF\", function () { pm.expect(body.data.substring(0, 7)).to.eql(\"JVBERi0\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Binary/doc-1-access",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Binary",
+                "doc-1-access"
+              ]
+            },
+            "description": "PDF file: data starts with JVBERi0 (Base64 of %PDF-)."
+          }
+        },
+        {
+          "name": "Read Binary doc-1-labs (text)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is Binary\", function () { pm.expect(body.resourceType).to.eql(\"Binary\"); });",
+                  "pm.test(\"id is doc-1-labs\", function () { pm.expect(body.id).to.eql(\"doc-1-labs\"); });",
+                  "pm.test(\"contentType is text/plain\", function () { pm.expect(body.contentType).to.eql(\"text/plain\"); });",
+                  "pm.test(\"decoded text is the lab report\", function () { pm.expect(atob(body.data)).to.include(\"MONTHLY DIALYSIS LABS\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Binary/doc-1-labs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Binary",
+                "doc-1-labs"
+              ]
+            },
+            "description": "Plain text lab report."
+          }
+        },
+        {
+          "name": "Read Binary - not found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () { pm.response.to.have.status(404); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Binary/doc-999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Binary",
+                "doc-999"
+              ]
+            },
+            "description": "Unknown id."
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. QuestionnaireResponse",
+      "description": "DTR forms: create, update, read and search. Run in order: Create saves its id in qrId.",
+      "item": [
+        {
+          "name": "Create QuestionnaireResponse (saves qrId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is QuestionnaireResponse\", function () { pm.expect(body.resourceType).to.eql(\"QuestionnaireResponse\"); });",
+                  "pm.test(\"server gave an id\", function () { pm.expect(body.id).to.be.a(\"string\").and.not.empty; });",
+                  "pm.test(\"Location header present\", function () { pm.response.to.have.header(\"Location\"); });",
+                  "pm.collectionVariables.set(\"qrId\", body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/QuestionnaireResponse",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "QuestionnaireResponse"
+              ]
+            },
+            "description": "Creates a new in-progress form for pat-1; the server gives the id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"QuestionnaireResponse\",\n  \"questionnaire\": \"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\",\n  \"status\": \"in-progress\",\n  \"subject\": {\n    \"reference\": \"Patient/pat-1\"\n  },\n  \"authored\": \"2026-10-18T10:00:00Z\",\n  \"item\": [\n    {\n      \"linkId\": \"egfr\",\n      \"text\": \"Most recent eGFR\",\n      \"answer\": [\n        {\n          \"valueDecimal\": 8\n        }\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update QuestionnaireResponse to completed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"status is completed\", function () { pm.expect(body.status).to.eql(\"completed\"); });",
+                  "pm.test(\"same id\", function () { pm.expect(body.id).to.eql(pm.collectionVariables.get(\"qrId\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/QuestionnaireResponse/{{qrId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "QuestionnaireResponse",
+                "{{qrId}}"
+              ]
+            },
+            "description": "Replaces the form: status completed, attestation answered.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"QuestionnaireResponse\",\n  \"questionnaire\": \"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\",\n  \"status\": \"completed\",\n  \"subject\": {\n    \"reference\": \"Patient/pat-1\"\n  },\n  \"authored\": \"2026-10-18T10:00:00Z\",\n  \"item\": [\n    {\n      \"linkId\": \"egfr\",\n      \"text\": \"Most recent eGFR\",\n      \"answer\": [\n        {\n          \"valueDecimal\": 8\n        }\n      ]\n    },\n    {\n      \"linkId\": \"attestation\",\n      \"text\": \"Provider attestation\",\n      \"answer\": [\n        {\n          \"valueBoolean\": true\n        }\n      ]\n    }\n  ],\n  \"id\": \"{{qrId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Read QuestionnaireResponse",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"resourceType is QuestionnaireResponse\", function () { pm.expect(body.resourceType).to.eql(\"QuestionnaireResponse\"); });",
+                  "pm.test(\"status is completed\", function () { pm.expect(body.status).to.eql(\"completed\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/QuestionnaireResponse/{{qrId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "QuestionnaireResponse",
+                "{{qrId}}"
+              ]
+            },
+            "description": "Reads the form back exactly as saved."
+          }
+        },
+        {
+          "name": "Search QuestionnaireResponse by patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Bundle of type searchset\", function () { pm.expect(body.resourceType).to.eql(\"Bundle\"); pm.expect(body.type).to.eql(\"searchset\"); });",
+                  "pm.test(\"every match is a QuestionnaireResponse\", function () { (body.entry || []).filter(function (e) { return !e.search || e.search.mode === \"match\"; }).forEach(function (e) { pm.expect(e.resource.resourceType).to.eql(\"QuestionnaireResponse\"); }); });",
+                  "pm.test(\"contains the new form\", function () { pm.expect(body.entry.some(function (e) { return e.resource.id === pm.collectionVariables.get(\"qrId\"); })).to.be.true; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/QuestionnaireResponse?patient=pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "QuestionnaireResponse"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                }
+              ]
+            },
+            "description": "All forms of pat-1, newest first."
+          }
+        },
+        {
+          "name": "Create QuestionnaireResponse without subject (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/QuestionnaireResponse",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "QuestionnaireResponse"
+              ]
+            },
+            "description": "subject must point to a patient.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceType\": \"QuestionnaireResponse\",\n  \"status\": \"in-progress\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Search QuestionnaireResponse without patient (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/QuestionnaireResponse",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "QuestionnaireResponse"
+              ]
+            },
+            "description": "patient is required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. SMART launch (DTR app)",
+      "description": "The DTR app launch: the gateway creates a launch, the app gets a code from authorize, then exchanges it at token for the launch context. Run in order.",
+      "item": [
+        {
+          "name": "SMART configuration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"has authorization and token endpoints\", function () { pm.expect(body.authorization_endpoint).to.be.a(\"string\"); pm.expect(body.token_endpoint).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/.well-known/smart-configuration",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ".well-known",
+                "smart-configuration"
+              ]
+            },
+            "description": "Discovery document: authorize and token endpoints."
+          }
+        },
+        {
+          "name": "Create SMART launch (saves launchId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"launchId returned\", function () { pm.expect(body.launchId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.test(\"iss is the FHIR base URL\", function () { pm.expect(body.iss).to.match(/\\/fhir\\/r4$/); });",
+                  "pm.collectionVariables.set(\"launchId\", body.launchId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{internalUrl}}/smart-launches",
+              "host": [
+                "{{internalUrl}}"
+              ],
+              "path": [
+                "smart-launches"
+              ]
+            },
+            "description": "Called by the Payer Gateway before it opens the DTR app.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"pat-1\",\n  \"userPractitionerId\": \"prac-1\",\n  \"encounterId\": \"enc-1\",\n  \"fhirContext\": [\n    \"ServiceRequest/ord-1-hd\"\n  ],\n  \"appContext\": \"{\\\"questionnaire\\\":[\\\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\\\"]}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Authorize (302 with code, saves authCode)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 302\", function () { pm.response.to.have.status(302); });",
+                  "const location = pm.response.headers.get(\"Location\");",
+                  "pm.test(\"redirects to redirect_uri with code and state\", function () { pm.expect(location).to.include(\"code=\"); pm.expect(location).to.include(\"state=test123\"); });",
+                  "const match = /[?&]code=([^&]+)/.exec(location || \"\");",
+                  "if (match) { pm.collectionVariables.set(\"authCode\", decodeURIComponent(match[1])); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/authorize?response_type=code&client_id=dtr-app&redirect_uri={{redirectUri}}&launch={{launchId}}&scope=launch openid fhirUser patient/*.rs&state=test123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "authorize"
+              ],
+              "query": [
+                {
+                  "key": "response_type",
+                  "value": "code"
+                },
+                {
+                  "key": "client_id",
+                  "value": "dtr-app"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "{{redirectUri}}"
+                },
+                {
+                  "key": "launch",
+                  "value": "{{launchId}}"
+                },
+                {
+                  "key": "scope",
+                  "value": "launch openid fhirUser patient/*.rs"
+                },
+                {
+                  "key": "state",
+                  "value": "test123"
+                }
+              ]
+            },
+            "description": "Redirects to redirect_uri with a one-time code. Redirects are not followed so the code can be read."
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Token (launch context)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"access_token returned\", function () { pm.expect(body.access_token).to.be.a(\"string\").and.not.empty; });",
+                  "pm.test(\"patient is pat-1\", function () { pm.expect(body.patient).to.eql(\"pat-1\"); });",
+                  "pm.test(\"encounter is enc-1\", function () { pm.expect(body.encounter).to.eql(\"enc-1\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "token"
+              ]
+            },
+            "description": "Exchanges the code for the launch context.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "authorization_code"
+                },
+                {
+                  "key": "code",
+                  "value": "{{authCode}}"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "{{redirectUri}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Token - code used twice (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "token"
+              ]
+            },
+            "description": "A code works only once.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "authorization_code"
+                },
+                {
+                  "key": "code",
+                  "value": "{{authCode}}"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "{{redirectUri}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Authorize - unknown launch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 302\", function () { pm.response.to.have.status(302); });",
+                  "pm.test(\"redirect has error=invalid_request\", function () { pm.expect(pm.response.headers.get(\"Location\")).to.include(\"error=invalid_request\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/authorize?response_type=code&client_id=dtr-app&redirect_uri={{redirectUri}}&launch=unknown-launch&scope=launch&state=x",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "authorize"
+              ],
+              "query": [
+                {
+                  "key": "response_type",
+                  "value": "code"
+                },
+                {
+                  "key": "client_id",
+                  "value": "dtr-app"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "{{redirectUri}}"
+                },
+                {
+                  "key": "launch",
+                  "value": "unknown-launch"
+                },
+                {
+                  "key": "scope",
+                  "value": "launch"
+                },
+                {
+                  "key": "state",
+                  "value": "x"
+                }
+              ]
+            },
+            "description": "Unknown launch: redirect with error=invalid_request."
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "17. Internal - access token",
+      "description": "Called by the Payer Gateway: a short-lived token for one patient, sent to the payer as CDS Hooks fhirAuthorization.",
+      "item": [
+        {
+          "name": "Issue access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"token returned\", function () { pm.expect(body.access_token).to.be.a(\"string\").and.not.empty; });",
+                  "pm.test(\"Bearer, 300 seconds\", function () { pm.expect(body.token_type).to.eql(\"Bearer\"); pm.expect(body.expires_in).to.eql(300); });",
+                  "pm.test(\"patient is pat-1\", function () { pm.expect(body.patient).to.eql(\"pat-1\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{internalUrl}}/access-tokens",
+              "host": [
+                "{{internalUrl}}"
+              ],
+              "path": [
+                "access-tokens"
+              ]
+            },
+            "description": "Token for payer PAYER001 and pat-1, valid 5 minutes.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"PAYER001\",\n  \"patientId\": \"pat-1\",\n  \"minutes\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Issue access token without patientId (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{internalUrl}}/access-tokens",
+              "host": [
+                "{{internalUrl}}"
+              ],
+              "path": [
+                "access-tokens"
+              ]
+            },
+            "description": "subject and patientId are required.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"PAYER001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "18. Unsupported resource types",
+      "description": "Types this server does not serve answer 400 (not-supported).",
+      "item": [
+        {
+          "name": "Read DeviceRequest (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });",
+                  "pm.test(\"diagnostics mention not supported\", function () { pm.expect(JSON.stringify(body.issue)).to.include(\"not supported\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/DeviceRequest/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "DeviceRequest",
+                "1"
+              ]
+            },
+            "description": "The client has no device orders."
+          }
+        },
+        {
+          "name": "Search Appointment (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Body is an OperationOutcome\", function () { pm.expect(body.resourceType).to.eql(\"OperationOutcome\"); pm.expect(body.issue.length).to.be.above(0); });",
+                  "pm.test(\"diagnostics mention not supported\", function () { pm.expect(JSON.stringify(body.issue)).to.include(\"not supported\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/fhir+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Appointment?patient=pat-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Appointment"
+              ],
+              "query": [
+                {
+                  "key": "patient",
+                  "value": "pat-1"
+                }
+              ]
+            },
+            "description": "Appointment is not served."
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test(\"Response time below 5 s\", function () { pm.expect(pm.response.responseTime).to.be.below(5000); });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "coverageId",
+      "value": ""
+    },
+    {
+      "key": "qrId",
+      "value": ""
+    },
+    {
+      "key": "launchId",
+      "value": ""
+    },
+    {
+      "key": "authCode",
+      "value": ""
+    }
+  ]
+}

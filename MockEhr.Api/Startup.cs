@@ -79,7 +79,7 @@ public class Startup
         OpenApiInfo info = new OpenApiInfo();
         info.Title = "Mock EHR API";
         info.Version = "v1";
-        info.Description = "Test stand-in for the client's EHR REST APIs. Data is stored in Data/ehr-data.json. " +
+        info.Description = "Test stand-in for the client's EHR REST APIs. Data is stored in the Data folder, one JSON file per resource; the test data it starts with is in Data/TestData. " +
             "Sections show WHO calls each endpoint: 1 = Payer Gateway (saves its data), 2 = FHIR API (saves DTR forms), " +
             "3 = FHIR API (reads patient data and turns it into FHIR), 4 = Mock EHR UI (shows, adds and updates test data), " +
             "5 = old write-back endpoints nothing calls any more. An endpoint with two callers shows in both sections. " +

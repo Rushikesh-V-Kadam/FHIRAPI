@@ -2,14 +2,16 @@ using Microsoft.Extensions.Options;
 using FHIRAPI.Configuration;
 using FHIRAPI.Constants;
 using FHIRAPI.Exceptions;
+using FHIRAPI.Helpers;
 using FHIRAPI.Mapping;
+using FHIRAPI.Models.Ehr;
 using FHIRAPI.Models.Fhir;
 
 namespace FHIRAPI.Services;
 
 /// <summary>
 /// Reads ONE resource by type and id: fetches it live from the EHR and converts it to FHIR.
-/// Nothing is cached or stored. Used by GET /fhir/r4/{type}/{id} and by searches.
+/// Nothing is cached or stored. Used by the read actions (GET /fhir/r4/Patient/{id} and so on) and by searches.
 /// (QuestionnaireResponse is not here: it is stored by this API, see QuestionnaireResponseService.)
 /// </summary>
 public class FhirReadService
@@ -18,7 +20,7 @@ public class FhirReadService
     public static readonly string[] SupportedTypes =
     {
         "Patient", "Coverage", "Practitioner", "PractitionerRole", "Organization", "Location",
-        "ServiceRequest", "DeviceRequest", "MedicationRequest", "Appointment",
+        "ServiceRequest", "MedicationRequest",
         "Encounter", "Observation", "Condition", "Procedure", "DocumentReference"
     };
 
@@ -26,18 +28,16 @@ public class FhirReadService
     private readonly AdministrativeMapper _admin;
     private readonly OrderMapper _orders;
     private readonly ClinicalMapper _clinical;
-    private readonly CoveragePatientIndex _coverageIndex;
     private readonly FhirServerSettings _server;
 
     /// <summary>Created by dependency injection.</summary>
     public FhirReadService(IEhrClient ehr, AdministrativeMapper admin, OrderMapper orders, ClinicalMapper clinical,
-        CoveragePatientIndex coverageIndex, IOptions<FhirServerSettings> server)
+        IOptions<FhirServerSettings> server)
     {
         _ehr = ehr;
         _admin = admin;
         _orders = orders;
         _clinical = clinical;
-        _coverageIndex = coverageIndex;
         _server = server.Value;
     }
 
@@ -67,6 +67,11 @@ public class FhirReadService
                 return rolePractitioner == null ? null : _admin.ToPractitionerRole(rolePractitioner);
 
             case "Organization":
+                // CLIENT-EHR: a facility (Organization/facility-{locationId}) is built from the EHR location + its parent organization
+                if (FacilityIds.IsFacility(id))
+                {
+                    return await ReadFacilityAsync(FacilityIds.ToLocationId(id), ct);
+                }
                 var organization = await _ehr.GetOrganizationAsync(id, ct);
                 return organization == null ? null : _admin.ToOrganization(organization);
 
@@ -75,13 +80,8 @@ public class FhirReadService
                 return location == null ? null : _admin.ToLocation(location);
 
             case "ServiceRequest":
-            case "DeviceRequest":
             case "MedicationRequest":
                 return await ReadOrderAsync(type, id, ct);
-
-            case "Appointment":
-                var appointment = await _ehr.GetAppointmentAsync(id, ct);
-                return appointment == null ? null : _orders.ToAppointment(appointment);
 
             case "Encounter":
                 var encounter = await _ehr.GetEncounterAsync(id, ct);
@@ -106,28 +106,61 @@ public class FhirReadService
 
     /// <summary>
     /// An EHR order becomes one FHIR type (depends on orderType). Asking for the wrong type returns null,
-    /// e.g. GET ServiceRequest/ord-cpap when ord-cpap is a device order.
+    /// e.g. GET ServiceRequest/ord-1-retacrit when ord-1-retacrit is a medication order.
     /// </summary>
     private async Task<Resource?> ReadOrderAsync(string type, string id, CancellationToken ct)
     {
         var order = await _ehr.GetOrderAsync(id, ct);
         if (order == null || OrderMapper.GetResourceType(order.OrderType) != type) return null;
 
-        _coverageIndex.Remember(order.CoverageId, order.PatientId);
         return _orders.ToFhir(order);
     }
 
     /// <summary>
+    /// The facility Organization of an EHR location: the location (name, address, facility NPI) plus the tax id of
+    /// its parent organization. Null when the EHR has no such location. A missing parent organization is not an
+    /// error: the facility is then returned without tax id and without partOf.
+    /// </summary>
+    private async Task<Resource?> ReadFacilityAsync(string locationId, CancellationToken ct)
+    {
+        EhrLocationDto? location = await _ehr.GetLocationAsync(locationId, ct);
+        if (location == null)
+        {
+            return null;
+        }
+        EhrOrganizationDto? parent = null;
+        if (!string.IsNullOrEmpty(location.OrganizationId))
+        {
+            parent = await _ehr.GetOrganizationAsync(location.OrganizationId, ct);
+        }
+        if (parent == null)
+        {
+            location.OrganizationId = null;
+        }
+        return _admin.ToFacilityOrganization(location, parent);
+    }
+
+    /// <summary>
     /// The EHR can only list a patient's insurances, so the patient of the coverage must be known first
-    /// (see CoveragePatientIndex).
+    /// - it is read from the Coverage id itself (Helpers/CoverageIds). The EHR has no insurance id either: each of the
+    /// patient's insurances gets its Coverage id built (Helpers/CoverageIds) and is compared with the id asked for.
     /// </summary>
     private async Task<Resource?> ReadCoverageAsync(string coverageId, CancellationToken ct)
     {
-        var patientId = _coverageIndex.FindPatient(coverageId);
-        if (patientId == null) return null;
+        string? patientId = CoverageIds.FindPatientId(coverageId);
+        if (patientId == null)
+        {
+            return null;
+        }
 
         var insurances = await _ehr.GetInsurancesAsync(patientId, null, ct);
-        var insurance = insurances.FirstOrDefault(i => i.CoverageId == coverageId);
-        return insurance == null ? null : _admin.ToCoverage(insurance);
+        foreach (var insurance in insurances)
+        {
+            if (CoverageIds.Build(insurance.PatientId, insurance.PayerId, insurance.MemberId) == coverageId)
+            {
+                return _admin.ToCoverage(insurance);
+            }
+        }
+        return null;
     }
 }

@@ -1,0 +1,1100 @@
+[
+  {
+    "orderId": "ord-1-hd",
+    "orderType": "service",
+    "patientId": "pat-1",
+    "encounterId": "enc-1",
+    "status": "draft",
+    "code": "90935",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis, 3 times a week",
+    "quantity": 39,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-1",
+    "priority": "routine",
+    "notes": "Continue HD 3x/week, 4 hours, left arm AV fistula.",
+    "requestType": "renewal",
+    "patientType": "permanent",
+    "previousAuthorizationNumber": "PA20260706451203",
+    "previousStartDate": "2026-07-06",
+    "previousEndDate": "2026-10-04",
+    "previousTreatments": 39,
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-1-retacrit",
+    "orderType": "medication",
+    "patientId": "pat-1",
+    "encounterId": "enc-1",
+    "status": "draft",
+    "code": "Q5105",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Retacrit (epoetin alfa-epbx), 100 units",
+    "quantity": 1560,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "D63.1",
+        "codeSystem": "ICD10CM",
+        "display": "Anemia in chronic kidney disease"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-1",
+    "priority": "routine",
+    "notes": "4,000 units IV with each dialysis treatment (3 times a week)",
+    "medication": {
+      "doseText": "4,000 units IV with each dialysis treatment (3 times a week)",
+      "daysSupply": 90
+    },
+    "requestType": "renewal",
+    "patientType": "permanent",
+    "previousAuthorizationNumber": "PA20260706451207",
+    "previousStartDate": "2026-07-06",
+    "previousEndDate": "2026-10-04",
+    "previousTreatments": 39
+  },
+  {
+    "orderId": "ord-1-parsabiv",
+    "orderType": "medication",
+    "patientId": "pat-1",
+    "encounterId": "enc-1",
+    "status": "draft",
+    "code": "J0606",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Parsabiv (etelcalcetide), 0.1 mg",
+    "quantity": 1950,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N25.81",
+        "codeSystem": "ICD10CM",
+        "display": "Secondary hyperparathyroidism of renal origin"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-1",
+    "priority": "routine",
+    "notes": "5 mg IV 3 times a week at the end of dialysis",
+    "medication": {
+      "doseText": "5 mg IV 3 times a week at the end of dialysis",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-1-zemplar",
+    "orderType": "medication",
+    "patientId": "pat-1",
+    "encounterId": "enc-1",
+    "status": "draft",
+    "code": "J2501",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Zemplar (paricalcitol), 1 mcg",
+    "quantity": 156,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N25.81",
+        "codeSystem": "ICD10CM",
+        "display": "Secondary hyperparathyroidism of renal origin"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-1",
+    "priority": "routine",
+    "notes": "4 mcg IV 3 times a week with dialysis",
+    "medication": {
+      "doseText": "4 mcg IV 3 times a week with dialysis",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-1-sensipar",
+    "orderType": "medication",
+    "patientId": "pat-1",
+    "encounterId": "enc-1",
+    "status": "draft",
+    "code": "J0604",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Sensipar (cinacalcet, oral), 1 mg",
+    "quantity": 2700,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N25.81",
+        "codeSystem": "ICD10CM",
+        "display": "Secondary hyperparathyroidism of renal origin"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-1",
+    "priority": "routine",
+    "notes": "30 mg by mouth once daily",
+    "medication": {
+      "doseText": "30 mg by mouth once daily",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-2-training",
+    "orderType": "service",
+    "patientId": "pat-2",
+    "encounterId": "enc-2",
+    "status": "draft",
+    "code": "90989",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home dialysis training, completed course (PD)",
+    "quantity": 1,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2026-10-31",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ],
+    "coverageId": "cov-2",
+    "priority": "routine",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-2-home-pd",
+    "orderType": "service",
+    "patientId": "pat-2",
+    "encounterId": "enc-2",
+    "status": "draft",
+    "code": "90945",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home peritoneal dialysis (APD cycler)",
+    "quantity": 1,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-04-04",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "12",
+    "diagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ],
+    "coverageId": "cov-2",
+    "priority": "routine",
+    "notes": "Automated PD (cycler) nightly. PD catheter placed 2026-09-08. Training completed 2026-09-25.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-3-hd",
+    "orderType": "service",
+    "patientId": "pat-3",
+    "encounterId": "enc-3",
+    "status": "draft",
+    "code": "90935",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis, 4 times a week",
+    "quantity": 52,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-3",
+    "priority": "routine",
+    "notes": "New start 07/2026 in the hospital. Tunneled right IJ catheter; AV fistula planned.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-5"
+  },
+  {
+    "orderId": "ord-3-venofer",
+    "orderType": "medication",
+    "patientId": "pat-3",
+    "encounterId": "enc-3",
+    "status": "draft",
+    "code": "J1756",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Venofer (iron sucrose), 1 mg",
+    "quantity": 1000,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "D50.9",
+        "codeSystem": "ICD10CM",
+        "display": "Iron deficiency anemia, unspecified"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-3",
+    "priority": "routine",
+    "notes": "100 mg IV with 10 consecutive dialysis treatments",
+    "medication": {
+      "doseText": "100 mg IV with 10 consecutive dialysis treatments",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-3-aranesp",
+    "orderType": "medication",
+    "patientId": "pat-3",
+    "encounterId": "enc-3",
+    "status": "draft",
+    "code": "J0882",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Aranesp (darbepoetin alfa), 1 mcg",
+    "quantity": 520,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "D63.1",
+        "codeSystem": "ICD10CM",
+        "display": "Anemia in chronic kidney disease"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-3",
+    "priority": "routine",
+    "notes": "40 mcg IV once a week with dialysis",
+    "medication": {
+      "doseText": "40 mcg IV once a week with dialysis",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-4-hd",
+    "orderType": "service",
+    "patientId": "pat-4",
+    "encounterId": "enc-4",
+    "status": "draft",
+    "code": "90937",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis (visiting patient), 3 times a week",
+    "quantity": 9,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-12",
+    "requestedEndDate": "2026-10-30",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-lakeside",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-4",
+    "priority": "routine",
+    "notes": "Visiting from Phoenix, AZ. Home unit: Sunrise Kidney Center (fictional), returns 2026-10-31.",
+    "requestType": "new",
+    "patientType": "transient"
+  },
+  {
+    "orderId": "ord-5-aki",
+    "orderType": "service",
+    "patientId": "pat-5",
+    "encounterId": "enc-5",
+    "status": "draft",
+    "code": "G0491",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Dialysis for acute kidney injury (without ESRD)",
+    "quantity": 12,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-01",
+    "requestedEndDate": "2026-10-28",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N17.9",
+        "codeSystem": "ICD10CM",
+        "display": "Acute kidney failure, unspecified"
+      }
+    ],
+    "coverageId": "cov-5",
+    "priority": "urgent",
+    "notes": "Septic ATN, discharged 2026-09-26 on HD. Check kidney recovery at each treatment.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-5"
+  },
+  {
+    "orderId": "ord-6-training",
+    "orderType": "service",
+    "patientId": "pat-6",
+    "encounterId": "enc-6",
+    "status": "draft",
+    "code": "90993",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home hemodialysis training, per session",
+    "quantity": 30,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2026-12-18",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-lakeside",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-6",
+    "priority": "routine",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-6-nxstage",
+    "orderType": "service",
+    "patientId": "pat-6",
+    "encounterId": "enc-6",
+    "status": "draft",
+    "code": "90999",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home hemodialysis (NxStage), 5 times a week",
+    "quantity": 1,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-12-21",
+    "requestedEndDate": "2027-06-20",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "12",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-6",
+    "priority": "routine",
+    "notes": "Short daily home HD with NxStage, husband as care partner. Training started 2026-09-21.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-7-hd",
+    "orderType": "service",
+    "patientId": "pat-7",
+    "encounterId": "enc-7",
+    "status": "draft",
+    "code": "90935",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis, 3 times a week",
+    "quantity": 39,
+    "orderedDateTime": "2026-09-28T10:00:00Z",
+    "requestedStartDate": "2026-10-05",
+    "requestedEndDate": "2027-01-03",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-7",
+    "priority": "routine",
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-8-hd",
+    "orderType": "service",
+    "patientId": "pat-8",
+    "encounterId": "enc-8",
+    "status": "draft",
+    "code": "90935",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis, 3 times a week",
+    "quantity": 39,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-01-17",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-8",
+    "priority": "routine",
+    "notes": "New start 08/2026. Left forearm AV graft placed 08/25, cannulated since 09/22.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-8-retacrit",
+    "orderType": "medication",
+    "patientId": "pat-8",
+    "encounterId": "enc-8",
+    "status": "draft",
+    "code": "Q5105",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Retacrit (epoetin alfa-epbx), 100 units",
+    "quantity": 1170,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-01-17",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "D63.1",
+        "codeSystem": "ICD10CM",
+        "display": "Anemia in chronic kidney disease"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-8",
+    "priority": "routine",
+    "notes": "3,000 units IV with each dialysis treatment (3 times a week)",
+    "medication": {
+      "doseText": "3,000 units IV with each dialysis treatment (3 times a week)",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-9-home-pd",
+    "orderType": "service",
+    "patientId": "pat-9",
+    "encounterId": "enc-9",
+    "status": "draft",
+    "code": "90945",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home peritoneal dialysis (CAPD, 4 exchanges a day)",
+    "quantity": 1,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-04-18",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "12",
+    "diagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ],
+    "coverageId": "cov-9",
+    "priority": "routine",
+    "notes": "CAPD 4 x 2 L exchanges daily. Weekly Kt/V 1.9. No peritonitis episodes.",
+    "requestType": "renewal",
+    "patientType": "permanent",
+    "previousAuthorizationNumber": "PA20260420318855",
+    "previousStartDate": "2026-04-20",
+    "previousEndDate": "2026-10-18",
+    "previousTreatments": 1,
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-10-hd",
+    "orderType": "service",
+    "patientId": "pat-10",
+    "encounterId": "enc-10",
+    "status": "draft",
+    "code": "90935",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis, 3 times a week",
+    "quantity": 39,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-01-17",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-lakeside",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-10",
+    "priority": "routine",
+    "notes": "Right arm AV fistula, 3.5 h treatments.",
+    "requestType": "renewal",
+    "patientType": "permanent",
+    "previousAuthorizationNumber": "PA20260720552019",
+    "previousStartDate": "2026-07-20",
+    "previousEndDate": "2026-10-18",
+    "previousTreatments": 39
+  },
+  {
+    "orderId": "ord-10-venofer",
+    "orderType": "medication",
+    "patientId": "pat-10",
+    "encounterId": "enc-10",
+    "status": "draft",
+    "code": "J1756",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Venofer (iron sucrose), 1 mg",
+    "quantity": 1000,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-01-17",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-lakeside",
+    "diagnoses": [
+      {
+        "code": "D50.9",
+        "codeSystem": "ICD10CM",
+        "display": "Iron deficiency anemia, unspecified"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-10",
+    "priority": "routine",
+    "notes": "100 mg IV with 10 consecutive dialysis treatments",
+    "medication": {
+      "doseText": "100 mg IV with 10 consecutive dialysis treatments",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-11-hd",
+    "orderType": "service",
+    "patientId": "pat-11",
+    "encounterId": "enc-11",
+    "status": "draft",
+    "code": "90935",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis, 3 times a week",
+    "quantity": 39,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-01-17",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-11",
+    "priority": "routine",
+    "requestType": "renewal",
+    "patientType": "permanent",
+    "previousAuthorizationNumber": "PA20260720552044",
+    "previousStartDate": "2026-07-20",
+    "previousEndDate": "2026-10-18",
+    "previousTreatments": 39
+  },
+  {
+    "orderId": "ord-11-mircera",
+    "orderType": "medication",
+    "patientId": "pat-11",
+    "encounterId": "enc-11",
+    "status": "draft",
+    "code": "J0887",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Mircera (methoxy polyethylene glycol-epoetin beta), 1 mcg",
+    "quantity": 450,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-01-17",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "D63.1",
+        "codeSystem": "ICD10CM",
+        "display": "Anemia in chronic kidney disease"
+      },
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-11",
+    "priority": "routine",
+    "notes": "150 mcg IV once a month with dialysis",
+    "medication": {
+      "doseText": "150 mcg IV once a month with dialysis",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-11-parsabiv",
+    "orderType": "medication",
+    "patientId": "pat-11",
+    "encounterId": "enc-11",
+    "status": "draft",
+    "code": "J0606",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Parsabiv (etelcalcetide), 0.1 mg",
+    "quantity": 1950,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-01-17",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N25.81",
+        "codeSystem": "ICD10CM",
+        "display": "Secondary hyperparathyroidism of renal origin"
+      }
+    ],
+    "coverageId": "cov-11",
+    "priority": "routine",
+    "notes": "5 mg IV 3 times a week at the end of dialysis",
+    "medication": {
+      "doseText": "5 mg IV 3 times a week at the end of dialysis",
+      "daysSupply": 90
+    },
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-12-aki",
+    "orderType": "service",
+    "patientId": "pat-12",
+    "encounterId": "enc-12",
+    "status": "draft",
+    "code": "G0491",
+    "codeSystem": "HCPCS",
+    "codeDisplay": "Dialysis for acute kidney injury (without ESRD)",
+    "quantity": 12,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-15",
+    "requestedEndDate": "2026-11-12",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N17.9",
+        "codeSystem": "ICD10CM",
+        "display": "Acute kidney failure, unspecified"
+      }
+    ],
+    "coverageId": "cov-12",
+    "priority": "urgent",
+    "notes": "Rhabdomyolysis-induced AKI, discharged 2026-10-13 on HD. Recheck urine output and creatinine before each treatment.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-5"
+  },
+  {
+    "orderId": "ord-13-hd",
+    "orderType": "service",
+    "patientId": "pat-13",
+    "encounterId": "enc-13",
+    "status": "draft",
+    "code": "90937",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis (visiting patient), 3 times a week",
+    "quantity": 6,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-26",
+    "requestedEndDate": "2026-11-06",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-lakeside",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-13",
+    "priority": "routine",
+    "notes": "Visiting family from Denver, CO. Home unit: Front Range Dialysis (fictional), returns 2026-11-08.",
+    "requestType": "new",
+    "patientType": "transient"
+  },
+  {
+    "orderId": "ord-14-hd",
+    "orderType": "service",
+    "patientId": "pat-14",
+    "encounterId": "enc-14",
+    "status": "draft",
+    "code": "90935",
+    "codeSystem": "CPT",
+    "codeDisplay": "In-center hemodialysis, 3 times a week",
+    "quantity": 39,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-19",
+    "requestedEndDate": "2027-01-17",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-14",
+    "priority": "routine",
+    "notes": "Coverage ended 09/30/2026; new insurance pending.",
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-15-training",
+    "orderType": "service",
+    "patientId": "pat-15",
+    "encounterId": "enc-15",
+    "status": "draft",
+    "code": "90993",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home hemodialysis training, per session",
+    "quantity": 20,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-10-26",
+    "requestedEndDate": "2026-12-04",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-lakeside",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-15",
+    "priority": "routine",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-15-home-hd",
+    "orderType": "service",
+    "patientId": "pat-15",
+    "encounterId": "enc-15",
+    "status": "draft",
+    "code": "90999",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home hemodialysis (NxStage), 5 times a week",
+    "quantity": 1,
+    "orderedDateTime": "2026-10-12T10:00:00Z",
+    "requestedStartDate": "2026-12-07",
+    "requestedEndDate": "2027-06-06",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "12",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-15",
+    "priority": "routine",
+    "notes": "Short daily home HD, wife (Rachel) as care partner.",
+    "requestType": "new",
+    "patientType": "permanent"
+  },
+  {
+    "orderId": "ord-16-avf",
+    "orderType": "service",
+    "patientId": "pat-16",
+    "encounterId": "enc-16",
+    "status": "draft",
+    "code": "36821",
+    "codeSystem": "CPT",
+    "codeDisplay": "Arteriovenous fistula creation, left radiocephalic",
+    "quantity": 1,
+    "orderedDateTime": "2026-10-16T10:00:00Z",
+    "requestedStartDate": "2026-11-02",
+    "requestedEndDate": "2026-12-31",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "24",
+    "diagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ],
+    "coverageId": "cov-16",
+    "priority": "routine",
+    "notes": "Pre-dialysis access planning, eGFR 12. Surgery by Dr. Daniel Brooks (vascular surgery) at an ambulatory surgery center.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-17-avg",
+    "orderType": "service",
+    "patientId": "pat-17",
+    "encounterId": "enc-17",
+    "status": "draft",
+    "code": "36830",
+    "codeSystem": "CPT",
+    "codeDisplay": "Arteriovenous graft creation, right upper arm (PTFE)",
+    "quantity": 1,
+    "orderedDateTime": "2026-10-16T10:00:00Z",
+    "requestedStartDate": "2026-11-09",
+    "requestedEndDate": "2027-01-08",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "24",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-17",
+    "priority": "routine",
+    "notes": "On HD via tunneled catheter since 06/2026. Veins too small for a fistula on mapping. Surgery by Dr. Daniel Brooks.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-18-pdcath",
+    "orderType": "service",
+    "patientId": "pat-18",
+    "encounterId": "enc-18",
+    "status": "draft",
+    "code": "49421",
+    "codeSystem": "CPT",
+    "codeDisplay": "Tunneled peritoneal dialysis catheter insertion",
+    "quantity": 1,
+    "orderedDateTime": "2026-10-16T10:00:00Z",
+    "requestedStartDate": "2026-11-04",
+    "requestedEndDate": "2026-12-31",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "24",
+    "diagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ],
+    "coverageId": "cov-18",
+    "priority": "routine",
+    "notes": "Chose home PD. Catheter by Dr. Daniel Brooks; PD training to start 2 weeks after insertion.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-18-training",
+    "orderType": "service",
+    "patientId": "pat-18",
+    "encounterId": "enc-18",
+    "status": "draft",
+    "code": "90989",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home dialysis training, completed course (PD)",
+    "quantity": 1,
+    "orderedDateTime": "2026-10-16T10:00:00Z",
+    "requestedStartDate": "2026-11-23",
+    "requestedEndDate": "2026-12-31",
+    "orderingPractitionerId": "prac-1",
+    "performerOrganizationId": "org-1",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-main",
+    "diagnoses": [
+      {
+        "code": "N18.5",
+        "codeSystem": "ICD10CM",
+        "display": "Chronic kidney disease, stage 5"
+      }
+    ],
+    "coverageId": "cov-18",
+    "priority": "routine",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  },
+  {
+    "orderId": "ord-19-training",
+    "orderType": "service",
+    "patientId": "pat-19",
+    "encounterId": "enc-19",
+    "status": "draft",
+    "code": "90993",
+    "codeSystem": "CPT",
+    "codeDisplay": "Home hemodialysis training, per session",
+    "quantity": 30,
+    "orderedDateTime": "2026-10-16T10:00:00Z",
+    "requestedStartDate": "2026-10-26",
+    "requestedEndDate": "2026-12-18",
+    "orderingPractitionerId": "prac-3",
+    "performerOrganizationId": "org-2",
+    "placeOfServiceCode": "65",
+    "locationId": "loc-lakeside",
+    "diagnoses": [
+      {
+        "code": "N18.6",
+        "codeSystem": "ICD10CM",
+        "display": "End stage renal disease"
+      }
+    ],
+    "coverageId": "cov-19",
+    "priority": "routine",
+    "notes": "30 sessions requested: the care partner works shifts, so training runs over more, shorter sessions.",
+    "requestType": "new",
+    "patientType": "permanent",
+    "referringPractitionerId": "prac-4"
+  }
+]

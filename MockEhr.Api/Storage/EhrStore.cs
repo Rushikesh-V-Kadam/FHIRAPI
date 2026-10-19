@@ -1,11 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MockEhr.Api.Models;
 
 namespace MockEhr.Api.Storage;
 
 /// <summary>
-/// Keeps the EHR data in memory and in a JSON file. Registered as a singleton.
+/// Keeps the EHR data in memory and in JSON files, one file per resource (EhrDataFiles). Registered as a singleton.
+///   Data folder (MockEhr:DataFolder, default Data)              live data: patients.json, orders.json, write-backs.json ...
+///   Test data folder (MockEhr:TestDataFolder, default Data/TestData)  the data the EHR starts with. Copied to the data
+///                                                               folder on the first start and by POST /api/admin/reset.
 ///
 /// How to use it in a controller (simple and thread-safe):
 ///   lock (_store.Sync)
@@ -19,10 +21,14 @@ public class EhrStore
     /// <summary>Only 200 write-backs are kept.</summary>
     private const int MaxWriteBacks = 200;
 
-    private readonly string _filePath;
+    private readonly string _dataFolder;
+    private readonly string _testDataFolder;
     private readonly ILogger<EhrStore> _logger;
 
-    /// <summary>JSON settings of the data file: camelCase, indented (easy to read and edit by hand).</summary>
+    /// <summary>Content last written per file, so Save only rewrites the files that changed.</summary>
+    private readonly Dictionary<string, string> _written = new Dictionary<string, string>();
+
+    /// <summary>JSON settings of the data files: camelCase, indented (easy to read and edit by hand).</summary>
     public static readonly JsonSerializerOptions FileJson = CreateFileJson();
 
     /// <summary>Lock object: every read / change of Data must be inside lock (Sync).</summary>
@@ -31,33 +37,38 @@ public class EhrStore
     /// <summary>All EHR data.</summary>
     public EhrData Data { get; private set; } = new EhrData();
 
-    /// <summary>Loads the JSON file, or creates it from SeedData when it does not exist yet.</summary>
+    /// <summary>Loads the data files, or creates them from the test data when they do not exist yet.</summary>
     public EhrStore(IConfiguration configuration, IWebHostEnvironment environment, ILogger<EhrStore> logger)
     {
         _logger = logger;
-        string configured = configuration["MockEhr:DataFile"] ?? "Data/ehr-data.json";
-        _filePath = Path.IsPathRooted(configured) ? configured : Path.Combine(environment.ContentRootPath, configured);
+        _dataFolder = FullPath(environment, configuration["MockEhr:DataFolder"] ?? "Data");
+        _testDataFolder = FullPath(environment, configuration["MockEhr:TestDataFolder"] ?? "Data/TestData");
         Load();
     }
 
-    /// <summary>Full path of the data file.</summary>
-    public string GetFilePath()
+    /// <summary>Full path of the data folder.</summary>
+    public string GetDataFolder()
     {
-        return _filePath;
+        return _dataFolder;
     }
 
-    /// <summary>Writes Data to the JSON file (call inside lock (Sync)).</summary>
+    /// <summary>Writes the changed lists of Data to their files (call inside lock (Sync)).</summary>
     public void Save()
     {
-        string? folder = Path.GetDirectoryName(_filePath);
-        if (!string.IsNullOrEmpty(folder))
+        Directory.CreateDirectory(_dataFolder);
+        foreach (KeyValuePair<string, string> file in EhrDataFiles.Serialize(Data, FileJson))
         {
-            Directory.CreateDirectory(folder);
+            if (_written.TryGetValue(file.Key, out string? previous) && previous == file.Value)
+            {
+                continue;
+            }
+            // write to a temp file first so a crash never leaves half a file
+            string path = Path.Combine(_dataFolder, file.Key);
+            string tempPath = path + ".tmp";
+            File.WriteAllText(tempPath, file.Value);
+            ReplaceFile(tempPath, path);
+            _written[file.Key] = file.Value;
         }
-        // write to a temp file first so a crash never leaves half a file
-        string tempPath = _filePath + ".tmp";
-        File.WriteAllText(tempPath, JsonSerializer.Serialize(Data, FileJson));
-        ReplaceFile(tempPath, _filePath);
     }
 
     /// <summary>
@@ -90,13 +101,14 @@ public class EhrStore
         }
     }
 
-    /// <summary>Deletes all data and loads the seed data again (POST /api/admin/reset).</summary>
+    /// <summary>Deletes all data and loads the test data again (POST /api/admin/reset).</summary>
     public void Reset()
     {
         lock (Sync)
         {
             Data = new EhrData();
-            SeedData.Load(Data);
+            SeedData.Load(Data, _testDataFolder);
+            _written.Clear();
             Save();
         }
     }
@@ -122,25 +134,28 @@ public class EhrStore
         return prefix + "-" + Guid.NewGuid().ToString("N").Substring(0, 8);
     }
 
-    /// <summary>Reads the file, or seeds and writes it.</summary>
+    /// <summary>Reads the data files, or copies the test data when there are none yet.</summary>
     private void Load()
     {
         lock (Sync)
         {
-            if (File.Exists(_filePath))
+            Data = new EhrData();
+            if (EhrDataFiles.Read(Data, _dataFolder, FileJson) > 0)
             {
-                string json = File.ReadAllText(_filePath);
-                EhrData? data = JsonSerializer.Deserialize<EhrData>(json, FileJson);
-                Data = data ?? new EhrData();
-                _logger.LogInformation("EHR data loaded from {Path}", _filePath);
+                _logger.LogInformation("EHR data loaded from {Folder}", _dataFolder);
                 return;
             }
 
-            Data = new EhrData();
-            SeedData.Load(Data);
+            SeedData.Load(Data, _testDataFolder);
             Save();
-            _logger.LogInformation("EHR data file created with seed data: {Path}", _filePath);
+            _logger.LogInformation("EHR data files created from the test data in {TestFolder}: {Folder}", _testDataFolder, _dataFolder);
         }
+    }
+
+    /// <summary>A configured folder, relative to the project folder unless it is a full path.</summary>
+    private static string FullPath(IWebHostEnvironment environment, string configured)
+    {
+        return Path.IsPathRooted(configured) ? configured : Path.Combine(environment.ContentRootPath, configured);
     }
 
     /// <summary>Builds the file JSON settings.</summary>

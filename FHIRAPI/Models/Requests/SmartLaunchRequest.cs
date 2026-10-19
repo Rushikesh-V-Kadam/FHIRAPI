@@ -30,11 +30,4 @@ public class SmartLaunchRequest
     /// <summary>appContext from the payer's CRD card (which questionnaires to load, coverage-assertion-id). Passed to the app unchanged.</summary>
     /// <example>{"coverage-assertion-id":"702644806bf74c70aa65d2ca1a4a34b1","questionnaire":["http://example.org/fhir/Questionnaire/dialysis-incenter-hd"]}</example>
     public string? AppContext { get; set; }
-
-    /// <summary>
-    /// FHIR release the DTR app works with: "r4" (default) or "r5". Decides the "iss" returned, i.e. whether the app
-    /// reads /fhir/r4 or /fhir/r5.
-    /// </summary>
-    /// <example>r4</example>
-    public string? FhirVersion { get; set; }
 }

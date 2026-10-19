@@ -13,7 +13,7 @@ public static class ReferenceFinder
     private static List<ResourceReference> None => new();
 
     /// <summary>
-    /// References behind an _include parameter, e.g. (DeviceRequest, "requester") -> [Practitioner/prac-1].
+    /// References behind an _include parameter, e.g. (ServiceRequest, "requester") -> [Practitioner/prac-1].
     /// Unknown combinations return an empty list (the include is ignored).
     /// </summary>
     public static List<ResourceReference> Find(Resource resource, string parameter)
@@ -28,17 +28,6 @@ public static class ReferenceFinder
                     "performer" => r.Performer,
                     "encounter" => One(r.Encounter),
                     "location" => r.LocationReference,
-                    "insurance" => r.Insurance,
-                    _ => None
-                };
-
-            case DeviceRequest r:
-                return parameter switch
-                {
-                    "patient" => One(r.Subject),
-                    "requester" => One(r.Requester),
-                    "performer" => One(r.Performer),
-                    "encounter" => One(r.Encounter),
                     "insurance" => r.Insurance,
                     _ => None
                 };
@@ -64,14 +53,6 @@ public static class ReferenceFinder
                     _ => None
                 };
 
-            case Appointment r:
-                return parameter switch
-                {
-                    "patient" => ParticipantsOfType(r, "Patient"),
-                    "practitioner" => ParticipantsOfType(r, "Practitioner"),
-                    "location" => ParticipantsOfType(r, "Location"),
-                    _ => None
-                };
 
             case Coverage r:
                 return parameter is "patient" or "beneficiary" ? One(r.Beneficiary) : None;
@@ -98,7 +79,6 @@ public static class ReferenceFinder
         Patient r => r.Id,
         Coverage r => r.Beneficiary?.GetId(),
         ServiceRequest r => r.Subject?.GetId(),
-        DeviceRequest r => r.Subject?.GetId(),
         MedicationRequest r => r.Subject?.GetId(),
         Encounter r => r.Subject?.GetId(),
         Observation r => r.Subject?.GetId(),
@@ -106,19 +86,10 @@ public static class ReferenceFinder
         Procedure r => r.Subject?.GetId(),
         DocumentReference r => r.Subject?.GetId(),
         QuestionnaireResponse r => r.Subject?.GetId(),
-        Appointment r => ParticipantsOfType(r, "Patient").FirstOrDefault()?.GetId(),
         _ => null
     };
 
     /// <summary>A list with the reference, or an empty list when it is null.</summary>
     private static List<ResourceReference> One(ResourceReference? reference) =>
         reference == null ? None : new List<ResourceReference> { reference };
-
-    /// <summary>Appointment participants of one type, e.g. all "Practitioner/..." actors.</summary>
-    private static List<ResourceReference> ParticipantsOfType(Appointment appointment, string type) =>
-        appointment.Participant
-            .Select(p => p.Actor)
-            .OfType<ResourceReference>()
-            .Where(a => a.GetResourceType() == type)
-            .ToList();
 }

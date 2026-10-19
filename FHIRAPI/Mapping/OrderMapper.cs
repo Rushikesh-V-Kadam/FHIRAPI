@@ -1,12 +1,13 @@
 using FHIRAPI.Constants;
+using FHIRAPI.Helpers;
 using FHIRAPI.Models.Ehr;
 using FHIRAPI.Models.Fhir;
 
 namespace FHIRAPI.Mapping;
 
 /// <summary>
-/// EHR -> FHIR for orders and appointments (Da Vinci CRD profiles).
-/// One EHR order becomes ServiceRequest, DeviceRequest or MedicationRequest depending on its orderType.
+/// EHR -> FHIR for orders (Da Vinci CRD profiles).
+/// One EHR order becomes ServiceRequest or MedicationRequest depending on its orderType.
 /// Registered as a singleton.
 /// </summary>
 public class OrderMapper
@@ -21,11 +22,10 @@ public class OrderMapper
 
     /// <summary>
     /// FHIR resource type of an EHR order:
-    /// "device" -> DeviceRequest, "medication" -> MedicationRequest, anything else -> ServiceRequest.
+    /// "medication" -> MedicationRequest, anything else -> ServiceRequest.
     /// </summary>
     public static string GetResourceType(string? orderType) => orderType?.ToLowerInvariant() switch
     {
-        "device" => "DeviceRequest",
         "medication" => "MedicationRequest",
         _ => "ServiceRequest"
     };
@@ -33,7 +33,6 @@ public class OrderMapper
     /// <summary>Converts an order to the right FHIR request resource.</summary>
     public Resource ToFhir(EhrOrderDto order) => GetResourceType(order.OrderType) switch
     {
-        "DeviceRequest" => ToDeviceRequest(order),
         "MedicationRequest" => ToMedicationRequest(order),
         _ => ToServiceRequest(order)
     };
@@ -64,33 +63,6 @@ public class OrderMapper
             request.LocationCode.Add(new CodeableConcept(CodeSystems.PlaceOfService, order.PlaceOfServiceCode));
 
         request.ReasonCode.AddRange(GetDiagnoses(order));
-        AddIfPresent(request.Insurance, Ref("Coverage", order.CoverageId));
-        if (!string.IsNullOrEmpty(order.Notes)) request.Note.Add(new Annotation { Text = order.Notes });
-        return request;
-    }
-
-    /// <summary>Device order (DME) -> CRD DeviceRequest.</summary>
-    public DeviceRequest ToDeviceRequest(EhrOrderDto order)
-    {
-        var request = new DeviceRequest
-        {
-            Id = order.OrderId,
-            Status = CodeSystemMapper.RequestStatus(order.Status),
-            Priority = CodeSystemMapper.RequestPriority(order.Priority),
-            CodeCodeableConcept = _codes.Concept(order.Code, order.CodeSystem, order.CodeDisplay),
-            Subject = new ResourceReference("Patient", order.PatientId),
-            Encounter = Ref("Encounter", order.EncounterId),
-            OccurrenceDateTime = GetOccurrenceDate(order),
-            OccurrencePeriod = GetOccurrencePeriod(order),
-            AuthoredOn = order.OrderedDateTime,
-            Requester = Ref("Practitioner", order.OrderingPractitionerId),
-            // DeviceRequest allows one performer: prefer the supplier organization
-            Performer = Ref("Organization", order.PerformerOrganizationId) ?? Ref("Practitioner", order.PerformerPractitionerId)
-        };
-        request.AddProfile(FhirProfiles.CrdDeviceRequest);
-
-        request.ReasonCode.AddRange(GetDiagnoses(order));
-        AddIfPresent(request.Insurance, Ref("Coverage", order.CoverageId));
         if (!string.IsNullOrEmpty(order.Notes)) request.Note.Add(new Annotation { Text = order.Notes });
         return request;
     }
@@ -111,6 +83,13 @@ public class OrderMapper
         };
         request.AddProfile(FhirProfiles.CrdMedicationRequest);
 
+        // CLIENT-EHR: MedicationRequest has no location element: the facility of the order's location is the performer
+        // (Organization/facility-{locationId}); in-center drugs are given at that facility.
+        if (!string.IsNullOrEmpty(order.LocationId))
+        {
+            request.Performer = new ResourceReference("Organization", FacilityIds.ToOrganizationId(order.LocationId));
+        }
+
         var medication = order.Medication;
         if (!string.IsNullOrEmpty(medication?.DoseText))
             request.DosageInstruction.Add(new Dosage { Text = medication.DoseText });
@@ -129,34 +108,8 @@ public class OrderMapper
         }
 
         request.ReasonCode.AddRange(GetDiagnoses(order));
-        AddIfPresent(request.Insurance, Ref("Coverage", order.CoverageId));
         if (!string.IsNullOrEmpty(order.Notes)) request.Note.Add(new Annotation { Text = order.Notes });
         return request;
-    }
-
-    /// <summary>EHR appointment -> CRD Appointment (patient, practitioner and location as participants).</summary>
-    public Appointment ToAppointment(EhrAppointmentDto source)
-    {
-        var appointment = new Appointment
-        {
-            Id = source.AppointmentId,
-            Status = source.Status,
-            Start = source.StartDateTime,
-            End = source.EndDateTime
-        };
-        appointment.AddProfile(FhirProfiles.CrdAppointment);
-
-        if (!string.IsNullOrEmpty(source.ServiceCode))
-            appointment.ServiceType.Add(_codes.Concept(source.ServiceCode, source.ServiceCodeSystem, source.ServiceDisplay));
-
-        AddIfPresent(appointment.BasedOn, Ref("ServiceRequest", source.OrderId));
-
-        appointment.Participant.Add(new AppointmentParticipant { Actor = new ResourceReference("Patient", source.PatientId) });
-        if (!string.IsNullOrEmpty(source.PractitionerId))
-            appointment.Participant.Add(new AppointmentParticipant { Actor = new ResourceReference("Practitioner", source.PractitionerId) });
-        if (!string.IsNullOrEmpty(source.LocationId))
-            appointment.Participant.Add(new AppointmentParticipant { Actor = new ResourceReference("Location", source.LocationId) });
-        return appointment;
     }
 
     // ------------------------------------------------------------------ helpers

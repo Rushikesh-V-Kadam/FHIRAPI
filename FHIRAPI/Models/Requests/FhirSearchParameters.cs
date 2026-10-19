@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace FHIRAPI.Models.Requests;
 
 /// <summary>
-/// Query parameters accepted by GET /fhir/r4/{type}.
+/// Query parameters of the FHIR searches (GET /fhir/r4/Patient?..., /fhir/r4/Coverage?... and so on). Each search action of
+/// the per-resource controllers fills only the parameters its resource type uses.
 /// Declared one by one so Swagger shows an input box for each of them.
 /// Which parameters a resource type needs is listed in FhirSearchService.
 /// </summary>
 public class FhirSearchParameters
 {
-    /// <summary>One or more ids, comma separated: _id=ord-cpap,ord-visit</summary>
+    /// <summary>One or more ids, comma separated: _id=ord-1-hd,ord-visit</summary>
     [FromQuery(Name = "_id")]
     public string? Id { get; set; }
 
@@ -51,7 +52,7 @@ public class FhirSearchParameters
 
     /// <summary>
     /// Related resources to add to the Bundle, repeatable:
-    /// _include=DeviceRequest:patient&amp;_include=DeviceRequest:requester
+    /// _include=ServiceRequest:patient&amp;_include=ServiceRequest:requester
     /// </summary>
     [FromQuery(Name = "_include")]
     public List<string> Include { get; set; } = new();

@@ -1,0 +1,30 @@
+[
+  {
+    "organizationId": "org-1",
+    "taxId": "12-3456789",
+    "name": "Demo Dialysis Center - Main",
+    "address": {
+      "line1": "300 Clinic Way",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "phone": "214-555-0300",
+    "active": true
+  },
+  {
+    "organizationId": "org-2",
+    "taxId": "12-3456790",
+    "name": "Demo Dialysis Center - Lakeside",
+    "address": {
+      "line1": "45 Lakeside Drive",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75218",
+      "country": "US"
+    },
+    "phone": "214-555-0400",
+    "active": true
+  }
+]

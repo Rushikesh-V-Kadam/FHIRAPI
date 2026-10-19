@@ -478,7 +478,7 @@ public class PatientsController : ControllerBase
         return Ok(ListResult.Of(result));
     }
 
-    /// <summary>Adds a clinical document (typed text or an uploaded file as Base64).</summary>
+    /// <summary>Adds a clinical document from JSON: typed text, or a file already converted to Base64.</summary>
     /// <remarks>
     /// typeCode (LOINC) must be filled, and contentText or contentBase64.
     /// </remarks>
@@ -487,12 +487,14 @@ public class PatientsController : ControllerBase
     /// <response code="201">The document as stored (with its id and size).</response>
     /// <response code="400">typeCode or the content is missing, or contentBase64 is not valid Base64.</response>
     /// <response code="404">No patient with this id.</response>
+    /// <response code="409">documentId is already used by another document.</response>
     [Tags(SwaggerGroups.MockUi)]
     [HttpPost("{id}/documents")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(EhrDocumentDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public ActionResult<EhrDocumentDto> AddDocument(string id, [FromBody, Required] NewDocumentRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.TypeCode))
@@ -523,24 +525,152 @@ public class PatientsController : ControllerBase
         }
 
         EhrDocumentDto document = new EhrDocumentDto();
+        document.DocumentId = request.DocumentId ?? string.Empty;
+        document.TypeCode = request.TypeCode;
+        document.TypeDisplay = request.TypeDisplay;
+        document.Title = request.Title ?? request.TypeDisplay;
+        document.AuthorPractitionerId = request.AuthorPractitionerId;
+        document.OrganizationId = request.OrganizationId;
+        document.EncounterId = request.EncounterId;
+        document.ContentType = request.ContentType;
+        return SaveNewDocument(id, document, contentBase64);
+    }
+
+    /// <summary>Adds a clinical document from a file; the EHR converts the file to Base64.</summary>
+    /// <remarks>
+    /// Send the form as multipart/form-data: the file plus typeCode (LOINC) and the optional fields. In Swagger UI use
+    /// "Try it out" and pick the file. The file is stored as Base64 (api/documents/{id}/content) and the FHIR API serves
+    /// it as Binary/{id}, so the Payer Gateway can send it to the payer in PAS or CDex.
+    /// The MIME type is taken from the upload; when the browser sends none (or application/octet-stream) it comes from
+    /// the file extension.
+    /// </remarks>
+    /// <param name="id" example="pat-1">EHR patient id, e.g. pat-1.</param>
+    /// <param name="request">Required. The file and its document details.</param>
+    /// <param name="ct">Cancelled when the caller disconnects.</param>
+    /// <response code="201">The document as stored (with its id, MIME type and size).</response>
+    /// <response code="400">The file or typeCode is missing, the file is empty or too large, or its type is not allowed.</response>
+    /// <response code="404">No patient with this id.</response>
+    /// <response code="409">documentId is already used by another document.</response>
+    [Tags(SwaggerGroups.MockUi)]
+    [HttpPost("{id}/documents/upload")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]   // the file plus the other form fields
+    [ProducesResponseType(typeof(EhrDocumentDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<EhrDocumentDto>> UploadDocument(string id, [FromForm, Required] UploadDocumentRequest request,
+        CancellationToken ct)
+    {
+        IFormFile? file = request.File;
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new ErrorResponse("Send a file (form field \"file\"); it must not be empty."));
+        }
+        if (file.Length > MaxUploadBytes)
+        {
+            return BadRequest(new ErrorResponse("The file is " + file.Length + " bytes; at most " + MaxUploadBytes + " bytes (20 MB) are allowed."));
+        }
+        if (string.IsNullOrWhiteSpace(request.TypeCode))
+        {
+            return BadRequest(new ErrorResponse("typeCode (LOINC) is required."));
+        }
+
+        string? contentType = UploadContentType(file);
+        if (contentType == null)
+        {
+            return BadRequest(new ErrorResponse("File type of \"" + file.FileName + "\" is not allowed. Allowed: "
+                + string.Join(", ", UploadTypesByExtension.Keys) + "."));
+        }
+
+        // the conversion: the file's bytes -> Base64 text, as the EHR stores it and the FHIR API returns it in Binary.data
+        string contentBase64;
+        using (MemoryStream buffer = new MemoryStream())
+        {
+            await file.CopyToAsync(buffer, ct);
+            contentBase64 = Convert.ToBase64String(buffer.ToArray());
+        }
+
+        EhrDocumentDto document = new EhrDocumentDto();
+        document.DocumentId = request.DocumentId ?? string.Empty;
+        document.TypeCode = request.TypeCode.Trim();
+        document.TypeDisplay = request.TypeDisplay;
+        document.Title = string.IsNullOrWhiteSpace(request.Title) ? Path.GetFileNameWithoutExtension(file.FileName) : request.Title;
+        document.AuthorPractitionerId = request.AuthorPractitionerId;
+        document.OrganizationId = request.OrganizationId;
+        document.EncounterId = request.EncounterId;
+        document.ContentType = contentType;
+        return SaveNewDocument(id, document, contentBase64);
+    }
+
+    /// <summary>Largest file POST .../documents/upload accepts: 20 MB.</summary>
+    private const long MaxUploadBytes = 20L * 1024 * 1024;
+
+    /// <summary>File types an upload may have: extension -> MIME type.</summary>
+    private static readonly Dictionary<string, string> UploadTypesByExtension = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        { ".pdf", "application/pdf" },
+        { ".png", "image/png" },
+        { ".jpg", "image/jpeg" },
+        { ".jpeg", "image/jpeg" },
+        { ".tif", "image/tiff" },
+        { ".tiff", "image/tiff" },
+        { ".txt", "text/plain" },
+        { ".rtf", "application/rtf" },
+        { ".doc", "application/msword" },
+        { ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }
+    };
+
+    /// <summary>
+    /// MIME type of an uploaded file, or null when the file type is not allowed. The type the browser sent is used when
+    /// it is one of the allowed types; otherwise (none, or application/octet-stream) the extension decides.
+    /// </summary>
+    private static string? UploadContentType(IFormFile file)
+    {
+        string sent = (file.ContentType ?? string.Empty).Split(';')[0].Trim();
+        if (UploadTypesByExtension.ContainsValue(sent))
+        {
+            return sent;
+        }
+        string extension = Path.GetExtension(file.FileName ?? string.Empty);
+        if (UploadTypesByExtension.TryGetValue(extension, out string? fromExtension))
+        {
+            return fromExtension;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Stores a new document and its Base64 content for a patient (shared by the JSON and the file upload endpoints).
+    /// Fills id (when empty), patient, category and created time; returns 201, 404 or 409.
+    /// </summary>
+    private ActionResult<EhrDocumentDto> SaveNewDocument(string patientId, EhrDocumentDto document, string contentBase64)
+    {
         lock (_store.Sync)
         {
-            if (FindPatient(id) == null)
+            if (FindPatient(patientId) == null)
             {
-                return NotFound(new ErrorResponse("Patient " + id + " not found."));
+                return NotFound(new ErrorResponse("Patient " + patientId + " not found."));
             }
-            document.DocumentId = string.IsNullOrWhiteSpace(request.DocumentId) ? EhrStore.NewId("doc") : request.DocumentId;
-            document.PatientId = id;
-            document.TypeCode = request.TypeCode;
-            document.TypeDisplay = request.TypeDisplay;
+            if (string.IsNullOrWhiteSpace(document.DocumentId))
+            {
+                document.DocumentId = EhrStore.NewId("doc");
+            }
+            else
+            {
+                document.DocumentId = document.DocumentId.Trim();
+                foreach (EhrDocumentDto existing in _store.Data.Documents)
+                {
+                    if (existing.DocumentId == document.DocumentId)
+                    {
+                        return Conflict(new ErrorResponse("Document id " + document.DocumentId + " is already used."));
+                    }
+                }
+            }
+            document.PatientId = patientId;
             document.Category = "clinical-note";
-            document.Title = request.Title ?? request.TypeDisplay;
             document.CreatedDateTime = DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'");
-            document.AuthorPractitionerId = request.AuthorPractitionerId;
-            document.OrganizationId = request.OrganizationId;
-            document.EncounterId = request.EncounterId;
-            document.ContentType = request.ContentType;
-            SeedData.AddDocument(_store.Data, document, contentBase64);
+            SeedData.AddDocument(_store.Data, document, contentBase64);   // sets size and contentUrl
             _store.Save();
         }
         return Created("/api/documents/" + document.DocumentId, document);

@@ -1,5 +1,6 @@
 using FHIRAPI.Configuration;
 using FHIRAPI.Constants;
+using FHIRAPI.Helpers;
 using FHIRAPI.Models.Ehr;
 using FHIRAPI.Models.Fhir;
 
@@ -59,12 +60,17 @@ public class AdministrativeMapper
         return patient;
     }
 
-    /// <summary>EHR insurance -> CRD Coverage (member id, payer id, plan, group, period).</summary>
+    /// <summary>
+    /// EHR insurance -> CRD Coverage (member id, payer id, plan, group, period).
+    /// The EHR has no insurance id, so Coverage.id is built from patient id + payer id + policy number (member id)
+    /// and is the same on every call (see Helpers/CoverageIds). The policy number is optional.
+    /// </summary>
     public Coverage ToCoverage(EhrInsuranceDto source)
     {
         var coverage = new Coverage
         {
-            Id = source.CoverageId,
+            // CLIENT-EHR: no coverage id in the EHR; built from patient + payer + policy number (Helpers/CoverageIds)
+            Id = CoverageIds.Build(source.PatientId, source.PayerId, source.MemberId),
             Status = string.IsNullOrEmpty(source.Status) ? "active" : source.Status.ToLowerInvariant(),
             SubscriberId = string.IsNullOrWhiteSpace(source.MemberId) ? null : source.MemberId,
             Beneficiary = new ResourceReference("Patient", source.PatientId),
@@ -132,12 +138,32 @@ public class AdministrativeMapper
         var practitioner = new Practitioner { Id = source.PractitionerId };
         practitioner.AddProfile(FhirProfiles.Practitioner);
 
-        if (!string.IsNullOrEmpty(source.Npi))
-            practitioner.Identifier.Add(new Identifier(CodeSystems.Npi, source.Npi));
+        // CLIENT-EHR: the client's EHR has no practitioner id; it finds a practitioner by NPI, so the NPI is the id
+        // (GET api/practitioners/{npi}). When the answer has no separate npi field, the id is used as the NPI, but only
+        // when it is a valid NPI (10 digits, correct check digit), so an ordinary EHR id is never sent as an NPI.
+        string? npi = source.Npi;
+        if (string.IsNullOrEmpty(npi) && NpiNumbers.IsValid(source.PractitionerId))
+        {
+            npi = source.PractitionerId;
+        }
+        if (!string.IsNullOrEmpty(npi))
+        {
+            practitioner.Identifier.Add(new Identifier(CodeSystems.Npi, npi));
+        }
 
-        var name = new HumanName { Family = source.LastName };
-        AddIfPresent(name.Given, source.FirstName);
-        practitioner.Name.Add(name);
+        // Practitioner.name is 0..* in R4: first / last name when the EHR splits them; else the one-field name of the
+        // client's EHR as HumanName.text (not split, so no part is guessed); else no name.
+        if (!string.IsNullOrEmpty(source.LastName) || !string.IsNullOrEmpty(source.FirstName))
+        {
+            var name = new HumanName { Family = source.LastName };
+            AddIfPresent(name.Given, source.FirstName);
+            practitioner.Name.Add(name);
+        }
+        else if (!string.IsNullOrWhiteSpace(source.Name))
+        {
+            // CLIENT-EHR: the client's EHR gives the name in one field.
+            practitioner.Name.Add(new HumanName { Text = source.Name.Trim() });
+        }
         return practitioner;
     }
 
@@ -175,7 +201,11 @@ public class AdministrativeMapper
         return organization;
     }
 
-    /// <summary>EHR location -> US Core Location (place-of-service code as the type).</summary>
+    /// <summary>
+    /// EHR location -> US Core Location (place-of-service code as the type, the facility NPI as identifier).
+    /// managingOrganization is the facility Organization of this location (Organization/facility-{locationId}), which
+    /// carries the NPI and points to the parent organization (see ToFacilityOrganization).
+    /// </summary>
     public Location ToLocation(EhrLocationDto source)
     {
         var location = new Location
@@ -184,13 +214,56 @@ public class AdministrativeMapper
             Status = "active",
             Name = source.Name,
             Address = ToAddress(source.Address),
-            ManagingOrganization = string.IsNullOrEmpty(source.OrganizationId) ? null : new ResourceReference("Organization", source.OrganizationId)
+            // CLIENT-EHR: points to the facility Organization (with the facility NPI), not to the parent organization
+            ManagingOrganization = new ResourceReference("Organization", FacilityIds.ToOrganizationId(source.LocationId))
         };
         location.AddProfile(FhirProfiles.Location);
+
+        if (!string.IsNullOrEmpty(source.Npi))
+        {
+            location.Identifier.Add(new Identifier(CodeSystems.Npi, source.Npi));
+        }
 
         if (!string.IsNullOrEmpty(source.PlaceOfServiceCode))
             location.Type.Add(new CodeableConcept(CodeSystems.PlaceOfService, source.PlaceOfServiceCode));
         return location;
+    }
+
+    /// <summary>
+    /// EHR location (+ its parent organization) -> facility Organization (Organization/facility-{locationId}).
+    /// The client keeps each facility's NPI, name and address on the location and only the tax id on the parent
+    /// organization. The facility Organization has: the location's name and address, the facility NPI, the parent's
+    /// tax id (facilities bill under the parent's tax id), and partOf = the parent organization.
+    /// It is what a PAS request uses as Claim.provider. parent may be null (no parent, or not found in the EHR).
+    /// </summary>
+    public Organization ToFacilityOrganization(EhrLocationDto location, EhrOrganizationDto? parent)
+    {
+        // CLIENT-EHR: the facility NPI comes from the location; the parent organization gives only its tax id.
+        Organization organization = new Organization();
+        organization.Id = FacilityIds.ToOrganizationId(location.LocationId);
+        organization.Active = true;
+        organization.Name = location.Name;
+        organization.AddProfile(FhirProfiles.Organization);
+
+        if (!string.IsNullOrEmpty(location.Npi))
+        {
+            organization.Identifier.Add(new Identifier(CodeSystems.Npi, location.Npi));
+        }
+        if (parent != null && !string.IsNullOrEmpty(parent.TaxId))
+        {
+            organization.Identifier.Add(new Identifier(CodeSystems.TaxId, parent.TaxId));
+        }
+
+        Address? address = ToAddress(location.Address);
+        if (address != null)
+        {
+            organization.Address.Add(address);
+        }
+        if (!string.IsNullOrEmpty(location.OrganizationId))
+        {
+            organization.PartOf = new ResourceReference("Organization", location.OrganizationId);
+        }
+        return organization;
     }
 
     // ------------------------------------------------------------------ helpers

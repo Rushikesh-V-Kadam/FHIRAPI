@@ -1,0 +1,327 @@
+[
+  {
+    "patientId": "pat-1",
+    "mrn": "MRN-100001",
+    "firstName": "Robert",
+    "lastName": "Hayes",
+    "gender": "male",
+    "dateOfBirth": "1959-03-14",
+    "address": {
+      "line1": "100 Demo Street",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "phone": "214-555-0101",
+    "active": true
+  },
+  {
+    "patientId": "pat-2",
+    "mrn": "MRN-100002",
+    "firstName": "Linda",
+    "lastName": "Morales",
+    "gender": "female",
+    "dateOfBirth": "1968-07-02",
+    "address": {
+      "line1": "200 Sample Avenue",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "phone": "214-555-0102",
+    "active": true
+  },
+  {
+    "patientId": "pat-3",
+    "mrn": "MRN-100003",
+    "firstName": "James",
+    "lastName": "Carter",
+    "gender": "male",
+    "dateOfBirth": "1953-11-20",
+    "address": {
+      "line1": "310 Example Road",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "phone": "214-555-0103",
+    "active": true
+  },
+  {
+    "patientId": "pat-4",
+    "mrn": "MRN-100004",
+    "firstName": "Susan",
+    "lastName": "Nguyen",
+    "gender": "female",
+    "dateOfBirth": "1975-01-09",
+    "address": {
+      "line1": "420 Test Lane",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "phone": "602-555-0104",
+    "active": true
+  },
+  {
+    "patientId": "pat-5",
+    "mrn": "MRN-100005",
+    "firstName": "Michael",
+    "lastName": "Torres",
+    "gender": "male",
+    "dateOfBirth": "1961-05-23",
+    "address": {
+      "line1": "515 Market Street",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "phone": "214-555-0105",
+    "active": true
+  },
+  {
+    "patientId": "pat-6",
+    "mrn": "MRN-100006",
+    "firstName": "Patricia",
+    "lastName": "Bell",
+    "gender": "female",
+    "dateOfBirth": "1970-12-03",
+    "address": {
+      "line1": "606 Garden Court",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "phone": "214-555-0106",
+    "active": true
+  },
+  {
+    "patientId": "pat-7",
+    "mrn": "MRN-100007",
+    "firstName": "Thomas",
+    "lastName": "Reed",
+    "gender": "male",
+    "dateOfBirth": "1966-02-17",
+    "address": {
+      "line1": "707 River Road",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "phone": "214-555-0107",
+    "active": true
+  },
+  {
+    "patientId": "pat-8",
+    "mrn": "MRN-100008",
+    "firstName": "Angela",
+    "lastName": "Brooks",
+    "gender": "female",
+    "dateOfBirth": "1972-05-09",
+    "address": {
+      "line1": "812 Elm Avenue",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75204",
+      "country": "US"
+    },
+    "phone": "214-555-0108",
+    "email": "angela.brooks@example.com",
+    "active": true
+  },
+  {
+    "patientId": "pat-9",
+    "mrn": "MRN-100009",
+    "firstName": "David",
+    "lastName": "Kim",
+    "gender": "male",
+    "dateOfBirth": "1980-11-23",
+    "address": {
+      "line1": "915 Oak Lane",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75206",
+      "country": "US"
+    },
+    "phone": "214-555-0109",
+    "active": true
+  },
+  {
+    "patientId": "pat-10",
+    "mrn": "MRN-100010",
+    "firstName": "Gloria",
+    "middleName": "Elena",
+    "lastName": "Ramirez",
+    "gender": "female",
+    "dateOfBirth": "1955-01-30",
+    "address": {
+      "line1": "1010 Lakeview Court",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75218",
+      "country": "US"
+    },
+    "phone": "214-555-0110",
+    "active": true
+  },
+  {
+    "patientId": "pat-11",
+    "mrn": "MRN-100011",
+    "firstName": "William",
+    "lastName": "Johnson",
+    "gender": "male",
+    "dateOfBirth": "1948-07-04",
+    "address": {
+      "line1": "1111 Maple Street",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75214",
+      "country": "US"
+    },
+    "phone": "214-555-0111",
+    "active": true
+  },
+  {
+    "patientId": "pat-12",
+    "mrn": "MRN-100012",
+    "firstName": "Karen",
+    "lastName": "Mitchell",
+    "gender": "female",
+    "dateOfBirth": "1990-02-14",
+    "address": {
+      "line1": "1212 Cedar Drive",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75219",
+      "country": "US"
+    },
+    "phone": "214-555-0112",
+    "active": true
+  },
+  {
+    "patientId": "pat-13",
+    "mrn": "MRN-100013",
+    "firstName": "Joseph",
+    "lastName": "Lee",
+    "gender": "male",
+    "dateOfBirth": "1963-09-02",
+    "address": {
+      "line1": "1313 Visitor Inn, Room 214",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75218",
+      "country": "US"
+    },
+    "phone": "214-555-0113",
+    "active": true
+  },
+  {
+    "patientId": "pat-14",
+    "mrn": "MRN-100014",
+    "firstName": "Nancy",
+    "lastName": "Adams",
+    "gender": "female",
+    "dateOfBirth": "1968-12-11",
+    "address": {
+      "line1": "1414 Pine Ridge",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75228",
+      "country": "US"
+    },
+    "phone": "214-555-0114",
+    "active": true
+  },
+  {
+    "patientId": "pat-15",
+    "mrn": "MRN-100015",
+    "firstName": "Steven",
+    "lastName": "Clark",
+    "gender": "male",
+    "dateOfBirth": "1985-04-27",
+    "address": {
+      "line1": "1515 Birch Boulevard",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75243",
+      "country": "US"
+    },
+    "phone": "214-555-0115",
+    "active": true
+  },
+  {
+    "patientId": "pat-16",
+    "mrn": "MRN-100016",
+    "firstName": "Maria",
+    "lastName": "Gonzalez",
+    "gender": "female",
+    "dateOfBirth": "1964-06-18",
+    "address": {
+      "line1": "1616 Willow Street",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75204",
+      "country": "US"
+    },
+    "phone": "214-555-0116",
+    "active": true
+  },
+  {
+    "patientId": "pat-17",
+    "mrn": "MRN-100017",
+    "firstName": "Charles",
+    "lastName": "Wilson",
+    "gender": "male",
+    "dateOfBirth": "1951-03-29",
+    "address": {
+      "line1": "1717 Hickory Lane",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75218",
+      "country": "US"
+    },
+    "phone": "214-555-0117",
+    "active": true
+  },
+  {
+    "patientId": "pat-18",
+    "mrn": "MRN-100018",
+    "firstName": "Laura",
+    "lastName": "Bennett",
+    "gender": "female",
+    "dateOfBirth": "1983-09-07",
+    "address": {
+      "line1": "1818 Aspen Court",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75206",
+      "country": "US"
+    },
+    "phone": "214-555-0118",
+    "active": true
+  },
+  {
+    "patientId": "pat-19",
+    "mrn": "MRN-100019",
+    "firstName": "Henry",
+    "lastName": "Walker",
+    "gender": "male",
+    "dateOfBirth": "1977-12-01",
+    "address": {
+      "line1": "1919 Sycamore Drive",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75243",
+      "country": "US"
+    },
+    "phone": "214-555-0119",
+    "active": true
+  }
+]

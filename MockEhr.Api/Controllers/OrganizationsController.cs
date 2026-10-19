@@ -38,7 +38,7 @@ public class OrganizationsController : ControllerBase
 
     /// <summary>One organization.</summary>
     /// <remarks>
-    /// The FHIR API turns the answer into a FHIR Organization (GET /fhir/r4/Organization/{id}). The NPI is needed for prior authorization requests.
+    /// The FHIR API turns the answer into a FHIR Organization (GET /fhir/r4/Organization/{id}). Facility NPIs are on the locations (FHIR: Organization/facility-{locationId}).
     /// </remarks>
     /// <param name="id" example="org-1">EHR organization id, e.g. org-1.</param>
     /// <response code="200">The organization.</response>
@@ -64,11 +64,12 @@ public class OrganizationsController : ControllerBase
 
     /// <summary>Adds an organization.</summary>
     /// <remarks>
-    /// name and npi must be filled (PAS needs the NPI). An empty organizationId gets a new id.
+    /// name must be filled. npi is optional: the client's organizations are parents with a tax id and no NPI
+    /// (the facility NPIs are on the locations). An empty organizationId gets a new id.
     /// </remarks>
     /// <param name="organization">Required. The organization to add.</param>
     /// <response code="201">The organization as stored (with its id).</response>
-    /// <response code="400">name or npi is missing.</response>
+    /// <response code="400">name is missing.</response>
     [Tags(SwaggerGroups.MockUi)]
     [HttpPost]
     [Consumes("application/json")]
@@ -76,9 +77,9 @@ public class OrganizationsController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     public ActionResult<EhrOrganizationDto> Create([FromBody, Required] EhrOrganizationDto organization)
     {
-        if (string.IsNullOrWhiteSpace(organization.Name) || string.IsNullOrWhiteSpace(organization.Npi))
+        if (string.IsNullOrWhiteSpace(organization.Name))
         {
-            return BadRequest(new ErrorResponse("name and npi are required."));
+            return BadRequest(new ErrorResponse("name is required."));
         }
         lock (_store.Sync)
         {

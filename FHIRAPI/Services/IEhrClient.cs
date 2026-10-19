@@ -14,7 +14,6 @@ public interface IEhrClient
     Task<EhrOrganizationDto?> GetOrganizationAsync(string organizationId, CancellationToken ct);
     Task<EhrLocationDto?> GetLocationAsync(string locationId, CancellationToken ct);
     Task<EhrOrderDto?> GetOrderAsync(string orderId, CancellationToken ct);
-    Task<EhrAppointmentDto?> GetAppointmentAsync(string appointmentId, CancellationToken ct);
     Task<EhrEncounterDto?> GetEncounterAsync(string encounterId, CancellationToken ct);
     Task<List<EhrEncounterDto>> GetEncountersAsync(string patientId, string? from, CancellationToken ct);
     Task<List<EhrObservationDto>> GetObservationsAsync(string patientId, string? codes, string? category, string? from, CancellationToken ct);

@@ -7,7 +7,7 @@ public static class DtrExtensions
 {
     /// <summary>
     /// qr-context: which order and coverage the form was filled for,
-    /// e.g. valueReference "DeviceRequest/ord-cpap" and "Coverage/cov-1".
+    /// e.g. valueReference "MedicationRequest/ord-1-retacrit" and "Coverage/cov-1".
     /// </summary>
     public const string QrContext = "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context";
 

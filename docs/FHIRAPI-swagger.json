@@ -2,7 +2,7 @@
   "openapi": "3.0.4",
   "info": {
     "title": "FHIR API",
-    "description": "FHIR R4 and R5 view of the EHR. Sections show who calls each endpoint: payers during CRD, payer DTR apps, and the Payer Gateway (/internal).",
+    "description": "FHIR R4 view of the EHR. Sections show who calls each endpoint: payers during CRD, payer DTR apps, and the Payer Gateway (/internal).",
     "version": "v1"
   },
   "paths": {
@@ -19,40 +19,17 @@
         }
       }
     },
-    "/fhir/r5/metadata": {
+    "/fhir/r4/Patient/{id}": {
       "get": {
         "tags": [
-          "0. Metadata - CapabilityStatement (anyone)"
+          "1. FHIR APIs - Patient"
         ],
-        "summary": "Returns the CapabilityStatement of this FHIR server.",
-        "responses": {
-          "200": {
-            "description": "A FHIR CapabilityStatement (content type application/fhir+json): the resource types, their search parameters and the SMART authorize / token URLs."
-          }
-        }
-      }
-    },
-    "/fhir/r4/{type}/{id}": {
-      "get": {
-        "tags": [
-          "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
-        ],
-        "summary": "Reads one resource by type and id.\nTypes: Patient, Coverage, Practitioner, PractitionerRole (id \"role-{practitionerId}\"), Organization, Location,\nServiceRequest, DeviceRequest, MedicationRequest, Appointment, Encounter, DocumentReference, Binary.",
+        "summary": "Reads one Patient by id. GET /fhir/r4/Patient/{id}",
         "parameters": [
-          {
-            "name": "type",
-            "in": "path",
-            "description": "Required. FHIR resource type, case sensitive (e.g. \"Patient\").",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "Patient"
-          },
           {
             "name": "id",
             "in": "path",
-            "description": "Required. Resource id (the EHR id), e.g. pat-1, cov-1, ord-1-hd, doc-1-labs.",
+            "description": "Required. EHR patient id.",
             "required": true,
             "schema": {
               "type": "string"
@@ -62,13 +39,10 @@
         ],
         "responses": {
           "200": {
-            "description": "The resource as FHIR JSON (content type application/fhir+json), e.g. { \"resourceType\": \"Patient\", \"id\": \"pat-1\", ... }."
-          },
-          "400": {
-            "description": "The resource type is not supported. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-supported\", \"diagnostics\": \"Resource type Foo is not supported.\" } ] }."
+            "description": "The Patient as FHIR JSON (application/fhir+json)."
           },
           "404": {
-            "description": "The EHR has no such record. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-found\", \"diagnostics\": \"Patient/pat-9 was not found.\" } ] }."
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
           },
           "502": {
             "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
@@ -76,143 +50,17 @@
         }
       }
     },
-    "/fhir/r5/{type}/{id}": {
+    "/fhir/r4/Patient": {
       "get": {
         "tags": [
-          "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
+          "1. FHIR APIs - Patient"
         ],
-        "summary": "Reads one resource by type and id.\nTypes: Patient, Coverage, Practitioner, PractitionerRole (id \"role-{practitionerId}\"), Organization, Location,\nServiceRequest, DeviceRequest, MedicationRequest, Appointment, Encounter, DocumentReference, Binary.",
+        "summary": "Searches Patient and returns a \"searchset\" Bundle. Required: _id. GET /fhir/r4/Patient?...",
         "parameters": [
-          {
-            "name": "type",
-            "in": "path",
-            "description": "Required. FHIR resource type, case sensitive (e.g. \"Patient\").",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "Patient"
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Required. Resource id (the EHR id), e.g. pat-1, cov-1, ord-1-hd, doc-1-labs.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "pat-1"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The resource as FHIR JSON (content type application/fhir+json), e.g. { \"resourceType\": \"Patient\", \"id\": \"pat-1\", ... }."
-          },
-          "400": {
-            "description": "The resource type is not supported. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-supported\", \"diagnostics\": \"Resource type Foo is not supported.\" } ] }."
-          },
-          "404": {
-            "description": "The EHR has no such record. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-found\", \"diagnostics\": \"Patient/pat-9 was not found.\" } ] }."
-          },
-          "502": {
-            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
-          }
-        }
-      }
-    },
-    "/fhir/r4/{type}": {
-      "get": {
-        "tags": [
-          "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
-        ],
-        "summary": "Searches one resource type and returns a \"searchset\" Bundle.\nRequired: _id for Patient, Practitioner, PractitionerRole, Organization, Location, the order types and Appointment;\npatient for Coverage, Observation, Condition, Procedure, DocumentReference; _id or patient for Encounter.",
-        "parameters": [
-          {
-            "name": "type",
-            "in": "path",
-            "description": "Required. FHIR resource type, case sensitive (e.g. \"Coverage\").",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "Coverage"
-          },
           {
             "name": "_id",
             "in": "query",
-            "description": "One or more ids, comma separated: _id=ord-cpap,ord-visit",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "patient",
-            "in": "query",
-            "description": "Patient id or \"Patient/id\".",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "subject",
-            "in": "query",
-            "description": "Same as patient (some clients send subject).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "beneficiary",
-            "in": "query",
-            "description": "Same as patient (Coverage searches may send beneficiary).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "code",
-            "in": "query",
-            "description": "Codes, comma separated, as system|code: http://loinc.org|39156-5",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "category",
-            "in": "query",
-            "description": "Observation category, e.g. laboratory or vital-signs.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "description": "Lower date bound: date=ge2026-01-01 (only ge/gt are used).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "description": "Coverage status, e.g. active.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clinical-status",
-            "in": "query",
-            "description": "Condition clinical status, e.g. active.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "description": "DocumentReference type as system|code: http://loinc.org|18748-4",
+            "description": "Required. One or more ids, comma separated.",
             "schema": {
               "type": "string"
             }
@@ -220,7 +68,7 @@
           {
             "name": "_include",
             "in": "query",
-            "description": "Related resources to add to the Bundle, repeatable:\n_include=DeviceRequest:patient&_include=DeviceRequest:requester",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Patient:parameter[:TargetType], e.g. Patient:patient.",
             "schema": {
               "type": "array",
               "items": {
@@ -231,10 +79,10 @@
         ],
         "responses": {
           "200": {
-            "description": "A FHIR Bundle of type \"searchset\" (content type application/fhir+json): total = number of matches, entry = the resources found plus the ones added by _include. Nothing found = total 0 and no entry (still 200)."
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
           },
           "400": {
-            "description": "The resource type is not supported, or the parameter this type needs (_id or patient) is missing. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"Coverage search requires the patient parameter, e.g. Coverage?patient=pat-1.\" } ] }."
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
           },
           "502": {
             "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
@@ -242,75 +90,56 @@
         }
       }
     },
-    "/fhir/r5/{type}": {
+    "/fhir/r4/Coverage/{id}": {
       "get": {
         "tags": [
-          "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
+          "1. FHIR APIs - Coverage"
         ],
-        "summary": "Searches one resource type and returns a \"searchset\" Bundle.\nRequired: _id for Patient, Practitioner, PractitionerRole, Organization, Location, the order types and Appointment;\npatient for Coverage, Observation, Condition, Procedure, DocumentReference; _id or patient for Encounter.",
+        "summary": "Reads one Coverage by id. GET /fhir/r4/Coverage/{id}",
         "parameters": [
           {
-            "name": "type",
+            "name": "id",
             "in": "path",
-            "description": "Required. FHIR resource type, case sensitive (e.g. \"Coverage\").",
+            "description": "Required. Coverage id built by the FHIR API: cov-{patientId}-{16 hex characters} (the client's EHR has no insurance id). Take it from a Coverage search.",
             "required": true,
             "schema": {
               "type": "string"
-            },
-            "example": "Coverage"
-          },
-          {
-            "name": "_id",
-            "in": "query",
-            "description": "One or more ids, comma separated: _id=ord-cpap,ord-visit",
-            "schema": {
-              "type": "string"
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Coverage as FHIR JSON (application/fhir+json)."
           },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Coverage": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Coverage"
+        ],
+        "summary": "Searches Coverage and returns a \"searchset\" Bundle. Required: patient (or beneficiary). GET /fhir/r4/Coverage?...",
+        "parameters": [
           {
             "name": "patient",
             "in": "query",
-            "description": "Patient id or \"Patient/id\".",
+            "description": "Required, or send beneficiary. Patient id, or \"Patient/{id}\".",
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "subject",
-            "in": "query",
-            "description": "Same as patient (some clients send subject).",
-            "schema": {
-              "type": "string"
-            }
+            },
+            "example": "pat-1"
           },
           {
             "name": "beneficiary",
             "in": "query",
-            "description": "Same as patient (Coverage searches may send beneficiary).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "code",
-            "in": "query",
-            "description": "Codes, comma separated, as system|code: http://loinc.org|39156-5",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "category",
-            "in": "query",
-            "description": "Observation category, e.g. laboratory or vital-signs.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "description": "Lower date bound: date=ge2026-01-01 (only ge/gt are used).",
+            "description": "Optional. Same as patient (Coverage searches may send beneficiary).",
             "schema": {
               "type": "string"
             }
@@ -318,31 +147,16 @@
           {
             "name": "status",
             "in": "query",
-            "description": "Coverage status, e.g. active.",
+            "description": "Optional. Insurance status, e.g. active. Empty = every insurance of the patient.",
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "clinical-status",
-            "in": "query",
-            "description": "Condition clinical status, e.g. active.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "description": "DocumentReference type as system|code: http://loinc.org|18748-4",
-            "schema": {
-              "type": "string"
-            }
+            },
+            "example": "active"
           },
           {
             "name": "_include",
             "in": "query",
-            "description": "Related resources to add to the Bundle, repeatable:\n_include=DeviceRequest:patient&_include=DeviceRequest:requester",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Coverage:parameter[:TargetType], e.g. Coverage:patient.",
             "schema": {
               "type": "array",
               "items": {
@@ -353,10 +167,854 @@
         ],
         "responses": {
           "200": {
-            "description": "A FHIR Bundle of type \"searchset\" (content type application/fhir+json): total = number of matches, entry = the resources found plus the ones added by _include. Nothing found = total 0 and no entry (still 200)."
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
           },
           "400": {
-            "description": "The resource type is not supported, or the parameter this type needs (_id or patient) is missing. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"Coverage search requires the patient parameter, e.g. Coverage?patient=pat-1.\" } ] }."
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Practitioner/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Practitioner"
+        ],
+        "summary": "Reads one Practitioner by id. GET /fhir/r4/Practitioner/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. EHR practitioner id. The client's EHR uses the practitioner's NPI as the id.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "prac-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Practitioner as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Practitioner": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Practitioner"
+        ],
+        "summary": "Searches Practitioner and returns a \"searchset\" Bundle. Required: _id. GET /fhir/r4/Practitioner?...",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "Required. One or more ids, comma separated.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Practitioner:parameter[:TargetType], e.g. Practitioner:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/PractitionerRole/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - PractitionerRole"
+        ],
+        "summary": "Reads one PractitionerRole by id. GET /fhir/r4/PractitionerRole/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. role-{practitionerId}.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "role-prac-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PractitionerRole as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/PractitionerRole": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - PractitionerRole"
+        ],
+        "summary": "Searches PractitionerRole and returns a \"searchset\" Bundle. Required: _id. GET /fhir/r4/PractitionerRole?...",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "Required. One or more ids, comma separated.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as PractitionerRole:parameter[:TargetType], e.g. PractitionerRole:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Organization/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Organization"
+        ],
+        "summary": "Reads one Organization by id. GET /fhir/r4/Organization/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. EHR organization id, or facility-{locationId} for a facility (a location with its own NPI).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "org-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Organization as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Organization": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Organization"
+        ],
+        "summary": "Searches Organization and returns a \"searchset\" Bundle. Required: _id. GET /fhir/r4/Organization?...",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "Required. One or more ids, comma separated.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Organization:parameter[:TargetType], e.g. Organization:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Location/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Location"
+        ],
+        "summary": "Reads one Location by id. GET /fhir/r4/Location/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. EHR location (facility) id.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "loc-main"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Location as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Location": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Location"
+        ],
+        "summary": "Searches Location and returns a \"searchset\" Bundle. Required: _id. GET /fhir/r4/Location?...",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "Required. One or more ids, comma separated.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Location:parameter[:TargetType], e.g. Location:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/ServiceRequest/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - ServiceRequest"
+        ],
+        "summary": "Reads one ServiceRequest by id. GET /fhir/r4/ServiceRequest/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. EHR order id of a service order.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ord-1-hd"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The ServiceRequest as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/ServiceRequest": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - ServiceRequest"
+        ],
+        "summary": "Searches ServiceRequest and returns a \"searchset\" Bundle. Required: _id. GET /fhir/r4/ServiceRequest?...",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "Required. One or more ids, comma separated.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as ServiceRequest:parameter[:TargetType], e.g. ServiceRequest:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/MedicationRequest/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - MedicationRequest"
+        ],
+        "summary": "Reads one MedicationRequest by id. GET /fhir/r4/MedicationRequest/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. EHR order id of a medication order.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ord-1-retacrit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The MedicationRequest as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/MedicationRequest": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - MedicationRequest"
+        ],
+        "summary": "Searches MedicationRequest and returns a \"searchset\" Bundle. Required: _id. GET /fhir/r4/MedicationRequest?...",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "Required. One or more ids, comma separated.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as MedicationRequest:parameter[:TargetType], e.g. MedicationRequest:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Encounter/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Encounter"
+        ],
+        "summary": "Reads one Encounter by id. GET /fhir/r4/Encounter/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. EHR encounter id.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "enc-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Encounter as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Encounter": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Encounter"
+        ],
+        "summary": "Searches Encounter and returns a \"searchset\" Bundle. Required: _id, or patient (or subject). GET /fhir/r4/Encounter?...",
+        "parameters": [
+          {
+            "name": "_id",
+            "in": "query",
+            "description": "Required: _id or patient (or subject). One or more ids, comma separated.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Required: _id or patient (or subject). Patient id, or \"Patient/{id}\".",
+            "schema": {
+              "type": "string"
+            },
+            "example": "pat-1"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Optional. Same as patient (some clients send subject).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Optional. Lower date bound: ge2026-01-01 (only ge and gt are used).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Encounter:parameter[:TargetType], e.g. Encounter:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Observation": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Observation"
+        ],
+        "summary": "Searches Observation and returns a \"searchset\" Bundle. Required: patient (or subject / beneficiary). GET /fhir/r4/Observation?...",
+        "parameters": [
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Required, or send subject. Patient id, or \"Patient/{id}\".",
+            "schema": {
+              "type": "string"
+            },
+            "example": "pat-1"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Optional. Same as patient (some clients send subject).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "Optional. Codes, comma separated, as system|code, e.g. http://loinc.org|39156-5.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Optional. Observation category, e.g. laboratory or vital-signs.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Optional. Lower date bound: ge2026-01-01 (only ge and gt are used).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Observation:parameter[:TargetType], e.g. Observation:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Condition": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Condition"
+        ],
+        "summary": "Searches Condition and returns a \"searchset\" Bundle. Required: patient (or subject / beneficiary). GET /fhir/r4/Condition?...",
+        "parameters": [
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Required, or send subject. Patient id, or \"Patient/{id}\".",
+            "schema": {
+              "type": "string"
+            },
+            "example": "pat-1"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Optional. Same as patient (some clients send subject).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "Optional. Codes, comma separated, as system|code, e.g. http://loinc.org|39156-5.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clinical-status",
+            "in": "query",
+            "description": "Optional. Condition clinical status, e.g. active.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Condition:parameter[:TargetType], e.g. Condition:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Procedure": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Procedure"
+        ],
+        "summary": "Searches Procedure and returns a \"searchset\" Bundle. Required: patient (or subject / beneficiary). GET /fhir/r4/Procedure?...",
+        "parameters": [
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Required, or send subject. Patient id, or \"Patient/{id}\".",
+            "schema": {
+              "type": "string"
+            },
+            "example": "pat-1"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Optional. Same as patient (some clients send subject).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "description": "Optional. Codes, comma separated, as system|code, e.g. http://loinc.org|39156-5.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Optional. Lower date bound: ge2026-01-01 (only ge and gt are used).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as Procedure:parameter[:TargetType], e.g. Procedure:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/DocumentReference/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - DocumentReference"
+        ],
+        "summary": "Reads one DocumentReference by id. GET /fhir/r4/DocumentReference/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. EHR document id.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "doc-1-labs"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The DocumentReference as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/DocumentReference": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - DocumentReference"
+        ],
+        "summary": "Searches DocumentReference and returns a \"searchset\" Bundle. Required: patient (or subject / beneficiary). GET /fhir/r4/DocumentReference?...",
+        "parameters": [
+          {
+            "name": "patient",
+            "in": "query",
+            "description": "Required, or send subject. Patient id, or \"Patient/{id}\".",
+            "schema": {
+              "type": "string"
+            },
+            "example": "pat-1"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Optional. Same as patient (some clients send subject).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Optional. Document type as system|code, e.g. http://loinc.org|18748-4.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_include",
+            "in": "query",
+            "description": "Optional, repeatable. Related resources to add to the Bundle, as DocumentReference:parameter[:TargetType], e.g. DocumentReference:patient.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A FHIR Bundle of type searchset (application/fhir+json): total and the resources found, plus the _include ones. Nothing found = total 0 (still 200)."
+          },
+          "400": {
+            "description": "The required search parameter is missing. Body: a FHIR OperationOutcome (code required)."
+          },
+          "502": {
+            "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
+          }
+        }
+      }
+    },
+    "/fhir/r4/Binary/{id}": {
+      "get": {
+        "tags": [
+          "1. FHIR APIs - Binary"
+        ],
+        "summary": "Reads one Binary by id. GET /fhir/r4/Binary/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Required. EHR document id: the file of DocumentReference/{id}.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "doc-1-labs"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Binary as FHIR JSON (application/fhir+json)."
+          },
+          "404": {
+            "description": "The EHR has no such record. Body: a FHIR OperationOutcome (code not-found)."
           },
           "502": {
             "description": "The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome."
@@ -375,7 +1033,7 @@
           "description": "Required. A FHIR QuestionnaireResponse (subject = Patient/{id} is required).",
           "content": {
             "application/fhir+json": {
-              "schema": { },
+              "schema": {},
               "example": {
                 "resourceType": "QuestionnaireResponse",
                 "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
@@ -415,140 +1073,7 @@
               }
             },
             "application/json": {
-              "schema": { },
-              "example": {
-                "resourceType": "QuestionnaireResponse",
-                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
-                "status": "in-progress",
-                "subject": {
-                  "reference": "Patient/pat-1"
-                },
-                "authored": "2026-10-07T18:36:05Z",
-                "author": {
-                  "reference": "Practitioner/prac-1"
-                },
-                "extension": [
-                  {
-                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
-                    "valueReference": {
-                      "reference": "ServiceRequest/ord-1-hd"
-                    }
-                  },
-                  {
-                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
-                    "valueReference": {
-                      "reference": "Coverage/cov-1"
-                    }
-                  }
-                ],
-                "item": [
-                  {
-                    "linkId": "egfr",
-                    "text": "Most recent eGFR (mL/min/1.73 m2)",
-                    "answer": [
-                      {
-                        "valueDecimal": 9
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Saved. Body: the form as stored, with its new id; the Location header has its URL."
-          },
-          "400": {
-            "description": "The body is not a QuestionnaireResponse, or subject does not point to a patient. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse.subject must reference a Patient, e.g. 'Patient/pat-1'.\" } ] }."
-          },
-          "502": {
-            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
-        ],
-        "summary": "Returns all forms of a patient as a searchset Bundle (newest first).",
-        "parameters": [
-          {
-            "name": "patient",
-            "in": "query",
-            "description": "Required. Patient id or \"Patient/id\", e.g. pat-1.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A FHIR Bundle of type \"searchset\" with the forms of the patient (total 0 and no entry when there are none)."
-          },
-          "400": {
-            "description": "The patient parameter is missing. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse search requires the patient parameter.\" } ] }."
-          },
-          "502": {
-            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
-          }
-        }
-      }
-    },
-    "/fhir/r5/QuestionnaireResponse": {
-      "post": {
-        "tags": [
-          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
-        ],
-        "summary": "Creates a new form. Any id in the body is replaced by a server id. Returns 201 + Location header.",
-        "description": "Must be filled in the body: resourceType = \"QuestionnaireResponse\" and subject.reference = \"Patient/{patient id}\".\nThe order and the coverage the form is for are read from the DTR \"qr-context\" extensions, when present.",
-        "requestBody": {
-          "description": "Required. A FHIR QuestionnaireResponse (subject = Patient/{id} is required).",
-          "content": {
-            "application/fhir+json": {
-              "schema": { },
-              "example": {
-                "resourceType": "QuestionnaireResponse",
-                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
-                "status": "in-progress",
-                "subject": {
-                  "reference": "Patient/pat-1"
-                },
-                "authored": "2026-10-07T18:36:05Z",
-                "author": {
-                  "reference": "Practitioner/prac-1"
-                },
-                "extension": [
-                  {
-                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
-                    "valueReference": {
-                      "reference": "ServiceRequest/ord-1-hd"
-                    }
-                  },
-                  {
-                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
-                    "valueReference": {
-                      "reference": "Coverage/cov-1"
-                    }
-                  }
-                ],
-                "item": [
-                  {
-                    "linkId": "egfr",
-                    "text": "Most recent eGFR (mL/min/1.73 m2)",
-                    "answer": [
-                      {
-                        "valueDecimal": 9
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "application/json": {
-              "schema": { },
+              "schema": {},
               "example": {
                 "resourceType": "QuestionnaireResponse",
                 "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
@@ -653,7 +1178,7 @@
           "description": "Required. A FHIR QuestionnaireResponse.",
           "content": {
             "application/fhir+json": {
-              "schema": { },
+              "schema": {},
               "example": {
                 "resourceType": "QuestionnaireResponse",
                 "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
@@ -693,157 +1218,7 @@
               }
             },
             "application/json": {
-              "schema": { },
-              "example": {
-                "resourceType": "QuestionnaireResponse",
-                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
-                "status": "in-progress",
-                "subject": {
-                  "reference": "Patient/pat-1"
-                },
-                "authored": "2026-10-07T18:36:05Z",
-                "author": {
-                  "reference": "Practitioner/prac-1"
-                },
-                "extension": [
-                  {
-                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
-                    "valueReference": {
-                      "reference": "ServiceRequest/ord-1-hd"
-                    }
-                  },
-                  {
-                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
-                    "valueReference": {
-                      "reference": "Coverage/cov-1"
-                    }
-                  }
-                ],
-                "item": [
-                  {
-                    "linkId": "egfr",
-                    "text": "Most recent eGFR (mL/min/1.73 m2)",
-                    "answer": [
-                      {
-                        "valueDecimal": 9
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Replaced. Body: the form as stored."
-          },
-          "201": {
-            "description": "Created (the id was new). Body: the form as stored."
-          },
-          "400": {
-            "description": "The body is not a QuestionnaireResponse, or subject does not point to a patient, or the id in the body is not the id in the URL. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"required\", \"diagnostics\": \"QuestionnaireResponse.subject must reference a Patient, e.g. 'Patient/pat-1'.\" } ] }."
-          },
-          "502": {
-            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
-        ],
-        "summary": "Returns one stored form exactly as it was saved.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Required. Form id.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "qr-frm-235b7ad69e85"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The FHIR QuestionnaireResponse (content type application/fhir+json)."
-          },
-          "404": {
-            "description": "No form with this id. Body: a FHIR OperationOutcome, e.g. { \"resourceType\": \"OperationOutcome\", \"issue\": [ { \"severity\": \"error\", \"code\": \"not-found\", \"diagnostics\": \"QuestionnaireResponse/qr-9 was not found.\" } ] }."
-          },
-          "502": {
-            "description": "The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome."
-          }
-        }
-      }
-    },
-    "/fhir/r5/QuestionnaireResponse/{id}": {
-      "put": {
-        "tags": [
-          "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"
-        ],
-        "summary": "Creates (201) or replaces (200) the form with this id. The body id, if present, must equal the URL id.",
-        "description": "Must be filled in the body: resourceType = \"QuestionnaireResponse\" and subject.reference = \"Patient/{patient id}\".\nSend the whole form each time: it replaces the stored one.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Required. Form id chosen by the caller, e.g. \"qr-frm-235b7ad69e85\".",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "qr-frm-235b7ad69e85"
-          }
-        ],
-        "requestBody": {
-          "description": "Required. A FHIR QuestionnaireResponse.",
-          "content": {
-            "application/fhir+json": {
-              "schema": { },
-              "example": {
-                "resourceType": "QuestionnaireResponse",
-                "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
-                "status": "in-progress",
-                "subject": {
-                  "reference": "Patient/pat-1"
-                },
-                "authored": "2026-10-07T18:36:05Z",
-                "author": {
-                  "reference": "Practitioner/prac-1"
-                },
-                "extension": [
-                  {
-                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
-                    "valueReference": {
-                      "reference": "ServiceRequest/ord-1-hd"
-                    }
-                  },
-                  {
-                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context",
-                    "valueReference": {
-                      "reference": "Coverage/cov-1"
-                    }
-                  }
-                ],
-                "item": [
-                  {
-                    "linkId": "egfr",
-                    "text": "Most recent eGFR (mL/min/1.73 m2)",
-                    "answer": [
-                      {
-                        "valueDecimal": 9
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "application/json": {
-              "schema": { },
+              "schema": {},
               "example": {
                 "resourceType": "QuestionnaireResponse",
                 "questionnaire": "http://example.org/fhir/Questionnaire/dialysis-incenter-hd",
@@ -931,26 +1306,6 @@
       }
     },
     "/fhir/r4/.well-known/smart-configuration": {
-      "get": {
-        "tags": [
-          "3. SMART launch context - called by payer DTR apps"
-        ],
-        "summary": "SMART discovery document. The app calls this first, with the \"iss\" it received.",
-        "responses": {
-          "200": {
-            "description": "The SMART configuration.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SmartConfigurationResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/fhir/r5/.well-known/smart-configuration": {
       "get": {
         "tags": [
           "3. SMART launch context - called by payer DTR apps"
@@ -1157,261 +1512,7 @@
         }
       }
     },
-    "/fhir/r5/auth/authorize": {
-      "get": {
-        "tags": [
-          "3. SMART launch context - called by payer DTR apps"
-        ],
-        "summary": "Authorize (query string). Redirects (302) to redirect_uri?code=...&state=...",
-        "parameters": [
-          {
-            "name": "response_type",
-            "in": "query",
-            "description": "Required. Must be \"code\".",
-            "schema": {
-              "type": "string",
-              "example": "code"
-            },
-            "example": "code"
-          },
-          {
-            "name": "client_id",
-            "in": "query",
-            "description": "The app's client id (not checked).",
-            "schema": {
-              "type": "string",
-              "example": "dtr-app"
-            },
-            "example": "dtr-app"
-          },
-          {
-            "name": "redirect_uri",
-            "in": "query",
-            "description": "Required. Where the code is sent: the app's redirect URL.",
-            "schema": {
-              "type": "string",
-              "example": "http://localhost:5174/callback"
-            },
-            "example": "http://localhost:5174/callback"
-          },
-          {
-            "name": "launch",
-            "in": "query",
-            "description": "Required. Launch id the app received from the EHR launch (the \"launch\" URL parameter; created by POST /internal/smart-launches).",
-            "schema": {
-              "type": "string",
-              "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
-            },
-            "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
-          },
-          {
-            "name": "scope",
-            "in": "query",
-            "description": "Requested scopes, separated by a space. Empty = \"launch patient/*.rs patient/QuestionnaireResponse.cu\".",
-            "schema": {
-              "type": "string",
-              "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
-            },
-            "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
-          },
-          {
-            "name": "state",
-            "in": "query",
-            "description": "Random value from the app, returned unchanged with the code.",
-            "schema": {
-              "type": "string",
-              "example": "af0ifjsldkj"
-            },
-            "example": "af0ifjsldkj"
-          }
-        ],
-        "responses": {
-          "302": {
-            "description": "Redirect to the app with a code (or error=invalid_request for an unknown launch)."
-          },
-          "400": {
-            "description": "redirect_uri missing.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/OAuthError"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OAuthError"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OAuthError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "3. SMART launch context - called by payer DTR apps"
-        ],
-        "summary": "Authorize sent as a form post (SMART \"authorize-post\"). Same answers as the GET.",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "response_type": {
-                    "type": "string",
-                    "description": "Required. Must be \"code\".",
-                    "example": "code"
-                  },
-                  "client_id": {
-                    "type": "string",
-                    "description": "The app's client id (not checked).",
-                    "example": "dtr-app"
-                  },
-                  "redirect_uri": {
-                    "type": "string",
-                    "description": "Required. Where the code is sent: the app's redirect URL.",
-                    "example": "http://localhost:5174/callback"
-                  },
-                  "launch": {
-                    "type": "string",
-                    "description": "Required. Launch id the app received from the EHR launch (the \"launch\" URL parameter; created by POST /internal/smart-launches).",
-                    "example": "6-jM9cmaBKMd4rFPAl-hQp_D"
-                  },
-                  "scope": {
-                    "type": "string",
-                    "description": "Requested scopes, separated by a space. Empty = \"launch patient/*.rs patient/QuestionnaireResponse.cu\".",
-                    "example": "launch openid fhirUser patient/*.rs patient/QuestionnaireResponse.cu"
-                  },
-                  "state": {
-                    "type": "string",
-                    "description": "Random value from the app, returned unchanged with the code.",
-                    "example": "af0ifjsldkj"
-                  }
-                }
-              },
-              "encoding": {
-                "response_type": {
-                  "style": "form"
-                },
-                "client_id": {
-                  "style": "form"
-                },
-                "redirect_uri": {
-                  "style": "form"
-                },
-                "launch": {
-                  "style": "form"
-                },
-                "scope": {
-                  "style": "form"
-                },
-                "state": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "302": {
-            "description": "Redirect to the app with a code (or an error)."
-          },
-          "400": {
-            "description": "redirect_uri missing.",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/OAuthError"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OAuthError"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OAuthError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/fhir/r4/auth/token": {
-      "post": {
-        "tags": [
-          "3. SMART launch context - called by payer DTR apps"
-        ],
-        "summary": "Exchanges the one-time code for the launch context: patient, encounter, fhirUser, fhirContext (orders, coverage)\nand appContext (from the payer's CRD card). The access_token is a random value; no endpoint checks it.",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "grant_type": {
-                    "type": "string",
-                    "description": "Required. Must be \"authorization_code\".",
-                    "example": "authorization_code"
-                  },
-                  "code": {
-                    "type": "string",
-                    "description": "Required. The code from authorize. It works once only.",
-                    "example": "Jx3n0Yd2kQ8mVw5ZrT1uLb7c"
-                  },
-                  "redirect_uri": {
-                    "type": "string",
-                    "description": "The same redirect_uri as in authorize (not checked).",
-                    "example": "http://localhost:5174/callback"
-                  }
-                }
-              },
-              "encoding": {
-                "grant_type": {
-                  "style": "form"
-                },
-                "code": {
-                  "style": "form"
-                },
-                "redirect_uri": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Launch context.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SmartTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Wrong grant type, or unknown / used / expired code.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OAuthError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/fhir/r5/auth/token": {
       "post": {
         "tags": [
           "3. SMART launch context - called by payer DTR apps"
@@ -1768,12 +1869,6 @@
             "description": "appContext from the payer's CRD card (which questionnaires to load, coverage-assertion-id). Passed to the app unchanged.",
             "nullable": true,
             "example": "{\"coverage-assertion-id\":\"702644806bf74c70aa65d2ca1a4a34b1\",\"questionnaire\":[\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\"]}"
-          },
-          "fhirVersion": {
-            "type": "string",
-            "description": "FHIR release the DTR app works with: \"r4\" (default) or \"r5\". Decides the \"iss\" returned, i.e. whether the app\nreads /fhir/r4 or /fhir/r5.",
-            "nullable": true,
-            "example": "r4"
           }
         },
         "additionalProperties": false,
@@ -1872,7 +1967,46 @@
       "name": "0. Metadata - CapabilityStatement (anyone)"
     },
     {
-      "name": "1. FHIR read and search - called by payers (CRD), payer DTR apps and the Payer Gateway"
+      "name": "1. FHIR APIs - Binary"
+    },
+    {
+      "name": "1. FHIR APIs - Condition"
+    },
+    {
+      "name": "1. FHIR APIs - Coverage"
+    },
+    {
+      "name": "1. FHIR APIs - DocumentReference"
+    },
+    {
+      "name": "1. FHIR APIs - Encounter"
+    },
+    {
+      "name": "1. FHIR APIs - Location"
+    },
+    {
+      "name": "1. FHIR APIs - MedicationRequest"
+    },
+    {
+      "name": "1. FHIR APIs - Observation"
+    },
+    {
+      "name": "1. FHIR APIs - Organization"
+    },
+    {
+      "name": "1. FHIR APIs - Patient"
+    },
+    {
+      "name": "1. FHIR APIs - Practitioner"
+    },
+    {
+      "name": "1. FHIR APIs - PractitionerRole"
+    },
+    {
+      "name": "1. FHIR APIs - Procedure"
+    },
+    {
+      "name": "1. FHIR APIs - ServiceRequest"
     },
     {
       "name": "2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app"

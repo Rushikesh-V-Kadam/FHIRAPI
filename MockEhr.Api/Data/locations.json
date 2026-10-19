@@ -1,0 +1,43 @@
+[
+  {
+    "locationId": "loc-main",
+    "npi": "1999999992",
+    "name": "Demo Dialysis Center - Main, in-center unit",
+    "placeOfServiceCode": "65",
+    "address": {
+      "line1": "300 Clinic Way",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "organizationId": "org-1"
+  },
+  {
+    "locationId": "loc-lakeside",
+    "npi": "1888999004",
+    "name": "Demo Dialysis Center - Lakeside, in-center unit",
+    "placeOfServiceCode": "65",
+    "address": {
+      "line1": "45 Lakeside Drive",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75218",
+      "country": "US"
+    },
+    "organizationId": "org-2"
+  },
+  {
+    "locationId": "loc-office",
+    "name": "Demo Dialysis Center - Nephrology office",
+    "placeOfServiceCode": "11",
+    "address": {
+      "line1": "300 Clinic Way",
+      "city": "Dallas",
+      "state": "TX",
+      "postalCode": "75201",
+      "country": "US"
+    },
+    "organizationId": "org-1"
+  }
+]

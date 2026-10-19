@@ -2,7 +2,7 @@
 
 **Project:** `FHIRAPI` (port 5100)
 **Standards:** FHIR R4 4.0.1, US Core 3.1.1, Da Vinci CRD / DTR / PAS 2.0.1, CDex 2.0.0, SMART App Launch 2.x, CDS Hooks 2.0.
-The same data is also served as **FHIR R5 5.0.0** under `/fhir/r5` (section 3.11); R4 stays the main API.
+The API serves FHIR R4 only.
 **Storage:** QuestionnaireResponse in the EHR's Oracle database (table `PA_QUESTIONNAIRE_RESPONSE`), read and saved through the EHR data API. This API has no database connection of its own. Everything else is read live from the EHR REST APIs and is not stored.
 
 ---
@@ -16,7 +16,6 @@ The EHR only has plain REST/JSON APIs. The Da Vinci guides require FHIR. This AP
    EHR REST APIs  <--- reads ----  |   FHIR API (5100)    |  <--- FHIR reads ---  Payer (during CRD)
    (5090)         --- forms  --->  |                               |  <--- FHIR + SMART -- DTR app (browser)
                                    |  /fhir/r4/...   (FHIR R4)     |  <--- FHIR reads ---  Payer Gateway (5200)
-                                   |  /fhir/r5/...   (FHIR R5 view)|  <--- R5 payers / R5 DTR apps (optional)
                                    |  /internal/...  (gateway only)|  <--- launches ---------- Payer Gateway
                                    +---------------+---------------+
                                                    |
@@ -28,8 +27,8 @@ There are three callers, and each one uses a different set of endpoints.
 
 | Caller | Why it calls | Endpoints it uses |
 |---|---|---|
-| **Payer Gateway** (our other solution) | Needs Patient, Coverage and orders as FHIR to build CRD, PAS and CDex calls | `/fhir/r4/{type}`, `/fhir/r4/{type}/{id}`, `/fhir/r4/QuestionnaireResponse/*`, `/internal/*` |
-| **Payer** (e.g. the mock Da Vinci payer) | During CRD it may need more data than the prefetch contained | `/fhir/r4/{type}`, `/fhir/r4/{type}/{id}` |
+| **Payer Gateway** (our other solution) | Needs Patient, Coverage and orders as FHIR to build CRD, PAS and CDex calls | `/fhir/r4/{Type}` and `/fhir/r4/{Type}/{id}` for each resource type (e.g. `/fhir/r4/Patient/pat-1`), `/fhir/r4/QuestionnaireResponse/*`, `/internal/*` |
+| **Payer** (e.g. the mock Da Vinci payer) | During CRD it may need more data than the prefetch contained | `/fhir/r4/{Type}`, `/fhir/r4/{Type}/{id}` for each resource type |
 | **DTR SMART app** (runs in the clinician's browser) | Pre-fills the payer's questionnaire from the chart and saves the completed form | `.well-known/smart-configuration`, `auth/authorize`, `auth/token`, `/fhir/r4/*`, `QuestionnaireResponse` |
 
 **No authentication is built into this API.** No caller sends a key or token, and nothing is checked. Authentication is added outside this code (section 2).
@@ -39,9 +38,9 @@ There are three callers, and each one uses a different set of endpoints.
 | Flow step | What happens | FHIR API endpoints involved |
 |---|---|---|
 | 0. Discovery | A client asks what this server can do | `GET /fhir/r4/metadata`, `GET /fhir/r4/.well-known/smart-configuration` |
-| 1. CRD (order-sign) | Gateway reads the order, patient and coverage, gets a fhirAuthorization token for the payer, and calls the payer's CDS service. The payer may read more data. | `GET /fhir/r4/{type}?_id=...&_include=...`, `GET /fhir/r4/Coverage?patient=...`, `POST /internal/access-tokens`, then payer calls `GET /fhir/r4/{type}/{id}` |
+| 1. CRD (order-sign) | Gateway reads the order, patient and coverage, gets a fhirAuthorization token for the payer, and calls the payer's CDS service. The payer may read more data. | `GET /fhir/r4/ServiceRequest?_id=...&_include=...` (or MedicationRequest), `GET /fhir/r4/Coverage?patient=...`, `POST /internal/access-tokens`, then payer calls e.g. `GET /fhir/r4/Patient/{id}` |
 | 2. DTR | The user opens the DTR link. The gateway creates a launch, the DTR app gets its launch context, reads data and saves the form. | `POST /internal/smart-launches`, `GET /fhir/r4/auth/authorize`, `POST /fhir/r4/auth/token`, `GET /fhir/r4/Observation?...`, `PUT /fhir/r4/QuestionnaireResponse/{id}` |
-| 3. PAS | The gateway builds the PAS Bundle and attaches the saved form | `GET /fhir/r4/{type}?_id=...`, `GET /fhir/r4/QuestionnaireResponse?patient=...` |
+| 3. PAS | The gateway builds the PAS Bundle and attaches the saved form | `GET /fhir/r4/ServiceRequest?_id=...`, `GET /fhir/r4/Location/{id}`, `GET /fhir/r4/Organization/{id}`, `GET /fhir/r4/QuestionnaireResponse?patient=...` |
 | 4. CDex | The gateway sends the documents and forms the payer asked for | `GET /fhir/r4/DocumentReference/{id}`, `GET /fhir/r4/Binary/{id}`, `GET /fhir/r4/QuestionnaireResponse/{id}` |
 
 ### Quick answers
@@ -49,8 +48,8 @@ There are three callers, and each one uses a different set of endpoints.
 | Endpoint | In one sentence | Required? |
 |---|---|---|
 | `GET /fhir/r4/metadata` | Tells clients which resources and searches this server supports | **Yes.** Every FHIR server must publish it |
-| `GET /fhir/r4/{type}/{id}` | Returns one resource, e.g. `Patient/pat-1` | **Yes** |
-| `GET /fhir/r4/{type}` | Search, e.g. `Coverage?patient=pat-1`. Returns a Bundle | **Yes.** See section 3.3 for why it seemed not to work |
+| `GET /fhir/r4/{Type}/{id}` (one endpoint per type, e.g. `/fhir/r4/Patient/{id}`) | Returns one resource, e.g. `Patient/pat-1` | **Yes** |
+| `GET /fhir/r4/{Type}` (one endpoint per type, e.g. `/fhir/r4/Coverage`) | Search, e.g. `Coverage?patient=pat-1`. Returns a Bundle | **Yes.** See section 3.3 for why it seemed not to work |
 | `POST /fhir/r4/QuestionnaireResponse` | Saves a new DTR form (server picks the id) | **Yes** (DTR 2.0.1 requires the app to be able to save forms) |
 | `PUT /fhir/r4/QuestionnaireResponse/{id}` | Saves or updates a DTR form with a known id | **Yes** (the DTR app saves again as the user edits) |
 | `POST /internal/access-tokens` | One-patient token the gateway sends to the payer as `fhirAuthorization` during CRD | **Recommended.** Not checked by this API until authentication is added |
@@ -164,32 +163,46 @@ No parameters, no body, no authentication.
 
 ---
 
-### 3.2 `GET /fhir/r4/{type}/{id}`: read one resource
+### 3.2 `GET /fhir/r4/{Type}/{id}`: read one resource
+
+**One endpoint per resource type.** Each type has its own route and its own action, e.g. `GET /fhir/r4/Patient/{id}`, `GET /fhir/r4/Coverage/{id}`, `GET /fhir/r4/Location/{id}`. Swagger shows them in one section, "1. FHIR APIs", with a sub-section per resource type (Patient, Coverage, ...). The endpoints are tagged "1. FHIR APIs - Patient" and so on; `wwwroot/swagger-ui/fhir-sections.js` and `.css` turn those tags into sub-sections. The URLs are the standard FHIR ones, so callers did not change. A type this API does not serve (e.g. `GET /fhir/r4/Claim/1`) still gets a 400 OperationOutcome `not-supported` (`FhirUnsupportedTypeController`, hidden from Swagger).
 
 **Why we use it.** This is the basic FHIR "read". Anyone who holds a reference such as `"Patient/pat-1"` or `"Coverage/cov-1"` fetches the resource with it. The API calls the matching EHR endpoint, converts the JSON to FHIR (US Core / CRD profile) and returns it.
 
 **Scenarios**
 
-1. **CRD, payer side.** The payer receives `order-sign` with a `DeviceRequest` that says `insurance: Coverage/cov-1`. If `Coverage` was not in the prefetch, the payer calls `GET /fhir/r4/Coverage/cov-1`.
+1. **CRD, payer side.** The payer receives `order-sign` with the orders. If `Coverage` was not in the prefetch, the payer searches `Coverage?patient=pat-1` and may then read one by id, e.g. `GET /fhir/r4/Coverage/cov-1`.
 2. **DTR app.** After login, the app reads the patient in context: `GET /fhir/r4/Patient/pat-1`.
 3. **CDex.** The gateway reads `DocumentReference/doc-knee-xray`, then downloads the file from `Binary/doc-knee-xray` to attach it.
 
-**Supported `{type}` values and the EHR call behind each**
+**Supported types and the EHR call behind each**
 
 | type | EHR call | Notes |
 |---|---|---|
 | Patient | `GET api/patients/{id}` | |
-| Coverage | `GET api/patients/{patientId}/insurances` | The EHR has no "coverage by id" call, so the API must already know the patient. It learns this when it reads the order or searches `Coverage?patient=`. |
+| Coverage | `GET api/patients/{patientId}/insurances` | The EHR has no "coverage by id" call, so the API must already know the patient. It learns this when `Coverage?patient=` is searched. The id is built by the API (see the note below). |
 | Practitioner | `GET api/practitioners/{id}` | |
 | PractitionerRole | `GET api/practitioners/{id}` | id is `role-{practitionerId}`, e.g. `role-prac-1` |
-| Organization | `GET api/organizations/{id}` | |
-| Location | `GET api/locations/{id}` | |
-| ServiceRequest / DeviceRequest / MedicationRequest | `GET api/orders/{id}` | The EHR `orderType` decides the type. Asking `ServiceRequest/ord-cpap` for a device order returns 404. |
-| Appointment | `GET api/appointments/{id}` | |
+| Organization | `GET api/organizations/{id}` | The client's organizations are parents: name, address and tax id (`http://terminology.hl7.org/NamingSystem/USEIN`, the system of the PAS TIN slice), no NPI. |
+| Organization `facility-{locationId}` | `GET api/locations/{locationId}` + `GET api/organizations/{organizationId}` | A **facility**. The client keeps each facility (its own NPI, name, address) as a location. Because a PAS `Claim.provider` can only be an Organization, every location is also served as `Organization/facility-{locationId}`: the location's name and address, the facility NPI, the parent's tax id, and `partOf` = the parent organization. The payer gateway uses it as `Claim.provider`. |
+| Location | `GET api/locations/{id}` | The facility NPI is in `identifier`; `managingOrganization` = `Organization/facility-{locationId}`. |
+| ServiceRequest / MedicationRequest | `GET api/orders/{id}` | The EHR `orderType` decides the type. Asking `ServiceRequest/ord-1-retacrit` for a medication order returns 404. The order's `locationId` becomes `ServiceRequest.locationReference`; a MedicationRequest has no location element, so it becomes `MedicationRequest.performer` = `Organization/facility-{locationId}`. |
 | Encounter | `GET api/encounters/{id}` | |
 | DocumentReference | `GET api/documents/{id}` | `attachment.url` points to `Binary/{id}` |
 | Binary | `GET api/documents/{id}/content` | The file, base64 encoded |
 | QuestionnaireResponse | EHR data API (`api/prior-auth-data/questionnaire-responses`) | Served by `QuestionnaireResponseController` (section 3.5) |
+
+**Coverage ids.** The EHR has no id for an insurance (no coverage id column), so the API builds one while mapping
+(`Helpers/CoverageIds`): `cov-` + the patient id + `-` + the first 16 hex characters of SHA-256(`payerId|policy number`),
+where the policy number is the insurance's `memberId`, e.g. `cov-pat-1-3f9a1c0e2b7d4a91`. The same insurance always gets
+the same id, family members on one policy get different ids, and the policy number never appears in a URL. Because the
+patient id is inside the id, `GET Coverage/{id}` reads that patient's insurances from the EHR and returns the one whose id
+matches: nothing is stored (no database table, no in-memory list), and it works right after a restart. The patient id must
+be at most 43 characters (FHIR ids are at most 64). `cov-1` in this guide's examples stands for such an id. The `memberId` is optional
+(`Coverage.subscriberId` is 0..1 in FHIR R4): an insurance without one gets an id from an empty policy number and is
+returned without `subscriberId`. Orders no longer carry `insurance`, because the EHR order has no coverage id; the
+Payer Gateway picks the patient's coverage from `Coverage?patient=`. If the payer gives the patient a new policy number,
+the coverage gets a new id.
 
 **Request**
 
@@ -224,27 +237,6 @@ Accept: application/fhir+json
 }
 ```
 
-**Another example:** `GET /fhir/r4/DeviceRequest/ord-cpap`
-
-```json
-{
-  "resourceType": "DeviceRequest",
-  "id": "ord-cpap",
-  "meta": { "profile": [ "http://hl7.org/fhir/us/davinci-crd/StructureDefinition/profile-devicerequest" ] },
-  "status": "draft",
-  "intent": "order",
-  "priority": "routine",
-  "codeCodeableConcept": { "coding": [ { "system": "https://bluebutton.cms.gov/resources/codesystem/hcpcs", "code": "E0601", "display": "CPAP device" } ] },
-  "subject": { "reference": "Patient/pat-1" },
-  "encounter": { "reference": "Encounter/enc-1" },
-  "occurrenceDateTime": "2026-10-15",
-  "authoredOn": "2026-10-01T10:00:00Z",
-  "requester": { "reference": "Practitioner/prac-1" },
-  "reasonCode": [ { "coding": [ { "system": "http://hl7.org/fhir/sid/icd-10-cm", "code": "G47.33", "display": "Obstructive sleep apnea" } ] } ],
-  "insurance": [ { "reference": "Coverage/cov-1" } ]
-}
-```
-
 **Errors**
 
 ```json
@@ -258,17 +250,19 @@ Accept: application/fhir+json
 { "resourceType": "OperationOutcome", "issue": [ { "severity": "error", "code": "not-supported", "diagnostics": "Read of Claim is not supported. Supported: Patient, Coverage, ..." } ] }
 ```
 
-**Code:** `Controllers/FhirResourceController.cs` → `Services/FhirReadService.cs` → `Mapping/*Mapper.cs`
+**Code:** `Controllers/FhirAdministrativeController.cs`, `FhirOrderController.cs`, `FhirClinicalController.cs` (one action per type, shared code in `FhirResourceControllerBase.cs`) → `Services/FhirReadService.cs` → `Mapping/*Mapper.cs`
 
 ---
 
-### 3.3 `GET /fhir/r4/{type}`: search
+### 3.3 `GET /fhir/r4/{Type}`: search
+
+**One endpoint per resource type**, e.g. `GET /fhir/r4/Coverage?patient=...`, `GET /fhir/r4/Observation?patient=...&code=...`. Each search action shows in Swagger only the parameters its type uses (table below), marked required or optional, plus `_include`.
 
 **What it's for.** The FHIR "search" interaction returns a `Bundle` (type `searchset`) with every match. It is how clients find data when they don't know the id: "all active coverages of this patient", "BMI and SpO2 observations", "the order plus its requester and patient in one call".
 
 **Scenarios**
 
-1. **CRD prefetch.** The payer's discovery response contains prefetch templates such as `Coverage?patient={{context.patientId}}&status=active` and `DeviceRequest?_id={{context.draftOrders.DeviceRequest.id}}&_include=DeviceRequest:patient&_include=DeviceRequest:requester`. The gateway fills in the values and runs each template here. The results go into the hook's `prefetch`.
+1. **CRD prefetch.** The payer's discovery response contains prefetch templates such as `Coverage?patient={{context.patientId}}&status=active` and `ServiceRequest?_id={{context.draftOrders.ServiceRequest.id}}&_include=ServiceRequest:patient&_include=ServiceRequest:requester`. The gateway fills in the values and runs each template here. The results go into the hook's `prefetch`.
 2. **DTR pre-population.** The payer's questionnaire has CQL that needs a BMI (LOINC 39156-5). The DTR app runs `GET /fhir/r4/Observation?patient=pat-1&code=http://loinc.org|39156-5`.
 3. **PAS.** The gateway reads all the orders in one prior-auth request: `ServiceRequest?_id=ord-mri-lumbar,ord-mri-brain`.
 
@@ -285,7 +279,7 @@ The old version had two problems:
 
 | type | Required | Optional |
 |---|---|---|
-| Patient, Practitioner, PractitionerRole, Organization, Location, ServiceRequest, DeviceRequest, MedicationRequest, Appointment | `_id` (comma-separated list allowed) | `_include` |
+| Patient, Practitioner, PractitionerRole, Organization, Location, ServiceRequest, MedicationRequest | `_id` (comma-separated list allowed) | `_include` |
 | Coverage | `patient` | `status` (e.g. `active`) |
 | Encounter | `_id` **or** `patient` | `date=ge2026-01-01` |
 | Observation | `patient` | `code`, `category`, `date=ge...` |
@@ -303,10 +297,8 @@ The old version had two problems:
 | Source | parameters |
 |---|---|
 | ServiceRequest | `patient`, `requester`, `performer`, `encounter`, `location`, `insurance` |
-| DeviceRequest | `patient`, `requester`, `performer`, `encounter`, `insurance` |
 | MedicationRequest | `patient`, `requester`, `encounter`, `intended-dispenser`, `insurance` |
 | Encounter | `patient`, `practitioner`, `service-provider`, `location` |
-| Appointment | `patient`, `practitioner`, `location` |
 | Coverage | `patient` / `beneficiary` |
 | PractitionerRole | `practitioner`, `organization` |
 
@@ -319,7 +311,7 @@ The old version had two problems:
 GET /fhir/r4/Coverage?patient=pat-1&status=active
 
 ### An order with its patient and requester (CRD prefetch)
-GET /fhir/r4/DeviceRequest?_id=ord-cpap&_include=DeviceRequest:patient&_include=DeviceRequest:requester
+GET /fhir/r4/MedicationRequest?_id=ord-1-retacrit&_include=MedicationRequest:patient&_include=MedicationRequest:requester
 
 ### Two LOINC codes (DTR pre-population)
 GET /fhir/r4/Observation?patient=pat-1&code=http://loinc.org|39156-5,http://loinc.org|59408-5
@@ -369,7 +361,7 @@ With `_include`, the Bundle has the match first, then the included resources wit
 
 ```json
 "entry": [
-  { "fullUrl": ".../DeviceRequest/ord-cpap", "resource": { "resourceType": "DeviceRequest", "id": "ord-cpap", "...": "..." }, "search": { "mode": "match" } },
+  { "fullUrl": ".../MedicationRequest/ord-1-retacrit", "resource": { "resourceType": "MedicationRequest", "id": "ord-1-retacrit", "...": "..." }, "search": { "mode": "match" } },
   { "fullUrl": ".../Patient/pat-1",          "resource": { "resourceType": "Patient", "id": "pat-1", "...": "..." },          "search": { "mode": "include" } },
   { "fullUrl": ".../Practitioner/prac-1",    "resource": { "resourceType": "Practitioner", "id": "prac-1", "...": "..." },    "search": { "mode": "include" } }
 ]
@@ -464,19 +456,19 @@ Content-Type: application/fhir+json
   "resourceType": "QuestionnaireResponse",
   "meta": { "profile": [ "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse" ] },
   "extension": [
-    { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "DeviceRequest/ord-cpap" } },
+    { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "MedicationRequest/ord-1-retacrit" } },
     { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "Coverage/cov-1" } }
   ],
-  "questionnaire": "http://example.org/fhir/Questionnaire/cpap-e0601",
+  "questionnaire": "http://example.org/fhir/Questionnaire/retacrit-esa",
   "status": "in-progress",
   "subject": { "reference": "Patient/pat-1" },
   "authored": "2026-10-01T10:55:00Z",
   "author": { "reference": "Practitioner/prac-1" },
   "item": [
-    { "linkId": "sleep-study", "item": [
-      { "linkId": "sleep-study-date", "answer": [ { "valueDate": "2026-08-10" } ] },
-      { "linkId": "ahi", "answer": [ {
-          "valueDecimal": 32,
+    { "linkId": "hemoglobin-lab", "item": [
+      { "linkId": "hemoglobin-date", "answer": [ { "valueDate": "2026-09-20" } ] },
+      { "linkId": "hemoglobin", "answer": [ {
+          "valueDecimal": 9.4,
           "extension": [ { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin",
                            "extension": [ { "url": "source", "valueCode": "auto" } ] } ]
       } ] }
@@ -500,7 +492,7 @@ Body: the stored resource, which is your JSON plus the server `id` and `meta.las
     "lastUpdated": "2026-10-01T10:55:02Z"
   },
   "extension": [ "... unchanged ..." ],
-  "questionnaire": "http://example.org/fhir/Questionnaire/cpap-e0601",
+  "questionnaire": "http://example.org/fhir/Questionnaire/retacrit-esa",
   "status": "in-progress",
   "subject": { "reference": "Patient/pat-1" },
   "item": [ "... unchanged ..." ],
@@ -516,15 +508,15 @@ What the EHR receives (`POST api/patients/pat-1/questionnaire-responses`), one r
 {
   "responseId": "",
   "patientId": "pat-1",
-  "orderId": "ord-cpap",
+  "orderId": "ord-1-retacrit",
   "coverageId": "cov-1",
-  "questionnaireUrl": "http://example.org/fhir/Questionnaire/cpap-e0601",
+  "questionnaireUrl": "http://example.org/fhir/Questionnaire/retacrit-esa",
   "status": "in-progress",
   "authoredDateTime": "2026-10-01T10:55:00Z",
   "authorPractitionerId": "prac-1",
   "answers": [
-    { "linkId": "sleep-study-date", "valueType": "date", "value": "2026-08-10" },
-    { "linkId": "ahi", "valueType": "decimal", "value": 32, "origin": "auto" },
+    { "linkId": "hemoglobin-date", "valueType": "date", "value": "2026-09-20" },
+    { "linkId": "hemoglobin", "valueType": "decimal", "value": 9.4, "origin": "auto" },
     { "linkId": "face-to-face", "valueType": "boolean", "value": true }
   ],
   "fhirJson": "{ ...the complete FHIR JSON... }"
@@ -552,22 +544,22 @@ What the EHR receives (`POST api/patients/pat-1/questionnaire-responses`), one r
 - If the id exists, the form is replaced and the response is **200**. The EHR copy is updated too (the stored `EHR_RESPONSE_ID` is reused).
 - If the body has an `id`, it must equal the URL id, otherwise **400**.
 
-**Scenario.** The clinician opens the CPAP form at 10:50 and the app saves `qr-cpap-1` as `in-progress`. At 11:00 they tick the attestation and submit, and the app `PUT`s the same id with `status: completed`. Later the gateway builds the PAS request for `ord-cpap`, finds `qr-cpap-1` and attaches it.
+**Scenario.** The clinician opens the Retacrit (ESA) form at 10:50 and the app saves `qr-retacrit-1` as `in-progress`. At 11:00 they tick the attestation and submit, and the app `PUT`s the same id with `status: completed`. Later the gateway builds the PAS request for `ord-1-retacrit`, finds `qr-retacrit-1` and attaches it.
 
 **PUT request**
 
 ```http
-PUT /fhir/r4/QuestionnaireResponse/qr-cpap-1
+PUT /fhir/r4/QuestionnaireResponse/qr-retacrit-1
 Content-Type: application/fhir+json
 
 {
   "resourceType": "QuestionnaireResponse",
-  "id": "qr-cpap-1",
+  "id": "qr-retacrit-1",
   "extension": [
-    { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "DeviceRequest/ord-cpap" } },
+    { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "MedicationRequest/ord-1-retacrit" } },
     { "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context", "valueReference": { "reference": "Coverage/cov-1" } }
   ],
-  "questionnaire": "http://example.org/fhir/Questionnaire/cpap-e0601",
+  "questionnaire": "http://example.org/fhir/Questionnaire/retacrit-esa",
   "status": "completed",
   "subject": { "reference": "Patient/pat-1" },
   "authored": "2026-10-01T11:00:00Z",
@@ -579,12 +571,12 @@ Content-Type: application/fhir+json
 }
 ```
 
-**PUT response:** `201 Created` the first time, then `200 OK`. The header is `Location: .../QuestionnaireResponse/qr-cpap-1` and the body is the stored form (with `meta.lastUpdated`).
+**PUT response:** `201 Created` the first time, then `200 OK`. The header is `Location: .../QuestionnaireResponse/qr-retacrit-1` and the body is the stored form (with `meta.lastUpdated`).
 
 **Why we use GET by id.** It reads a stored form back exactly as it was saved. The gateway calls it in **CDex** when the payer's Task asks for a completed form (`questionnaireResponseIds: ["qr-knee-1"]`). The DTR app calls it to reopen an in-progress form.
 
 ```http
-GET /fhir/r4/QuestionnaireResponse/qr-cpap-1
+GET /fhir/r4/QuestionnaireResponse/qr-retacrit-1
 ```
 
 **GET response 200:** the stored JSON. **404** if the id is unknown.
@@ -609,8 +601,8 @@ Our EHR can't launch SMART apps itself, so the Payer Gateway and this API do it 
 
 **Scenario**
 
-1. CRD returns "documentation needed" for `ord-cpap` with a DTR link (`/api/v1/pa/dtr/launch/{linkId}` on the gateway).
-2. The clinician clicks it. The gateway calls this endpoint with `patientId=pat-1`, `fhirContext=["DeviceRequest/ord-cpap","Coverage/cov-1"]` and the card's `appContext`.
+1. CRD returns "documentation needed" for `ord-1-retacrit` with a DTR link (`/api/v1/pa/dtr/launch/{linkId}` on the gateway).
+2. The clinician clicks it. The gateway calls this endpoint with `patientId=pat-1`, `fhirContext=["MedicationRequest/ord-1-retacrit","Coverage/cov-1"]` and the card's `appContext`.
 3. The gateway redirects the browser to `https://dtr.example.org/launch?iss=http://localhost:5100/fhir/r4&launch=Xq3...`.
 4. The DTR app continues with sections 3.8 to 3.10.
 
@@ -632,8 +624,8 @@ Content-Type: application/json
   "patientId": "pat-1",
   "userPractitionerId": "prac-1",
   "encounterId": "enc-1",
-  "fhirContext": [ "DeviceRequest/ord-cpap", "Coverage/cov-1" ],
-  "appContext": "{\"questionnaire\":[\"http://example.org/fhir/Questionnaire/cpap-e0601\"],\"coverage-assertion-id\":\"ca-7781\"}"
+  "fhirContext": [ "MedicationRequest/ord-1-retacrit", "Coverage/cov-1" ],
+  "appContext": "{\"questionnaire\":[\"http://example.org/fhir/Questionnaire/retacrit-esa\"],\"coverage-assertion-id\":\"ca-7781\"}"
 }
 ```
 
@@ -770,15 +762,15 @@ grant_type=authorization_code&code=Lm8Qf2...&redirect_uri=https%3A%2F%2Fdtr.exam
   "patient": "pat-1",
   "encounter": "enc-1",
   "fhirUser": "Practitioner/prac-1",
-  "fhirContext": [ { "reference": "DeviceRequest/ord-cpap" }, { "reference": "Coverage/cov-1" } ],
-  "appContext": "{\"questionnaire\":[\"http://example.org/fhir/Questionnaire/cpap-e0601\"],\"coverage-assertion-id\":\"ca-7781\"}",
+  "fhirContext": [ { "reference": "MedicationRequest/ord-1-retacrit" }, { "reference": "Coverage/cov-1" } ],
+  "appContext": "{\"questionnaire\":[\"http://example.org/fhir/Questionnaire/retacrit-esa\"],\"coverage-assertion-id\":\"ca-7781\"}",
   "need_patient_banner": false
 }
 ```
 
 The app then:
 
-1. reads `Patient/pat-1`, `DeviceRequest/ord-cpap` and `Coverage/cov-1` here;
+1. reads `Patient/pat-1`, `MedicationRequest/ord-1-retacrit` and `Coverage/cov-1` here;
 2. calls the gateway's `$questionnaire-package` to get the payer's Questionnaire and CQL;
 3. runs the CQL against `/fhir/r4/Observation?...`, `/Condition?...` and so on to pre-fill;
 4. saves with `PUT /fhir/r4/QuestionnaireResponse/{id}`.
@@ -792,60 +784,14 @@ The app then:
 
 ---
 
-### 3.11 FHIR R5: `/fhir/r5/...`
-
-Every `/fhir/r4` endpoint also answers under `/fhir/r5`: read, search, `metadata`, `QuestionnaireResponse`, and the SMART
-endpoints (`.well-known/smart-configuration`, `auth/authorize`, `auth/token`). Same data, same parameters, same
-security; only the FHIR release of the body differs.
-
-**How it works.** Inside the API everything stays R4: the mappers build R4 resources, exactly as before. For a call on
-`/fhir/r5`, `Versioning/R5Converter` converts the finished R4 resource (or Bundle) to R5 just before it is sent.
-The R4 answers did not change at all.
-
-| Resource | R4 (as built) | R5 (as sent on `/fhir/r5`) |
-|---|---|---|
-| Coverage | `payor[]`, `subscriberId` text, `class.value` text | `insurer`, `subscriberId[]` Identifier, `class.value` Identifier, `kind` = `insurance` (required in R5) |
-| Organization | `telecom[]`, `address[]` | `contact[]` with `telecom` and `address` |
-| ServiceRequest | `code`, `locationCode[]` + `locationReference[]`, `reasonCode[]` | `code.concept`, `location[]`, `reason[]` (CodeableReference) |
-| DeviceRequest | `codeCodeableConcept`, `performer`, `reasonCode[]` | `code.concept`, `performer.reference`, `reason[]` |
-| MedicationRequest | `medicationCodeableConcept`, `reasonCode[]`, `dispenseRequest.performer` | `medication.concept`, `reason[]`, `dispenseRequest.dispenser` |
-| Appointment | `serviceType[]` | `serviceType[].concept` |
-| Encounter | `status` finished / arrived, `class` Coding, `period`, `participant.individual`, `reasonCode[]`, `hospitalization` | `status` completed / in-progress, `class[]` CodeableConcept, `actualPeriod`, `participant.actor`, `reason[].value[]`, `admission` |
-| Procedure | `performedDateTime` | `occurrenceDateTime` |
-| CapabilityStatement | `fhirVersion` 4.0.1, US Core guide | `fhirVersion` 5.0.0, no US Core guide |
-| every resource | `meta.profile` = US Core / Da Vinci CRD profiles | no `meta.profile` (those profiles exist only for R4) |
-| every URL | `.../fhir/r4/...` | `.../fhir/r5/...` (fullUrl, Binary links, SMART URLs, Location header) |
-
-Patient, Practitioner, PractitionerRole, Location, Observation, Condition, DocumentReference, Binary, QuestionnaireResponse,
-Bundle and OperationOutcome need no change for the elements this API writes. R5 responses carry
-`Content-Type: application/fhir+json; fhirVersion=5.0`.
-
-**Forms (QuestionnaireResponse).** The elements DTR uses are identical in R4 and R5. A form saved through `/fhir/r5` is
-stored once, unchanged, and can be read through both releases. The Payer Gateway keeps reading forms through `/fhir/r4`.
-
-**SMART.** A token issued on either release works on both. `POST /internal/smart-launches` takes an optional
-`"fhirVersion": "r4" | "r5"` (default `r4`); with `r5` the returned `iss` is the R5 base URL, so the DTR app reads
-`/fhir/r5`. Any other value returns 400.
-
-**Settings.** `FhirServer:PublicBaseUrlR5` (default `http://localhost:5100/fhir/r5`), next to `FhirServer:PublicBaseUrl`.
-
-**Limits.**
-- There are no R5 versions of US Core or the Da Vinci profiles, so R5 answers claim no profile. They are valid R5
-  resources (checked against the R5 core definitions), not profile-conformant ones.
-- Only the elements the mappers write are converted. A new mapper field must be added to `R5Converter` too when R4
-  and R5 differ for it.
-- Errors (OperationOutcome) are the same in both releases and are sent with the R4 content type.
-
-
-### 3.12 Payers' own SMART DTR apps
+### 3.11 Payers' own SMART DTR apps
 
 When a payer brings its own SMART DTR app (`PA_PAYER.DTR_MODE = SmartApp`), the flow is the standard SMART EHR launch,
 with this API playing the EHR's part:
 
 1. Order-sign: the payer's CRD card has a `smart` link. The gateway saves it and gives the EHR `/api/v1/dtr/launch/{linkId}`.
-2. The user opens that link. The gateway calls `POST /internal/smart-launches` with the payer's FHIR release
-   (`fhirVersion`, from `PA_PAYER.FHIR_VERSION`), then redirects the browser to the payer's app with `iss`
-   (`/fhir/r4` or `/fhir/r5`) and `launch`.
+2. The user opens that link. The gateway calls `POST /internal/smart-launches`, then redirects the browser to the
+   payer's app with `iss` (the `/fhir/r4` base URL) and `launch`.
 3. The app reads `{iss}/.well-known/smart-configuration`, calls `auth/authorize`, then `auth/token`, and gets its context.
 4. It reads the chart, calls its payer for the questionnaire, and saves the completed `QuestionnaireResponse` here.
    The form names its order in the DTR `qr-context` extension.
@@ -873,9 +819,9 @@ Each class lives in its own file, with the same name as the class.
 | `Program.cs` | Dependency-injection wiring and the request pipeline, nothing else |
 | `Configuration/` | One settings class per `appsettings.json` section (`EhrSettings`, `FhirServerSettings`, `FhirMappingSettings`, `StorageSettings`). In `FhirMapping`, `MemberIdSystem` and `PayerIdSystem` are optional and empty by default: the member id and the payer id of an insurance are sent without a "system" unless a payer gives one |
 | `Constants/` | URIs and fixed values: code systems, profiles, DTR extension URLs, issue codes, headers, default scopes |
-| `Controllers/` | One controller per area: `MetadataController`, `FhirResourceController` (read + search), `QuestionnaireResponseController`, `SmartAuthController`, `InternalController` |
+| `Controllers/` | One controller per area: `MetadataController`; the FHIR read and search actions, one per resource type, in `FhirAdministrativeController` (Patient, Coverage, Practitioner, PractitionerRole, Organization, Location), `FhirOrderController` (ServiceRequest, MedicationRequest, Encounter) and `FhirClinicalController` (Observation, Condition, Procedure, DocumentReference, Binary), sharing `FhirResourceControllerBase`; `FhirUnsupportedTypeController` (OperationOutcome for other types); `QuestionnaireResponseController`, `SmartAuthController`, `InternalController` |
 | `Middleware/` | `FhirExceptionHandler` (every error → OperationOutcome, so controllers have no try/catch), correlation id middleware and handler |
-| `Services/` | `EhrClient` (HTTP to the EHR), `FhirReadService` (read one), `FhirSearchService` (search + `_include`), `ReferenceFinder` (references and patient of a resource), `QuestionnaireResponseService`, the SMART launch store, `CoveragePatientIndex` |
+| `Services/` | `EhrClient` (HTTP to the EHR), `FhirReadService` (read one), `FhirSearchService` (search + `_include`), `ReferenceFinder` (references and patient of a resource), `QuestionnaireResponseService`, the SMART launch store |
 | `Mapping/` | EHR → FHIR converters split by area: `AdministrativeMapper`, `OrderMapper`, `ClinicalMapper`; `QuestionnaireResponseMapper` (FHIR → EHR); `CodeSystemMapper` (CPT → URI and similar) |
 | `Repositories/Interfaces/` | `IQuestionnaireResponseRepository` and `QuestionnaireResponseRecord`: what the services use |
 | `Repositories/Database/` | `EhrApiQuestionnaireResponseRepository`: saves forms to the EHR database through the EHR data API |
@@ -893,6 +839,8 @@ Each class lives in its own file, with the same name as the class.
 |---|---|---|
 | Files | Several classes per file (`Security.cs` had 9, `FhirDataService.cs` had 4, `Resources.cs` had 20+) | One class per file, 130+ files in clear folders |
 | Search | Parameters read by hand, so Swagger couldn't send them (the "not working" issue) | Declared parameters, Swagger boxes, clear 400 messages |
+| Routes | Two generic actions, `GET /fhir/r4/{type}/{id}` and `GET /fhir/r4/{type}` | One read and one search action per resource type (`/fhir/r4/Patient/{id}`, `/fhir/r4/Coverage?...`, ...), each with its own parameters in Swagger. Same URLs for the callers |
+| Appointment | Read and search of Appointment (CRD `appointment-book` hook) | Removed: only the `order-sign` hook is used. `/fhir/r4/Appointment/...` answers 400 `not-supported`; the EHR needs no `api/appointments` API |
 | `_include` | Resources serialized to JSON and walked as a JSON tree | Typed `ReferenceFinder` switch, readable per resource type |
 | Error handling | try/catch in every action | One `FhirExceptionHandler` |
 | QuestionnaireResponse | In memory; body re-serialized, so unmodelled fields could be lost | EHR database through the EHR data API (or memory for local), exact JSON stored; EHR sync status tracked |
@@ -906,6 +854,7 @@ Each class lives in its own file, with the same name as the class.
 ## 7. Before production
 
 - Add authentication outside this code (section 2), and restrict CORS to the DTR apps' origins.
+- Make sure every facility location in the EHR has its NPI (payers identify the requesting facility by it), and every order has the location of its facility.
 - SMART launches are held in memory. That's fine for one instance; with several instances, move them to a shared store such as Redis, or to an EHR data API table (the class sits behind an interface).
-- Expose only `/fhir/r4/*` and `/fhir/r5/*` publicly. Keep `/internal/*` private.
+- Expose only `/fhir/r4/*` publicly. Keep `/internal/*` private.
 - Add a small job that re-sends forms with `EHR_SYNC_STATUS = 'FAILED'` to the EHR.

@@ -14,6 +14,10 @@ public class EhrLocationDto
     /// <example>Demo Dialysis Center - Main, in-center unit</example>
     public string? Name { get; set; }
 
+    /// <summary>NPI of the facility at this location. The client keeps facility NPIs on locations, not on organizations.</summary>
+    /// <example>1999999992</example>
+    public string? Npi { get; set; }
+
     /// <summary>CMS place of service code, e.g. 65 = ESRD treatment facility, 11 = office, 12 = home.</summary>
     /// <example>65</example>
     public string? PlaceOfServiceCode { get; set; }

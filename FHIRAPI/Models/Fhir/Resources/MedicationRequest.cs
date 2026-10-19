@@ -18,6 +18,8 @@ public class MedicationRequest : DomainResource
     public ResourceReference? Encounter { get; set; }
     public string? AuthoredOn { get; set; }
     public ResourceReference? Requester { get; set; }
+    /// <summary>Who gives the drug: the facility of the order's location (in-center drugs are given at the facility).</summary>
+    public ResourceReference? Performer { get; set; }
     public List<CodeableConcept> ReasonCode { get; set; } = new();
     public List<ResourceReference> Insurance { get; set; } = new();
     public List<Dosage> DosageInstruction { get; set; } = new();

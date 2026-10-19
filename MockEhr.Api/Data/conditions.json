@@ -1,0 +1,392 @@
+[
+  {
+    "conditionId": "cond-1-esrd",
+    "patientId": "pat-1",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2024-02-10"
+  },
+  {
+    "conditionId": "cond-1-anemia",
+    "patientId": "pat-1",
+    "code": "D63.1",
+    "codeSystem": "ICD10CM",
+    "display": "Anemia in chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2024-06-15"
+  },
+  {
+    "conditionId": "cond-1-shpt",
+    "patientId": "pat-1",
+    "code": "N25.81",
+    "codeSystem": "ICD10CM",
+    "display": "Secondary hyperparathyroidism of renal origin",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2025-03-01"
+  },
+  {
+    "conditionId": "cond-1-dialysis",
+    "patientId": "pat-1",
+    "code": "Z99.2",
+    "codeSystem": "ICD10CM",
+    "display": "Dependence on renal dialysis",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2024-02-20"
+  },
+  {
+    "conditionId": "cond-2-ckd5",
+    "patientId": "pat-2",
+    "code": "N18.5",
+    "codeSystem": "ICD10CM",
+    "display": "Chronic kidney disease, stage 5",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2025-11-04"
+  },
+  {
+    "conditionId": "cond-2-dm",
+    "patientId": "pat-2",
+    "code": "E11.22",
+    "codeSystem": "ICD10CM",
+    "display": "Type 2 diabetes mellitus with diabetic chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2012-03-01"
+  },
+  {
+    "conditionId": "cond-3-esrd",
+    "patientId": "pat-3",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-07-14"
+  },
+  {
+    "conditionId": "cond-3-anemia",
+    "patientId": "pat-3",
+    "code": "D63.1",
+    "codeSystem": "ICD10CM",
+    "display": "Anemia in chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-07-14"
+  },
+  {
+    "conditionId": "cond-3-iron",
+    "patientId": "pat-3",
+    "code": "D50.9",
+    "codeSystem": "ICD10CM",
+    "display": "Iron deficiency anemia, unspecified",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-09-21"
+  },
+  {
+    "conditionId": "cond-4-esrd",
+    "patientId": "pat-4",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2022-08-01"
+  },
+  {
+    "conditionId": "cond-5-aki",
+    "patientId": "pat-5",
+    "code": "N17.9",
+    "codeSystem": "ICD10CM",
+    "display": "Acute kidney failure, unspecified",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-09-10"
+  },
+  {
+    "conditionId": "cond-6-esrd",
+    "patientId": "pat-6",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2023-04-18"
+  },
+  {
+    "conditionId": "cond-7-esrd",
+    "patientId": "pat-7",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2021-08-01"
+  },
+  {
+    "conditionId": "cond-8-esrd",
+    "patientId": "pat-8",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-08-18"
+  },
+  {
+    "conditionId": "cond-8-anemia",
+    "patientId": "pat-8",
+    "code": "D63.1",
+    "codeSystem": "ICD10CM",
+    "display": "Anemia in chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-08-18"
+  },
+  {
+    "conditionId": "cond-8-htn",
+    "patientId": "pat-8",
+    "code": "I12.0",
+    "codeSystem": "ICD10CM",
+    "display": "Hypertensive chronic kidney disease with stage 5 CKD or ESRD",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2019-04-02"
+  },
+  {
+    "conditionId": "cond-9-ckd5",
+    "patientId": "pat-9",
+    "code": "N18.5",
+    "codeSystem": "ICD10CM",
+    "display": "Chronic kidney disease, stage 5",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2025-01-15"
+  },
+  {
+    "conditionId": "cond-9-dm",
+    "patientId": "pat-9",
+    "code": "E11.22",
+    "codeSystem": "ICD10CM",
+    "display": "Type 2 diabetes mellitus with diabetic chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2012-06-01"
+  },
+  {
+    "conditionId": "cond-10-esrd",
+    "patientId": "pat-10",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2022-09-12"
+  },
+  {
+    "conditionId": "cond-10-iron",
+    "patientId": "pat-10",
+    "code": "D50.9",
+    "codeSystem": "ICD10CM",
+    "display": "Iron deficiency anemia, unspecified",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-08-30"
+  },
+  {
+    "conditionId": "cond-10-anemia",
+    "patientId": "pat-10",
+    "code": "D63.1",
+    "codeSystem": "ICD10CM",
+    "display": "Anemia in chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2023-01-10"
+  },
+  {
+    "conditionId": "cond-11-esrd",
+    "patientId": "pat-11",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2020-03-05"
+  },
+  {
+    "conditionId": "cond-11-anemia",
+    "patientId": "pat-11",
+    "code": "D63.1",
+    "codeSystem": "ICD10CM",
+    "display": "Anemia in chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2020-06-11"
+  },
+  {
+    "conditionId": "cond-11-shpt",
+    "patientId": "pat-11",
+    "code": "N25.81",
+    "codeSystem": "ICD10CM",
+    "display": "Secondary hyperparathyroidism of renal origin",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2021-02-18"
+  },
+  {
+    "conditionId": "cond-11-dialysis",
+    "patientId": "pat-11",
+    "code": "Z99.2",
+    "codeSystem": "ICD10CM",
+    "display": "Dependence on renal dialysis",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2020-03-10"
+  },
+  {
+    "conditionId": "cond-12-aki",
+    "patientId": "pat-12",
+    "code": "N17.9",
+    "codeSystem": "ICD10CM",
+    "display": "Acute kidney failure, unspecified",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-10-02"
+  },
+  {
+    "conditionId": "cond-13-esrd",
+    "patientId": "pat-13",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2018-05-21"
+  },
+  {
+    "conditionId": "cond-14-esrd",
+    "patientId": "pat-14",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2023-11-08"
+  },
+  {
+    "conditionId": "cond-14-anemia",
+    "patientId": "pat-14",
+    "code": "D63.1",
+    "codeSystem": "ICD10CM",
+    "display": "Anemia in chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2024-01-20"
+  },
+  {
+    "conditionId": "cond-15-esrd",
+    "patientId": "pat-15",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2025-06-02"
+  },
+  {
+    "conditionId": "cond-15-gn",
+    "patientId": "pat-15",
+    "code": "N03.9",
+    "codeSystem": "ICD10CM",
+    "display": "Chronic nephritic syndrome with unspecified morphologic changes",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2021-10-14"
+  },
+  {
+    "conditionId": "cond-16-ckd5",
+    "patientId": "pat-16",
+    "code": "N18.5",
+    "codeSystem": "ICD10CM",
+    "display": "Chronic kidney disease, stage 5",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2025-11-03"
+  },
+  {
+    "conditionId": "cond-16-dm",
+    "patientId": "pat-16",
+    "code": "E11.22",
+    "codeSystem": "ICD10CM",
+    "display": "Type 2 diabetes mellitus with diabetic chronic kidney disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2010-02-12"
+  },
+  {
+    "conditionId": "cond-17-esrd",
+    "patientId": "pat-17",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-06-20"
+  },
+  {
+    "conditionId": "cond-17-dialysis",
+    "patientId": "pat-17",
+    "code": "Z99.2",
+    "codeSystem": "ICD10CM",
+    "display": "Dependence on renal dialysis",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-06-25"
+  },
+  {
+    "conditionId": "cond-18-ckd5",
+    "patientId": "pat-18",
+    "code": "N18.5",
+    "codeSystem": "ICD10CM",
+    "display": "Chronic kidney disease, stage 5",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2026-02-14"
+  },
+  {
+    "conditionId": "cond-18-pkd",
+    "patientId": "pat-18",
+    "code": "Q61.3",
+    "codeSystem": "ICD10CM",
+    "display": "Polycystic kidney, unspecified",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2015-05-20"
+  },
+  {
+    "conditionId": "cond-19-esrd",
+    "patientId": "pat-19",
+    "code": "N18.6",
+    "codeSystem": "ICD10CM",
+    "display": "End stage renal disease",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2024-04-11"
+  },
+  {
+    "conditionId": "cond-19-dialysis",
+    "patientId": "pat-19",
+    "code": "Z99.2",
+    "codeSystem": "ICD10CM",
+    "display": "Dependence on renal dialysis",
+    "clinicalStatus": "active",
+    "category": "problem-list-item",
+    "onsetDate": "2024-04-15"
+  }
+]

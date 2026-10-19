@@ -1,0 +1,46 @@
+/* Swagger UI: "1. FHIR APIs" shown as one section with a sub-section per FHIR resource type.
+   fhir-sections.js adds the heading and marks the resource sections; this file styles them. */
+
+.fhir-group-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 5px;
+    padding: 10px 20px 10px 10px;
+    border-bottom: 1px solid rgba(59, 65, 81, 0.3);
+    font-family: sans-serif;
+    font-size: 24px;
+    color: #3b4151;
+    cursor: pointer;
+    user-select: none;
+}
+
+.fhir-group-heading:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.fhir-group-heading .fhir-group-arrow {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    transform: rotate(180deg);   /* open: arrow up, like Swagger's own sections */
+    transition: transform 0.15s ease;
+}
+
+.fhir-group-collapsed .fhir-group-heading .fhir-group-arrow {
+    transform: none;              /* collapsed: arrow down */
+}
+
+/* resource sub-sections: indented, smaller title */
+.opblock-tag-section[data-fhir-sub] {
+    margin-left: 24px;
+}
+
+.opblock-tag-section[data-fhir-sub] > .opblock-tag {
+    font-size: 18px;
+    padding: 6px 20px 6px 10px;
+}
+
+.fhir-group-collapsed .opblock-tag-section[data-fhir-sub] {
+    display: none;
+}

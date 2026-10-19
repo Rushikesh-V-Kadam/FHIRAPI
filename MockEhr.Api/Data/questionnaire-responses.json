@@ -1,0 +1,71 @@
+[
+  {
+    "responseId": "qr-1",
+    "patientId": "pat-2",
+    "orderId": "ord-2-home-pd",
+    "coverageId": "cov-2",
+    "questionnaireUrl": "#adaptive-questionnaire",
+    "status": "completed",
+    "authoredDateTime": "2026-10-09T13:55:41Z",
+    "answers": [
+      {
+        "linkId": "home-modality",
+        "questionText": "Home dialysis modality requested",
+        "valueType": "coding",
+        "value": {
+          "code": "home-hd",
+          "system": "http://example.org/fhir/CodeSystem/dialysis-answers",
+          "display": "Home hemodialysis (e.g. NxStage)"
+        },
+        "origin": "manual"
+      },
+      {
+        "linkId": "egfr",
+        "questionText": "Most recent eGFR (mL/min/1.73 m2)",
+        "valueType": "decimal",
+        "value": 1.9,
+        "origin": "manual"
+      },
+      {
+        "linkId": "care-partner",
+        "questionText": "Is a trained care partner available for every home hemodialysis treatment?",
+        "valueType": "boolean",
+        "value": true,
+        "origin": "manual"
+      },
+      {
+        "linkId": "home-hd-access",
+        "questionText": "Vascular access for home hemodialysis",
+        "valueType": "coding",
+        "value": {
+          "code": "avf",
+          "system": "http://example.org/fhir/CodeSystem/dialysis-answers",
+          "display": "Arteriovenous fistula (AVF)"
+        },
+        "origin": "manual"
+      },
+      {
+        "linkId": "training-completed",
+        "questionText": "Has the patient (and care partner) completed home dialysis training?",
+        "valueType": "boolean",
+        "value": true,
+        "origin": "manual"
+      },
+      {
+        "linkId": "home-assessment",
+        "questionText": "Home assessment completed (space, water, electricity, supply storage)?",
+        "valueType": "boolean",
+        "value": true,
+        "origin": "manual"
+      },
+      {
+        "linkId": "attestation",
+        "questionText": "I attest that the information above is accurate and supported by the medical record.",
+        "valueType": "boolean",
+        "value": true,
+        "origin": "manual"
+      }
+    ],
+    "fhirJson": "{\"resourceType\":\"QuestionnaireResponse\",\"id\":\"qr-frm-005d4786073a\",\"meta\":{\"profile\":[\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse\"],\"lastUpdated\":\"2026-10-09T13:55:41Z\"},\"contained\":[{\"resourceType\":\"Questionnaire\",\"id\":\"adaptive-questionnaire\",\"url\":\"http://example.org/fhir/Questionnaire/home-dialysis-adaptive\",\"version\":\"1.0.0\",\"name\":\"home_dialysis_adaptive\",\"title\":\"Home Dialysis (CPT 90945 / 90999) - Adaptive Documentation\",\"status\":\"active\",\"extension\":[{\"url\":\"http://hl7.org/fhir/StructureDefinition/cqf-library\",\"valueCanonical\":\"http://example.org/fhir/Library/DialysisPrepopulation|1.0.0\"},{\"url\":\"http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-questionnaireAdaptive\",\"valueBoolean\":true}],\"item\":[{\"linkId\":\"home-modality\",\"text\":\"Home dialysis modality requested\",\"type\":\"choice\",\"required\":true,\"answerOption\":[{\"valueCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"capd\",\"display\":\"Peritoneal dialysis - CAPD (manual exchanges)\"}},{\"valueCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"apd\",\"display\":\"Peritoneal dialysis - APD / CCPD (cycler)\"}},{\"valueCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"home-hd\",\"display\":\"Home hemodialysis (e.g. NxStage)\"}}]},{\"linkId\":\"egfr\",\"text\":\"Most recent eGFR (mL/min/1.73 m2)\",\"type\":\"decimal\",\"required\":true,\"extension\":[{\"url\":\"http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression\",\"valueExpression\":{\"language\":\"text/cql\",\"expression\":\"\\u0022DialysisPrepopulation\\u0022.LatestEgfr\"}}]},{\"linkId\":\"care-partner\",\"text\":\"Is a trained care partner available for every home hemodialysis treatment?\",\"type\":\"boolean\",\"required\":true,\"enableWhen\":[{\"question\":\"home-modality\",\"operator\":\"=\",\"answerCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"home-hd\"}}]},{\"linkId\":\"home-hd-access\",\"text\":\"Vascular access for home hemodialysis\",\"type\":\"choice\",\"required\":true,\"enableWhen\":[{\"question\":\"home-modality\",\"operator\":\"=\",\"answerCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"home-hd\"}}],\"answerOption\":[{\"valueCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"avf\",\"display\":\"Arteriovenous fistula (AVF)\"}},{\"valueCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"avg\",\"display\":\"Arteriovenous graft (AVG)\"}},{\"valueCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"cvc\",\"display\":\"Central venous catheter (CVC)\"}}]},{\"linkId\":\"training-completed\",\"text\":\"Has the patient (and care partner) completed home dialysis training?\",\"type\":\"boolean\",\"required\":true},{\"linkId\":\"home-assessment\",\"text\":\"Home assessment completed (space, water, electricity, supply storage)?\",\"type\":\"boolean\",\"required\":true},{\"linkId\":\"attestation\",\"text\":\"I attest that the information above is accurate and supported by the medical record.\",\"type\":\"boolean\",\"required\":true}],\"meta\":{\"profile\":[\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaire-adapt-search\"]},\"subjectType\":[\"Patient\"],\"date\":\"2026-01-01\",\"publisher\":\"Example Health Plan\"}],\"extension\":[{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context\",\"valueReference\":{\"reference\":\"ServiceRequest/ord-2-home-pd\"}},{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/qr-context\",\"valueReference\":{\"reference\":\"Coverage/cov-2\"}}],\"questionnaire\":\"#adaptive-questionnaire\",\"status\":\"completed\",\"subject\":{\"reference\":\"Patient/pat-2\"},\"authored\":\"2026-10-09T13:55:41Z\",\"item\":[{\"linkId\":\"home-modality\",\"text\":\"Home dialysis modality requested\",\"answer\":[{\"extension\":[{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin\",\"extension\":[{\"url\":\"source\",\"valueCode\":\"manual\"}]}],\"valueCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"home-hd\",\"display\":\"Home hemodialysis (e.g. NxStage)\"}}]},{\"linkId\":\"egfr\",\"text\":\"Most recent eGFR (mL/min/1.73 m2)\",\"answer\":[{\"extension\":[{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin\",\"extension\":[{\"url\":\"source\",\"valueCode\":\"manual\"}]}],\"valueDecimal\":1.9}]},{\"linkId\":\"care-partner\",\"text\":\"Is a trained care partner available for every home hemodialysis treatment?\",\"answer\":[{\"extension\":[{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin\",\"extension\":[{\"url\":\"source\",\"valueCode\":\"manual\"}]}],\"valueBoolean\":true}]},{\"linkId\":\"home-hd-access\",\"text\":\"Vascular access for home hemodialysis\",\"answer\":[{\"extension\":[{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin\",\"extension\":[{\"url\":\"source\",\"valueCode\":\"manual\"}]}],\"valueCoding\":{\"system\":\"http://example.org/fhir/CodeSystem/dialysis-answers\",\"code\":\"avf\",\"display\":\"Arteriovenous fistula (AVF)\"}}]},{\"linkId\":\"training-completed\",\"text\":\"Has the patient (and care partner) completed home dialysis training?\",\"answer\":[{\"extension\":[{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin\",\"extension\":[{\"url\":\"source\",\"valueCode\":\"manual\"}]}],\"valueBoolean\":true}]},{\"linkId\":\"home-assessment\",\"text\":\"Home assessment completed (space, water, electricity, supply storage)?\",\"answer\":[{\"extension\":[{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin\",\"extension\":[{\"url\":\"source\",\"valueCode\":\"manual\"}]}],\"valueBoolean\":true}]},{\"linkId\":\"attestation\",\"text\":\"I attest that the information above is accurate and supported by the medical record.\",\"answer\":[{\"extension\":[{\"url\":\"http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/information-origin\",\"extension\":[{\"url\":\"source\",\"valueCode\":\"manual\"}]}],\"valueBoolean\":true}]}]}"
+  }
+]

@@ -74,10 +74,6 @@ public class PayerRow
     /// <example>30</example>
     public int? TimeoutSeconds { get; set; }
 
-    /// <summary>R4 | R5: FHIR release the payer works in. Empty = R4. Column FHIR_VERSION, VARCHAR2(5).</summary>
-    /// <example>R4</example>
-    public string? FhirVersion { get; set; }
-
     /// <summary>Forms (the EHR shows the payer's questions) | SmartApp (the payer's own SMART DTR app). Empty = Forms. Column DTR_MODE, VARCHAR2(10).</summary>
     /// <example>Forms</example>
     public string? DtrMode { get; set; }

@@ -10,7 +10,7 @@ public class EhrOrganizationDto
     /// <example>org-1</example>
     public string OrganizationId { get; set; } = string.Empty;
 
-    /// <summary>National Provider Identifier (10 digits). Needed for prior authorization requests (PAS).</summary>
+    /// <summary>Optional NPI (10 digits). The client's organizations are parents without an NPI; facility NPIs are on the locations.</summary>
     /// <example>1999999992</example>
     public string? Npi { get; set; }
 

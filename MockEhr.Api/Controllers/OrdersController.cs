@@ -9,7 +9,7 @@ using MockEhr.Api.Storage;
 namespace MockEhr.Api.Controllers;
 
 /// <summary>
-/// Orders (service, device, medication) and the CRD coverage decision the Payer Gateway writes back for each order.
+/// Orders (service, medication) and the CRD coverage decision the Payer Gateway writes back for each order.
 /// </summary>
 [ApiController]
 [Route("api/orders")]
@@ -49,7 +49,7 @@ public class OrdersController : ControllerBase
 
     /// <summary>One order.</summary>
     /// <remarks>
-    /// The FHIR API turns the answer into a FHIR ServiceRequest, DeviceRequest or MedicationRequest, depending on orderType
+    /// The FHIR API turns the answer into a FHIR ServiceRequest or MedicationRequest, depending on orderType
     /// (GET /fhir/r4/ServiceRequest/{id} ...). This is the order the payer checks at order-sign.
     /// </remarks>
     /// <param name="id" example="ord-1-hd">EHR order id, e.g. ord-1-hd.</param>
@@ -269,9 +269,9 @@ public class OrdersController : ControllerBase
         {
             return "code and codeSystem (CPT, HCPCS, RXNORM) are required.";
         }
-        if (order.OrderType != "service" && order.OrderType != "device" && order.OrderType != "medication")
+        if (order.OrderType != "service" && order.OrderType != "medication")
         {
-            return "orderType must be service, device or medication.";
+            return "orderType must be service or medication.";
         }
         if (string.IsNullOrWhiteSpace(order.RequestType))
         {

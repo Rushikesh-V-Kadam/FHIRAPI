@@ -4,7 +4,6 @@ using FHIRAPI.Configuration;
 using FHIRAPI.Constants;
 using FHIRAPI.Helpers;
 using FHIRAPI.Services;
-using FHIRAPI.Versioning;
 
 namespace FHIRAPI.Controllers;
 
@@ -14,11 +13,9 @@ namespace FHIRAPI.Controllers;
 /// Every FHIR server must publish one. It tells a client (payer, DTR app, Payer Gateway) which resource types
 /// can be read and searched, which search parameters work, which writes are allowed (QuestionnaireResponse),
 /// and where the SMART authorize/token endpoints are. It is public: no token is needed to read it.
-/// GET /fhir/r5/metadata returns the same statement as FHIR R5 (fhirVersion 5.0.0, R5 URLs).
 /// </summary>
 [ApiController]
 [Route("fhir/r4")]
-[Route("fhir/r5")]
 [Produces(FhirMediaTypes.FhirJson)]
 [Tags("0. Metadata - CapabilityStatement (anyone)")]
 public class MetadataController : ControllerBase
@@ -94,7 +91,7 @@ public class MetadataController : ControllerBase
             }
         };
 
-        return FhirResults.Ok(capabilityStatement, FhirRelease.FromRequest(Request), _server);
+        return FhirResults.Ok(capabilityStatement);
     }
 
     /// <summary>One "rest.resource" entry: type, allowed interactions, search parameters.</summary>

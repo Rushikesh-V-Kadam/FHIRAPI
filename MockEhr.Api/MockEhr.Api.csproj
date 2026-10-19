@@ -3,7 +3,7 @@
   <!-- Test stand-in for the provider's EHR REST APIs (port 5090). Not deployed.
        Serves the read APIs the FHIR API converts, the EHR data API (api/prior-auth-data) through which the
        Payer Gateway and the FHIR API store their data in the EHR database, and add / edit APIs for the
-       React EHR app. Data is stored in Data/ehr-data.json. -->
+       React EHR app. Data is stored in Data/*.json, one file per resource; test data in Data/TestData. -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>

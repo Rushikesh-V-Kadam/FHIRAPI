@@ -6,7 +6,6 @@ using FHIRAPI.Helpers;
 using FHIRAPI.Models.Requests;
 using FHIRAPI.Models.Security;
 using FHIRAPI.Services;
-using FHIRAPI.Versioning;
 
 namespace FHIRAPI.Controllers;
 
@@ -15,7 +14,7 @@ namespace FHIRAPI.Controllers;
 ///   GET       {fhir}/.well-known/smart-configuration   where to authorize and get the context
 ///   GET/POST  {fhir}/auth/authorize                    one-time code sent to the app's redirect_uri
 ///   POST      {fhir}/auth/token                        code -> launch context (patient, encounter, user, orders, appContext)
-/// {fhir} is /fhir/r4 or /fhir/r5 (the "iss" the app was launched with).
+/// {fhir} is /fhir/r4 (the "iss" the app was launched with).
 ///
 /// NO AUTHENTICATION: apps, redirect URIs, PKCE and scopes are not checked, and the access_token returned is a random
 /// value no endpoint checks. These endpoints exist only because a SMART app gets its patient / orders / questionnaire
@@ -23,7 +22,6 @@ namespace FHIRAPI.Controllers;
 /// </summary>
 [ApiController]
 [Route("fhir/r4")]
-[Route("fhir/r5")]
 [Tags("3. SMART launch context - called by payer DTR apps")]
 public class SmartAuthController : ControllerBase
 {
@@ -47,7 +45,7 @@ public class SmartAuthController : ControllerBase
     [ProducesResponseType(typeof(SmartConfigurationResponse), StatusCodes.Status200OK)]
     public ActionResult<SmartConfigurationResponse> GetConfiguration()
     {
-        string baseUrl = FhirRelease.FromRequest(Request).BaseUrl(_server);
+        string baseUrl = _server.BaseUrl;
         SmartConfigurationResponse configuration = new SmartConfigurationResponse();
         configuration.Issuer = baseUrl;
         configuration.AuthorizationEndpoint = baseUrl + "/auth/authorize";

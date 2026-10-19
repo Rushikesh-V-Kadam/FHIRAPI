@@ -7,7 +7,8 @@
 //     in the EHR database and read / save it through these endpoints (PriorAuthDataController)
 //   - the chart copy of DTR questionnaire responses written by the FHIR API
 //   - add / edit APIs used by the React EHR app (mock-ehr-ui)
-// All data is kept in one JSON file (MockEhr:DataFile, default Data/ehr-data.json), created from SeedData on first start.
+// Data is kept in the Data folder, one JSON file per resource (patients.json, orders.json ...). On the first start
+// (and on POST /api/admin/reset) the test data in Data/TestData is copied there.
 // Controllers only; registrations are in Startup.cs.
 // =====================================================================================================
 

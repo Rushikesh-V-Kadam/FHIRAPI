@@ -8,6 +8,11 @@ public class EhrPractitionerDto
 {
     public string PractitionerId { get; set; } = string.Empty;
     public string? Npi { get; set; }
+    /// <summary>
+    /// The full name in one field, for an EHR that does not split first and last name (the client's EHR gives only
+    /// the practitioner name and NPI). Used when FirstName and LastName are both empty.
+    /// </summary>
+    public string? Name { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? Prefix { get; set; }

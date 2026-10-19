@@ -10,11 +10,11 @@ using FHIRAPI.Models.Requests;
 namespace FHIRAPI.Services;
 
 /// <summary>
-/// Runs GET /fhir/r4/{type}?... searches against the EHR and returns a FHIR "searchset" Bundle.
+/// Runs the FHIR searches (GET /fhir/r4/Patient?..., /fhir/r4/Coverage?... and so on) against the EHR and returns a FHIR "searchset" Bundle.
 ///
 /// Required parameters per type (the EHR can only look data up this way):
 ///   Patient, Practitioner, PractitionerRole, Organization, Location,
-///   ServiceRequest, DeviceRequest, MedicationRequest, Appointment ....... _id
+///   ServiceRequest, MedicationRequest .................................. _id
 ///   Coverage, Observation, Condition, Procedure, DocumentReference ....... patient
 ///   Encounter ........................................................... _id or patient
 /// A search without its required parameter returns 400 with an OperationOutcome that says what is missing.
@@ -26,19 +26,17 @@ public class FhirSearchService
     private readonly AdministrativeMapper _admin;
     private readonly ClinicalMapper _clinical;
     private readonly CodeSystemMapper _codes;
-    private readonly CoveragePatientIndex _coverageIndex;
     private readonly FhirServerSettings _server;
 
     /// <summary>Created by dependency injection.</summary>
     public FhirSearchService(IEhrClient ehr, FhirReadService reader, AdministrativeMapper admin, ClinicalMapper clinical,
-        CodeSystemMapper codes, CoveragePatientIndex coverageIndex, IOptions<FhirServerSettings> server)
+        CodeSystemMapper codes, IOptions<FhirServerSettings> server)
     {
         _ehr = ehr;
         _reader = reader;
         _admin = admin;
         _clinical = clinical;
         _codes = codes;
-        _coverageIndex = coverageIndex;
         _server = server.Value;
     }
 
@@ -66,9 +64,7 @@ public class FhirSearchService
             case "Organization":
             case "Location":
             case "ServiceRequest":
-            case "DeviceRequest":
             case "MedicationRequest":
-            case "Appointment":
                 foreach (var id in RequireIds(type, search))
                 {
                     var resource = await _reader.ReadAsync(type, id, ct);
@@ -98,7 +94,7 @@ public class FhirSearchService
                 var insurances = await _ehr.GetInsurancesAsync(RequirePatient(type, search), search.Status, ct);
                 foreach (var insurance in insurances)
                 {
-                    _coverageIndex.Remember(insurance.CoverageId, insurance.PatientId);
+                    // the Coverage id is built while mapping (Helpers/CoverageIds) and holds the patient id
                     results.Add(_admin.ToCoverage(insurance));
                 }
                 break;
@@ -140,7 +136,7 @@ public class FhirSearchService
 
     /// <summary>
     /// Adds the resources named by _include values of the form "SourceType:parameter[:TargetType]", e.g.
-    /// "DeviceRequest:requester" or "MedicationRequest:requester:PractitionerRole".
+    /// "ServiceRequest:requester" or "MedicationRequest:requester:PractitionerRole".
     /// CRD prefetch templates use this to get an order and its practitioner, patient and coverage in one call.
     /// </summary>
     private async Task<List<Resource>> FindIncludesAsync(List<Resource> matches, List<string> includes, CancellationToken ct)

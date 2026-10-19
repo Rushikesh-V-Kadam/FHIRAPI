@@ -25,7 +25,5 @@ public static class FhirProfiles
 
     public const string CrdCoverage = Crd + "profile-coverage";
     public const string CrdServiceRequest = Crd + "profile-servicerequest";
-    public const string CrdDeviceRequest = Crd + "profile-devicerequest";
     public const string CrdMedicationRequest = Crd + "profile-medicationrequest";
-    public const string CrdAppointment = Crd + "profile-appointment";
 }

@@ -137,7 +137,7 @@ public class QuestionnaireResponseService
 
     /// <summary>
     /// Reads the id from a qr-context extension:
-    /// "Coverage/cov-1" when isCoverage is true, otherwise the order ("DeviceRequest/ord-cpap" -> "ord-cpap").
+    /// "Coverage/cov-1" when isCoverage is true, otherwise the order ("MedicationRequest/ord-1-retacrit" -> "ord-1-retacrit").
     /// </summary>
     private static string? FindContextId(QuestionnaireResponse form, bool isCoverage)
     {

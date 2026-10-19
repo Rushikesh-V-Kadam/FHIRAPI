@@ -8,7 +8,6 @@ using FHIRAPI.Constants;
 using FHIRAPI.Exceptions;
 using FHIRAPI.Helpers;
 using FHIRAPI.Services;
-using FHIRAPI.Versioning;
 
 namespace FHIRAPI.Controllers;
 
@@ -19,12 +18,9 @@ namespace FHIRAPI.Controllers;
 ///   GET  /fhir/r4/QuestionnaireResponse/{id}   read one form
 ///   GET  /fhir/r4/QuestionnaireResponse?patient=pat-1   all forms of a patient
 /// Callers: the DTR app saves forms; the Payer Gateway reads them for PAS and CDex.
-/// The same endpoints work under /fhir/r5. The QuestionnaireResponse elements DTR uses are the same in R4 and R5,
-/// so a form is stored once, as received, and can be read through either release.
 /// </summary>
 [ApiController]
 [Route("fhir/r4/QuestionnaireResponse")]
-[Route("fhir/r5/QuestionnaireResponse")]
 [Produces(FhirMediaTypes.FhirJson)]
 [Tags("2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app")]
 public class QuestionnaireResponseController : ControllerBase
@@ -57,9 +53,8 @@ public class QuestionnaireResponseController : ControllerBase
     public async Task<IActionResult> Create([FromBody, Required] JsonElement body, CancellationToken ct)
     {
         var (record, _) = await _service.SaveAsync(null, body, ct);
-        var release = FhirRelease.FromRequest(Request);
-        Response.Headers.Location = $"{release.BaseUrl(_server)}/QuestionnaireResponse/{record.Id}";
-        return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, release, _server, StatusCodes.Status201Created);
+        Response.Headers.Location = $"{_server.BaseUrl}/QuestionnaireResponse/{record.Id}";
+        return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, StatusCodes.Status201Created);
     }
 
     /// <summary>Creates (201) or replaces (200) the form with this id. The body id, if present, must equal the URL id.</summary>
@@ -83,9 +78,8 @@ public class QuestionnaireResponseController : ControllerBase
     public async Task<IActionResult> Update(string id, [FromBody, Required] JsonElement body, CancellationToken ct)
     {
         var (record, created) = await _service.SaveAsync(id, body, ct);
-        var release = FhirRelease.FromRequest(Request);
-        Response.Headers.Location = $"{release.BaseUrl(_server)}/QuestionnaireResponse/{record.Id}";
-        return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, release, _server, created ? StatusCodes.Status201Created : StatusCodes.Status200OK);
+        Response.Headers.Location = $"{_server.BaseUrl}/QuestionnaireResponse/{record.Id}";
+        return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, created ? StatusCodes.Status201Created : StatusCodes.Status200OK);
     }
 
     /// <summary>Returns one stored form exactly as it was saved.</summary>
@@ -103,7 +97,7 @@ public class QuestionnaireResponseController : ControllerBase
         var record = await _service.GetAsync(id, ct)
                      ?? throw new FhirException(404, IssueTypes.NotFound, $"QuestionnaireResponse/{id} was not found.");
 
-        return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, FhirRelease.FromRequest(Request), _server);
+        return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!);
     }
 
     /// <summary>Returns all forms of a patient as a searchset Bundle (newest first).</summary>
@@ -121,6 +115,6 @@ public class QuestionnaireResponseController : ControllerBase
         var patientId = patient?.Split('/').Last()
                         ?? throw new FhirException(400, IssueTypes.Required, "QuestionnaireResponse search requires the patient parameter.");
 
-        return FhirResults.Ok(await _service.SearchByPatientAsync(patientId, ct), FhirRelease.FromRequest(Request), _server);
+        return FhirResults.Ok(await _service.SearchByPatientAsync(patientId, ct));
     }
 }

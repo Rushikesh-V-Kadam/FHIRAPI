@@ -40,15 +40,15 @@ public class WriteBacksController : ControllerBase
         return Ok(newestFirst);
     }
 
-    /// <summary>Deletes all data (also what the EHR app added) and loads the seed data again.</summary>
-    /// <response code="200">Done: { "status": "reset", "file": "path of the data file" }.</response>
+    /// <summary>Deletes all data (also what the EHR app added) and loads the test data (Data/TestData) again.</summary>
+    /// <response code="200">Done: { "status": "reset", "folder": "path of the data folder" }.</response>
     [Tags(SwaggerGroups.MockUi)]
     [HttpPost("api/admin/reset")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Reset()
     {
         _store.Reset();
-        return Ok(new Dictionary<string, string> { { "status", "reset" }, { "file", _store.GetFilePath() } });
+        return Ok(new Dictionary<string, string> { { "status", "reset" }, { "folder", _store.GetDataFolder() } });
     }
 
     /// <summary>Opens Swagger UI when the root URL is browsed.</summary>

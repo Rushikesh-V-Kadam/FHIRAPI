@@ -1,0 +1,79 @@
+[
+  {
+    "practitionerId": "prac-1",
+    "npi": "1111111112",
+    "firstName": "Maria",
+    "lastName": "Santos",
+    "prefix": "Dr.",
+    "specialty": {
+      "code": "207RN0300X",
+      "codeSystem": "NUCC",
+      "display": "Nephrology"
+    },
+    "organizationId": "org-1",
+    "phone": "214-555-0201",
+    "fax": "214-555-0291",
+    "active": true
+  },
+  {
+    "practitionerId": "prac-3",
+    "npi": "1666777887",
+    "firstName": "Anita",
+    "lastName": "Patel",
+    "prefix": "Dr.",
+    "specialty": {
+      "code": "207RN0300X",
+      "codeSystem": "NUCC",
+      "display": "Nephrology"
+    },
+    "organizationId": "org-2",
+    "phone": "214-555-0203",
+    "fax": "214-555-0293",
+    "active": true
+  },
+  {
+    "practitionerId": "prac-2",
+    "npi": "1333444556",
+    "firstName": "Daniel",
+    "lastName": "Brooks",
+    "prefix": "Dr.",
+    "specialty": {
+      "code": "2086S0129X",
+      "codeSystem": "NUCC",
+      "display": "Vascular Surgery"
+    },
+    "phone": "214-555-0202",
+    "fax": "214-555-0292",
+    "active": true
+  },
+  {
+    "practitionerId": "prac-4",
+    "npi": "1444555662",
+    "firstName": "Kevin",
+    "lastName": "Wright",
+    "prefix": "Dr.",
+    "specialty": {
+      "code": "207R00000X",
+      "codeSystem": "NUCC",
+      "display": "Internal Medicine (primary care)"
+    },
+    "phone": "214-555-0204",
+    "fax": "214-555-0294",
+    "active": true
+  },
+  {
+    "practitionerId": "prac-5",
+    "npi": "1777888995",
+    "firstName": "Emily",
+    "lastName": "Chen",
+    "prefix": "Dr.",
+    "specialty": {
+      "code": "208M00000X",
+      "codeSystem": "NUCC",
+      "display": "Hospitalist"
+    },
+    "phone": "214-555-0205",
+    "fax": "214-555-0295",
+    "active": true
+  }
+]

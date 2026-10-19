@@ -6,7 +6,6 @@ using FHIRAPI.Constants;
 using FHIRAPI.Models.Requests;
 using FHIRAPI.Models.Security;
 using FHIRAPI.Services;
-using FHIRAPI.Versioning;
 
 namespace FHIRAPI.Controllers;
 
@@ -82,11 +81,11 @@ public class InternalController : ControllerBase
     /// <summary>
     /// Creates a SMART launch context for a DTR app (patient, user, encounter, orders/coverage, appContext).
     /// The gateway then redirects the browser to {DTR app}?iss={iss}&amp;launch={launchId}.
-    /// "iss" is the R4 base URL, or the R5 base URL when the request says fhirVersion = "r5".
+    /// "iss" is the FHIR R4 base URL (FhirServer:PublicBaseUrl).
     /// </summary>
-    /// <param name="request">Required. patientId must be filled; user, encounter, fhirContext, appContext and fhirVersion are optional.</param>
+    /// <param name="request">Required. patientId must be filled; user, encounter, fhirContext and appContext are optional.</param>
     /// <response code="200">The launch id and iss.</response>
-    /// <response code="400">patientId is missing, or fhirVersion is not "r4" or "r5".</response>
+    /// <response code="400">patientId is missing.</response>
     [HttpPost("smart-launches")]
     [Consumes(FhirMediaTypes.Json)]
     [ProducesResponseType(typeof(SmartLaunchResponse), StatusCodes.Status200OK)]
@@ -98,25 +97,18 @@ public class InternalController : ControllerBase
             return BadRequest(new OAuthError("invalid_request", "patientId is required."));
         }
 
-        FhirRelease? release = FhirRelease.FromName(request.FhirVersion);
-        if (release == null)
-        {
-            return BadRequest(new OAuthError("invalid_request", "fhirVersion must be \"r4\" or \"r5\"."));
-        }
-
         SmartLaunch launch = new SmartLaunch();
         launch.PatientId = request.PatientId;
         launch.UserPractitionerId = request.UserPractitionerId;
         launch.EncounterId = request.EncounterId;
         launch.FhirContext = request.FhirContext;
         launch.AppContext = request.AppContext;
-        launch.FhirVersion = release.Name;
         _launches.SaveLaunch(launch);
-        _logger.LogInformation("SMART launch {LaunchId} created for patient {PatientId}, {Release}", launch.LaunchId, request.PatientId, release.Name);
+        _logger.LogInformation("SMART launch {LaunchId} created for patient {PatientId}", launch.LaunchId, request.PatientId);
 
         SmartLaunchResponse response = new SmartLaunchResponse();
         response.LaunchId = launch.LaunchId;
-        response.Iss = release.BaseUrl(_server);
+        response.Iss = _server.BaseUrl;
         response.ExpiresAt = launch.ExpiresAt;
         return response;
     }

@@ -43,9 +43,6 @@ public class EhrClient : IEhrClient
     public Task<EhrOrderDto?> GetOrderAsync(string orderId, CancellationToken ct) =>
         GetAsync<EhrOrderDto>($"api/orders/{Esc(orderId)}", ct);
 
-    public Task<EhrAppointmentDto?> GetAppointmentAsync(string appointmentId, CancellationToken ct) =>
-        GetAsync<EhrAppointmentDto>($"api/appointments/{Esc(appointmentId)}", ct);
-
     public Task<EhrEncounterDto?> GetEncounterAsync(string encounterId, CancellationToken ct) =>
         GetAsync<EhrEncounterDto>($"api/encounters/{Esc(encounterId)}", ct);
 

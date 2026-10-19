@@ -19,7 +19,8 @@ public static class CodeSystems
 
     // ---- identifier systems
     public const string Npi = "http://hl7.org/fhir/sid/us-npi";
-    public const string TaxId = "urn:oid:2.16.840.1.113883.4.4";
+    /// <summary>US employer id (tax id / EIN). This is the system the PAS Requestor profile uses for its TIN slice.</summary>
+    public const string TaxId = "http://terminology.hl7.org/NamingSystem/USEIN";
 
     // ---- HL7 terminology
     public const string V2IdentifierType = "http://terminology.hl7.org/CodeSystem/v2-0203";

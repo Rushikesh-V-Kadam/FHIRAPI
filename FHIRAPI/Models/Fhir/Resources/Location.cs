@@ -9,6 +9,7 @@ public class Location : DomainResource
 {
     [JsonPropertyOrder(-100)] public override string ResourceType => "Location";
 
+    public List<Identifier> Identifier { get; set; } = new();
     public string? Status { get; set; }
     public string? Name { get; set; }
     public List<CodeableConcept> Type { get; set; } = new();

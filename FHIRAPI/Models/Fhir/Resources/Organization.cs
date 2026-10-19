@@ -14,4 +14,6 @@ public class Organization : DomainResource
     public string? Name { get; set; }
     public List<ContactPoint> Telecom { get; set; } = new();
     public List<Address> Address { get; set; } = new();
+    /// <summary>The parent organization (a facility is part of its parent).</summary>
+    public ResourceReference? PartOf { get; set; }
 }

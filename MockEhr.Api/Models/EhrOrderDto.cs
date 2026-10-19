@@ -2,7 +2,7 @@ namespace MockEhr.Api.Models;
 
 /// <summary>
 /// An order, as the EHR returns it from GET api/orders/{orderId}. Plain JSON (camelCase), not FHIR.
-/// orderType decides the FHIR resource the FHIR API builds: service = ServiceRequest, device = DeviceRequest,
+/// orderType decides the FHIR resource the FHIR API builds: service = ServiceRequest,
 /// medication = MedicationRequest. The payer decides on these values whether prior authorization is needed.
 /// </summary>
 public class EhrOrderDto
@@ -11,7 +11,7 @@ public class EhrOrderDto
     /// <example>ord-1-hd</example>
     public string OrderId { get; set; } = string.Empty;
 
-    /// <summary>service | device | medication.</summary>
+    /// <summary>service | medication.</summary>
     /// <example>service</example>
     public string OrderType { get; set; } = "service";
 

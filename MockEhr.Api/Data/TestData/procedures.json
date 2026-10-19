@@ -1,0 +1,92 @@
+[
+  {
+    "procedureId": "proc-1-avf",
+    "patientId": "pat-1",
+    "code": "36821",
+    "codeSystem": "CPT",
+    "display": "Arteriovenous fistula creation",
+    "status": "completed",
+    "performedDateTime": "2023-11-02T14:00:00Z",
+    "performerPractitionerId": "prac-2"
+  },
+  {
+    "procedureId": "proc-2-pdcath",
+    "patientId": "pat-2",
+    "code": "49324",
+    "codeSystem": "CPT",
+    "display": "Laparoscopic insertion of tunneled peritoneal dialysis catheter",
+    "status": "completed",
+    "performedDateTime": "2026-09-08T08:00:00Z",
+    "performerPractitionerId": "prac-2"
+  },
+  {
+    "procedureId": "proc-3-cvc",
+    "patientId": "pat-3",
+    "code": "36558",
+    "codeSystem": "CPT",
+    "display": "Insertion of tunneled central venous catheter",
+    "status": "completed",
+    "performedDateTime": "2026-07-15T10:00:00Z",
+    "performerPractitionerId": "prac-2"
+  },
+  {
+    "procedureId": "proc-6-avf",
+    "patientId": "pat-6",
+    "code": "36821",
+    "codeSystem": "CPT",
+    "display": "Arteriovenous fistula creation",
+    "status": "completed",
+    "performedDateTime": "2022-12-01T09:00:00Z",
+    "performerPractitionerId": "prac-2"
+  },
+  {
+    "procedureId": "proc-8-avg",
+    "patientId": "pat-8",
+    "code": "36830",
+    "codeSystem": "CPT",
+    "display": "Arteriovenous graft creation, non-autogenous",
+    "status": "completed",
+    "performedDateTime": "2026-08-25T13:00:00Z",
+    "performerPractitionerId": "prac-2"
+  },
+  {
+    "procedureId": "proc-9-pdcath",
+    "patientId": "pat-9",
+    "code": "49421",
+    "codeSystem": "CPT",
+    "display": "Insertion of tunneled intraperitoneal catheter for dialysis",
+    "status": "completed",
+    "performedDateTime": "2026-03-30T08:00:00Z",
+    "performerPractitionerId": "prac-2"
+  },
+  {
+    "procedureId": "proc-10-avf",
+    "patientId": "pat-10",
+    "code": "36821",
+    "codeSystem": "CPT",
+    "display": "Arteriovenous fistula creation",
+    "status": "completed",
+    "performedDateTime": "2022-07-19T10:00:00Z",
+    "performerPractitionerId": "prac-2"
+  },
+  {
+    "procedureId": "proc-11-avf",
+    "patientId": "pat-11",
+    "code": "36821",
+    "codeSystem": "CPT",
+    "display": "Arteriovenous fistula creation",
+    "status": "completed",
+    "performedDateTime": "2019-12-03T09:00:00Z",
+    "performerPractitionerId": "prac-2"
+  },
+  {
+    "procedureId": "proc-15-avf",
+    "patientId": "pat-15",
+    "code": "36821",
+    "codeSystem": "CPT",
+    "display": "Arteriovenous fistula creation",
+    "status": "completed",
+    "performedDateTime": "2025-04-10T11:00:00Z",
+    "performerPractitionerId": "prac-2"
+  }
+]
