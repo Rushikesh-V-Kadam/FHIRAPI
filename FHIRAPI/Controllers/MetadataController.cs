@@ -17,7 +17,7 @@ namespace FHIRAPI.Controllers;
 [ApiController]
 [Route("fhir/r4")]
 [Produces(FhirMediaTypes.FhirJson)]
-[Tags("0. Metadata - CapabilityStatement (anyone)")]
+[Tags("Metadata - CapabilityStatement (anyone)")]
 public class MetadataController : ControllerBase
 {
     /// <summary>Search parameters supported per type (anything not listed supports _id only).</summary>

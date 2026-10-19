@@ -22,7 +22,7 @@ namespace FHIRAPI.Controllers;
 [ApiController]
 [Route("fhir/r4/QuestionnaireResponse")]
 [Produces(FhirMediaTypes.FhirJson)]
-[Tags("2. DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app")]
+[Tags("DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app")]
 public class QuestionnaireResponseController : ControllerBase
 {
     private readonly QuestionnaireResponseService _service;

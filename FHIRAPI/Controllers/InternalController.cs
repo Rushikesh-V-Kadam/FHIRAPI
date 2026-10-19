@@ -17,7 +17,7 @@ namespace FHIRAPI.Controllers;
 [ApiController]
 [Route("internal")]
 [Produces(FhirMediaTypes.Json)]
-[Tags("4. Internal - called by the Payer Gateway only")]
+[Tags("Internal - called by the Payer Gateway only")]
 public class InternalController : ControllerBase
 {
     /// <summary>Longest lifetime of a fhirAuthorization token, in minutes.</summary>

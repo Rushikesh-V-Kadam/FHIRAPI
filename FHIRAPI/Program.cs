@@ -42,6 +42,7 @@ builder.Services.Configure<FhirServerSettings>(configuration.GetSection(FhirServ
 var mappingSettings = configuration.GetSection(FhirMappingSettings.SectionName).Get<FhirMappingSettings>() ?? new FhirMappingSettings();
 builder.Services.AddSingleton(mappingSettings);
 var storageSettings = configuration.GetSection(StorageSettings.SectionName).Get<StorageSettings>() ?? new StorageSettings();
+var swaggerSettings = configuration.GetSection(SwaggerSettings.SectionName).Get<SwaggerSettings>() ?? new SwaggerSettings();
 
 // ---------------------------------------------------------------- 2. EHR REST client
 builder.Services.AddTransient<CorrelationIdHandler>();
@@ -84,6 +85,11 @@ builder.Services.AddControllers(options =>
     // Accept "Content-Type: application/fhir+json" bodies (QuestionnaireResponse POST/PUT)
     var jsonInput = options.InputFormatters.OfType<SystemTextJsonInputFormatter>().First();
     jsonInput.SupportedMediaTypes.Add(FhirMediaTypes.FhirJson);
+    // Swagger:ShowDtrSections = false: the DTR forms and SMART launch sections are left out of Swagger (the endpoints still work)
+    if (!swaggerSettings.ShowDtrSections)
+    {
+        options.Conventions.Add(new HideDtrSectionsConvention());
+    }
 });
 builder.Services.AddExceptionHandler<FhirExceptionHandler>();   // errors -> OperationOutcome
 builder.Services.AddProblemDetails();
@@ -109,7 +115,6 @@ var app = builder.Build();
 // ---------------------------------------------------------------- request pipeline (order matters)
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
-app.UseStaticFiles();   // wwwroot/swagger-ui: FHIR sub-sections in Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI(SwaggerUiSetup.Configure);
 app.UseCors();

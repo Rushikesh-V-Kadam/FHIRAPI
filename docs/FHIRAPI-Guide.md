@@ -102,6 +102,8 @@ Keep `/internal/*` on the internal network: only the Payer Gateway calls it.
 
 ## 3. Endpoints
 
+> **Swagger sections.** Swagger UI shows the "FHIR APIs - ..." sections, then Internal and Metadata (sorted alphabetically). The sections "DTR forms (QuestionnaireResponse)" and "SMART launch context" are hidden for now (`Swagger:ShowDtrSections = false` in appsettings.json); their endpoints (sections 3.4 to 3.10) still work, because the Payer Gateway and payer DTR apps call them. Set it to `true` to show them again.
+
 ### 3.1 `GET /fhir/r4/metadata`: CapabilityStatement
 
 **Why we use it.** FHIR requires every server to publish a CapabilityStatement at `[base]/metadata`. It is the server's "menu": which resource types exist, which interactions work (read, search, create, update), which search parameters are supported, and where the SMART login endpoints are. Payers, the DTR app and test tools (Inferno, Touchstone, the HL7 validator) read it before they do anything else. Payers onboarding in 2027 will ask for it.
@@ -165,7 +167,7 @@ No parameters, no body, no authentication.
 
 ### 3.2 `GET /fhir/r4/{Type}/{id}`: read one resource
 
-**One endpoint per resource type.** Each type has its own route and its own action, e.g. `GET /fhir/r4/Patient/{id}`, `GET /fhir/r4/Coverage/{id}`, `GET /fhir/r4/Location/{id}`. Swagger shows them in one section, "1. FHIR APIs", with a sub-section per resource type (Patient, Coverage, ...). The endpoints are tagged "1. FHIR APIs - Patient" and so on; `wwwroot/swagger-ui/fhir-sections.js` and `.css` turn those tags into sub-sections. The URLs are the standard FHIR ones, so callers did not change. A type this API does not serve (e.g. `GET /fhir/r4/Claim/1`) still gets a 400 OperationOutcome `not-supported` (`FhirUnsupportedTypeController`, hidden from Swagger).
+**One endpoint per resource type.** Each type has its own route and its own action, e.g. `GET /fhir/r4/Patient/{id}`, `GET /fhir/r4/Coverage/{id}`, `GET /fhir/r4/Location/{id}`. Swagger shows one section per resource type, titled "FHIR APIs - Patient", "FHIR APIs - Coverage", and so on (sorted alphabetically). The URLs are the standard FHIR ones, so callers did not change. A type this API does not serve (e.g. `GET /fhir/r4/Claim/1`) still gets a 400 OperationOutcome `not-supported` (`FhirUnsupportedTypeController`, hidden from Swagger).
 
 **Why we use it.** This is the basic FHIR "read". Anyone who holds a reference such as `"Patient/pat-1"` or `"Coverage/cov-1"` fetches the resource with it. The API calls the matching EHR endpoint, converts the JSON to FHIR (US Core / CRD profile) and returns it.
 

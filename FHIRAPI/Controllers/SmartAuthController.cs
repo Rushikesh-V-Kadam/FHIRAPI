@@ -22,7 +22,7 @@ namespace FHIRAPI.Controllers;
 /// </summary>
 [ApiController]
 [Route("fhir/r4")]
-[Tags("3. SMART launch context - called by payer DTR apps")]
+[Tags("SMART launch context - called by payer DTR apps")]
 public class SmartAuthController : ControllerBase
 {
     /// <summary>Lifetime reported to the app (expires_in), in seconds.</summary>

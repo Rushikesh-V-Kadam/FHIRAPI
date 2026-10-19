@@ -34,7 +34,7 @@ public class FhirClinicalController : FhirResourceControllerBase
     /// <response code="400">The required search parameter is missing. Body: a FHIR OperationOutcome (code required).</response>
     /// <response code="502">The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
     [HttpGet("Observation")]
-    [Tags("1. FHIR APIs - Observation")]
+    [Tags("FHIR APIs - Observation")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
@@ -62,7 +62,7 @@ public class FhirClinicalController : FhirResourceControllerBase
     /// <response code="400">The required search parameter is missing. Body: a FHIR OperationOutcome (code required).</response>
     /// <response code="502">The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
     [HttpGet("Condition")]
-    [Tags("1. FHIR APIs - Condition")]
+    [Tags("FHIR APIs - Condition")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
@@ -89,7 +89,7 @@ public class FhirClinicalController : FhirResourceControllerBase
     /// <response code="400">The required search parameter is missing. Body: a FHIR OperationOutcome (code required).</response>
     /// <response code="502">The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
     [HttpGet("Procedure")]
-    [Tags("1. FHIR APIs - Procedure")]
+    [Tags("FHIR APIs - Procedure")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
@@ -112,7 +112,7 @@ public class FhirClinicalController : FhirResourceControllerBase
     /// <response code="404">The EHR has no such record. Body: a FHIR OperationOutcome (code not-found).</response>
     /// <response code="502">The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
     [HttpGet("DocumentReference/{id}")]
-    [Tags("1. FHIR APIs - DocumentReference")]
+    [Tags("FHIR APIs - DocumentReference")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
@@ -131,7 +131,7 @@ public class FhirClinicalController : FhirResourceControllerBase
     /// <response code="400">The required search parameter is missing. Body: a FHIR OperationOutcome (code required).</response>
     /// <response code="502">The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
     [HttpGet("DocumentReference")]
-    [Tags("1. FHIR APIs - DocumentReference")]
+    [Tags("FHIR APIs - DocumentReference")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
@@ -153,7 +153,7 @@ public class FhirClinicalController : FhirResourceControllerBase
     /// <response code="404">The EHR has no such record. Body: a FHIR OperationOutcome (code not-found).</response>
     /// <response code="502">The EHR could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
     [HttpGet("Binary/{id}")]
-    [Tags("1. FHIR APIs - Binary")]
+    [Tags("FHIR APIs - Binary")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
