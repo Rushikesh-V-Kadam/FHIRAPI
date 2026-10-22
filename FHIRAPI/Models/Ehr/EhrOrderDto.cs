@@ -20,10 +20,9 @@ public class EhrOrderDto
     public string? RequestedStartDate { get; set; }
     public string? RequestedEndDate { get; set; }
     public string? OrderingPractitionerId { get; set; }
-    public string? PerformerOrganizationId { get; set; }
     public string? PerformerPractitionerId { get; set; }
-    public string? PlaceOfServiceCode { get; set; }
-    public string? LocationId { get; set; }
+    // CLIENT-EHR: the client's orders carry no location, performing organization or place of service; the facility comes
+    // as orderLocationCode in the Payer Gateway PAS request.
     public List<EhrCode> Diagnoses { get; set; } = new();
     public string? Priority { get; set; }
     public string? Notes { get; set; }

@@ -1,8 +1,8 @@
 [
   {
     "locationId": "loc-main",
-    "npi": "1999999992",
     "name": "Demo Dialysis Center - Main, in-center unit",
+    "npi": "1999999992",
     "placeOfServiceCode": "65",
     "address": {
       "line1": "300 Clinic Way",
@@ -15,8 +15,8 @@
   },
   {
     "locationId": "loc-lakeside",
-    "npi": "1888999004",
     "name": "Demo Dialysis Center - Lakeside, in-center unit",
+    "npi": "1888999004",
     "placeOfServiceCode": "65",
     "address": {
       "line1": "45 Lakeside Drive",

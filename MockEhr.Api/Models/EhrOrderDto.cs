@@ -59,21 +59,12 @@ public class EhrOrderDto
     /// <example>prac-1</example>
     public string? OrderingPractitionerId { get; set; }
 
-    /// <summary>Organization that will give the service.</summary>
-    /// <example>org-1</example>
-    public string? PerformerOrganizationId { get; set; }
-
     /// <summary>Clinician who will give the service, if known.</summary>
     /// <example>prac-1</example>
     public string? PerformerPractitionerId { get; set; }
 
-    /// <summary>CMS place of service code, e.g. 65 = ESRD treatment facility, 12 = home.</summary>
-    /// <example>65</example>
-    public string? PlaceOfServiceCode { get; set; }
-
-    /// <summary>Location where the service is given.</summary>
-    /// <example>loc-main</example>
-    public string? LocationId { get; set; }
+    // Like the client's EHR, an order has no location, performing organization or place of service: the facility
+    // (and its place of service) is sent by the EHR as orderLocationCode in the Payer Gateway PAS request.
 
     /// <summary>Diagnoses the order is for (codeSystem ICD10CM), most important first.</summary>
     public List<EhrCode> Diagnoses { get; set; } = new();

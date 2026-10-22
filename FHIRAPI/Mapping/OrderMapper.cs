@@ -56,11 +56,9 @@ public class OrderMapper
         };
         request.AddProfile(FhirProfiles.CrdServiceRequest);
 
-        AddIfPresent(request.Performer, Ref("Organization", order.PerformerOrganizationId));
+        // CLIENT-EHR: the client's orders carry no location, organization or place of service (performer, locationReference
+        // and locationCode are 0..* in FHIR R4); only a performing practitioner is mapped when the EHR has one.
         AddIfPresent(request.Performer, Ref("Practitioner", order.PerformerPractitionerId));
-        AddIfPresent(request.LocationReference, Ref("Location", order.LocationId));
-        if (!string.IsNullOrEmpty(order.PlaceOfServiceCode))
-            request.LocationCode.Add(new CodeableConcept(CodeSystems.PlaceOfService, order.PlaceOfServiceCode));
 
         request.ReasonCode.AddRange(GetDiagnoses(order));
         if (!string.IsNullOrEmpty(order.Notes)) request.Note.Add(new Annotation { Text = order.Notes });
@@ -83,12 +81,7 @@ public class OrderMapper
         };
         request.AddProfile(FhirProfiles.CrdMedicationRequest);
 
-        // CLIENT-EHR: MedicationRequest has no location element: the facility of the order's location is the performer
-        // (Organization/facility-{locationId}); in-center drugs are given at that facility.
-        if (!string.IsNullOrEmpty(order.LocationId))
-        {
-            request.Performer = new ResourceReference("Organization", FacilityIds.ToOrganizationId(order.LocationId));
-        }
+        // CLIENT-EHR: the client's orders carry no location or facility, so MedicationRequest.performer (0..1) is not set.
 
         var medication = order.Medication;
         if (!string.IsNullOrEmpty(medication?.DoseText))

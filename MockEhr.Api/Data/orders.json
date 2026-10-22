@@ -13,9 +13,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -48,9 +45,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "D63.1",
@@ -91,9 +85,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N25.81",
@@ -130,9 +121,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N25.81",
@@ -169,9 +157,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N25.81",
@@ -208,9 +193,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2026-10-31",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N18.5",
@@ -238,8 +220,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-04-04",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "12",
     "diagnoses": [
       {
         "code": "N18.5",
@@ -268,9 +248,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -299,9 +276,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "D50.9",
@@ -338,9 +312,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "D63.1",
@@ -377,9 +348,6 @@
     "requestedStartDate": "2026-10-12",
     "requestedEndDate": "2026-10-30",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-lakeside",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -407,9 +375,6 @@
     "requestedStartDate": "2026-10-01",
     "requestedEndDate": "2026-10-28",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N17.9",
@@ -438,9 +403,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2026-12-18",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-lakeside",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -468,8 +430,6 @@
     "requestedStartDate": "2026-12-21",
     "requestedEndDate": "2027-06-20",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "12",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -498,9 +458,6 @@
     "requestedStartDate": "2026-10-05",
     "requestedEndDate": "2027-01-03",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -527,9 +484,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-01-17",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -558,9 +512,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-01-17",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "D63.1",
@@ -597,8 +548,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-04-18",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "12",
     "diagnoses": [
       {
         "code": "N18.5",
@@ -631,9 +580,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-01-17",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-lakeside",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -665,9 +611,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-01-17",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-lakeside",
     "diagnoses": [
       {
         "code": "D50.9",
@@ -704,9 +647,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-01-17",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -737,9 +677,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-01-17",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "D63.1",
@@ -776,9 +713,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-01-17",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N25.81",
@@ -810,9 +744,6 @@
     "requestedStartDate": "2026-10-15",
     "requestedEndDate": "2026-11-12",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N17.9",
@@ -841,9 +772,6 @@
     "requestedStartDate": "2026-10-26",
     "requestedEndDate": "2026-11-06",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-lakeside",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -871,9 +799,6 @@
     "requestedStartDate": "2026-10-19",
     "requestedEndDate": "2027-01-17",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -901,9 +826,6 @@
     "requestedStartDate": "2026-10-26",
     "requestedEndDate": "2026-12-04",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-lakeside",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -931,8 +853,6 @@
     "requestedStartDate": "2026-12-07",
     "requestedEndDate": "2027-06-06",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "12",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -960,8 +880,6 @@
     "requestedStartDate": "2026-11-02",
     "requestedEndDate": "2026-12-31",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "24",
     "diagnoses": [
       {
         "code": "N18.5",
@@ -990,8 +908,6 @@
     "requestedStartDate": "2026-11-09",
     "requestedEndDate": "2027-01-08",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "24",
     "diagnoses": [
       {
         "code": "N18.6",
@@ -1020,8 +936,6 @@
     "requestedStartDate": "2026-11-04",
     "requestedEndDate": "2026-12-31",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "24",
     "diagnoses": [
       {
         "code": "N18.5",
@@ -1050,9 +964,6 @@
     "requestedStartDate": "2026-11-23",
     "requestedEndDate": "2026-12-31",
     "orderingPractitionerId": "prac-1",
-    "performerOrganizationId": "org-1",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-main",
     "diagnoses": [
       {
         "code": "N18.5",
@@ -1080,9 +991,6 @@
     "requestedStartDate": "2026-10-26",
     "requestedEndDate": "2026-12-18",
     "orderingPractitionerId": "prac-3",
-    "performerOrganizationId": "org-2",
-    "placeOfServiceCode": "65",
-    "locationId": "loc-lakeside",
     "diagnoses": [
       {
         "code": "N18.6",
