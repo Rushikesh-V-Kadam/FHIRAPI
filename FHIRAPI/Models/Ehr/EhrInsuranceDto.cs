@@ -1,16 +1,20 @@
 namespace FHIRAPI.Models.Ehr;
 
 /// <summary>
-/// Insurance (coverage) from GET api/patients/{patientId}/insurances.
+/// Insurance (coverage) from GET api/insurances/{coverageId} (one) or GET api/patients/{patientId}/insurances (list).
 /// Plain EHR JSON (camelCase) - not FHIR.
-/// The EHR has no id for an insurance: the FHIR Coverage id is built from patientId + payerId + memberId
-/// (the policy number), see Helpers/CoverageIds.
 /// </summary>
 public class EhrInsuranceDto
 {
+    /// <summary>
+    /// The EHR's id of this insurance, unique in the EHR. It is the FHIR Coverage.id and the coverageId the EHR sends
+    /// to the Payer Gateway (order-sign, DTR, PAS).
+    /// </summary>
+    // CLIENT-EHR: the client sends its own unique coverage id.
+    public string CoverageId { get; set; } = string.Empty;
     public string PatientId { get; set; } = string.Empty;
     public string Status { get; set; } = "active";
-    /// <summary>Policy number / member id on the insurance card. Required: part of the Coverage id.</summary>
+    /// <summary>Policy number / member id on the insurance card (Coverage.subscriberId, optional).</summary>
     public string MemberId { get; set; } = string.Empty;
     public string PayerId { get; set; } = string.Empty;
     public string? PayerName { get; set; }

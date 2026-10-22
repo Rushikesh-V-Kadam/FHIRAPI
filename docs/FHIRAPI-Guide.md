@@ -182,7 +182,7 @@ No parameters, no body, no authentication.
 | type | EHR call | Notes |
 |---|---|---|
 | Patient | `GET api/patients/{id}` | |
-| Coverage | `GET api/patients/{patientId}/insurances` | The EHR has no "coverage by id" call, so the API must already know the patient. It learns this when `Coverage?patient=` is searched. The id is built by the API (see the note below). |
+| Coverage | `GET api/insurances/{coverageId}` (read) · `GET api/patients/{patientId}/insurances` (search `Coverage?patient=`) | `Coverage.id` is the EHR's own coverage id, unique in the EHR (see the note below). |
 | Practitioner | `GET api/practitioners/{id}` | |
 | PractitionerRole | `GET api/practitioners/{id}` | id is `role-{practitionerId}`, e.g. `role-prac-1` |
 | Organization | `GET api/organizations/{id}` | The client's organizations are parents: name, address and tax id (`http://terminology.hl7.org/NamingSystem/USEIN`, the system of the PAS TIN slice), no NPI. |
@@ -194,17 +194,12 @@ No parameters, no body, no authentication.
 | Binary | `GET api/documents/{id}/content` | The file, base64 encoded |
 | QuestionnaireResponse | EHR data API (`api/prior-auth-data/questionnaire-responses`) | Served by `QuestionnaireResponseController` (section 3.5) |
 
-**Coverage ids.** The EHR has no id for an insurance (no coverage id column), so the API builds one while mapping
-(`Helpers/CoverageIds`): `cov-` + the patient id + `-` + the first 16 hex characters of SHA-256(`payerId|policy number`),
-where the policy number is the insurance's `memberId`, e.g. `cov-pat-1-3f9a1c0e2b7d4a91`. The same insurance always gets
-the same id, family members on one policy get different ids, and the policy number never appears in a URL. Because the
-patient id is inside the id, `GET Coverage/{id}` reads that patient's insurances from the EHR and returns the one whose id
-matches: nothing is stored (no database table, no in-memory list), and it works right after a restart. The patient id must
-be at most 43 characters (FHIR ids are at most 64). `cov-1` in this guide's examples stands for such an id. The `memberId` is optional
-(`Coverage.subscriberId` is 0..1 in FHIR R4): an insurance without one gets an id from an empty policy number and is
-returned without `subscriberId`. Orders no longer carry `insurance`, because the EHR order has no coverage id; the
-Payer Gateway picks the patient's coverage from `Coverage?patient=`. If the payer gives the patient a new policy number,
-the coverage gets a new id.
+**Coverage ids.** The EHR sends its own coverage id, unique in the EHR (`coverageId` in order-sign, DTR and PAS of the
+Payer Gateway; e.g. `cov-1`). It is `Coverage.id`. `GET Coverage/{id}` reads that one insurance with
+`GET api/insurances/{coverageId}`; the insurance names its patient (`Coverage.beneficiary`). `Coverage?patient=` lists the
+patient's insurances with `GET api/patients/{patientId}/insurances`, each with its coverage id. Orders carry no
+`insurance`: the EHR sends the coverage id in the Payer Gateway request. The `memberId` is optional
+(`Coverage.subscriberId` is 0..1 in FHIR R4).
 
 **Request**
 

@@ -141,26 +141,17 @@ public class FhirReadService
     }
 
     /// <summary>
-    /// The EHR can only list a patient's insurances, so the patient of the coverage must be known first
-    /// - it is read from the Coverage id itself (Helpers/CoverageIds). The EHR has no insurance id either: each of the
-    /// patient's insurances gets its Coverage id built (Helpers/CoverageIds) and is compared with the id asked for.
+    /// One Coverage by the EHR's coverage id (unique in the EHR): the EHR returns exactly one insurance for it,
+    /// which already names its patient (Coverage.beneficiary). Null when the EHR has no such insurance (404).
     /// </summary>
+    // CLIENT-EHR: the EHR sends its own unique coverage id (coverageId of order-sign / DTR / PAS); read directly by it.
     private async Task<Resource?> ReadCoverageAsync(string coverageId, CancellationToken ct)
     {
-        string? patientId = CoverageIds.FindPatientId(coverageId);
-        if (patientId == null)
+        EhrInsuranceDto? insurance = await _ehr.GetInsuranceAsync(coverageId, ct);
+        if (insurance == null)
         {
             return null;
         }
-
-        var insurances = await _ehr.GetInsurancesAsync(patientId, null, ct);
-        foreach (var insurance in insurances)
-        {
-            if (CoverageIds.Build(insurance.PatientId, insurance.PayerId, insurance.MemberId) == coverageId)
-            {
-                return _admin.ToCoverage(insurance);
-            }
-        }
-        return null;
+        return _admin.ToCoverage(insurance);
     }
 }

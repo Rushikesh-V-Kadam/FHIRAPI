@@ -10,6 +10,8 @@ public interface IEhrClient
 {
     Task<EhrPatientDto?> GetPatientAsync(string patientId, CancellationToken ct);
     Task<List<EhrInsuranceDto>> GetInsurancesAsync(string patientId, string? status, CancellationToken ct);
+    /// <summary>One insurance by its EHR coverage id (unique in the EHR). Null when the EHR answers 404.</summary>
+    Task<EhrInsuranceDto?> GetInsuranceAsync(string coverageId, CancellationToken ct);
     Task<EhrPractitionerDto?> GetPractitionerAsync(string practitionerId, CancellationToken ct);
     Task<EhrOrganizationDto?> GetOrganizationAsync(string organizationId, CancellationToken ct);
     Task<EhrLocationDto?> GetLocationAsync(string locationId, CancellationToken ct);

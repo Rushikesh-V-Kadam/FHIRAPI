@@ -100,7 +100,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Required. Coverage id built by the FHIR API: cov-{patientId}-{16 hex characters} (the client's EHR has no insurance id). Take it from a Coverage search.",
+            "description": "Required. The EHR's coverage id (unique in the EHR), e.g. the coverageId the EHR sends to the Payer Gateway. The FHIR API reads it with GET api/insurances/{coverageId}.",
             "required": true,
             "schema": {
               "type": "string"

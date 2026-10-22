@@ -251,7 +251,7 @@
     },
     {
       "name": "2. Coverage",
-      "description": "Coverage ids are built by the FHIR API from patient + payer + policy number (cov-{patientId}-{hash}), so the first request saves the id in the collection variable coverageId for the read request.",
+      "description": "Coverage ids are the EHR's own coverage ids (unique in the EHR, e.g. cov-1). The first request saves the id in the collection variable coverageId for the read request.",
       "item": [
         {
           "name": "Search Coverage by patient (saves coverageId)",

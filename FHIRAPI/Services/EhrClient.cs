@@ -31,6 +31,11 @@ public class EhrClient : IEhrClient
     public Task<List<EhrInsuranceDto>> GetInsurancesAsync(string patientId, string? status, CancellationToken ct) =>
         GetListAsync<EhrInsuranceDto>($"api/patients/{Esc(patientId)}/insurances{Query(("status", status))}", ct);
 
+    // CLIENT-EHR: the EHR sends its own unique coverage id; one insurance is read by it.
+    // TODO: path of the client's "insurance by coverage id" API (the mock EHR serves api/insurances/{coverageId}).
+    public Task<EhrInsuranceDto?> GetInsuranceAsync(string coverageId, CancellationToken ct) =>
+        GetAsync<EhrInsuranceDto>($"api/insurances/{Esc(coverageId)}", ct);
+
     public Task<EhrPractitionerDto?> GetPractitionerAsync(string practitionerId, CancellationToken ct) =>
         GetAsync<EhrPractitionerDto>($"api/practitioners/{Esc(practitionerId)}", ct);
 

@@ -60,7 +60,7 @@ public class FhirAdministrativeController : FhirResourceControllerBase
     }
 
     /// <summary>Reads one Coverage by id. GET /fhir/r4/Coverage/{id}</summary>
-    /// <param name="id">Required. Coverage id built by the FHIR API: cov-{patientId}-{16 hex characters} (the client's EHR has no insurance id). Take it from a Coverage search.</param>
+    /// <param name="id" example="cov-1">Required. The EHR's coverage id (unique in the EHR), e.g. the coverageId the EHR sends to the Payer Gateway. The FHIR API reads it with GET api/insurances/{coverageId}.</param>
     /// <param name="ct">Cancelled when the caller disconnects.</param>
     /// <response code="200">The Coverage as FHIR JSON (application/fhir+json).</response>
     /// <response code="404">The EHR has no such record. Body: a FHIR OperationOutcome (code not-found).</response>

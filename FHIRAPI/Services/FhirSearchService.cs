@@ -94,7 +94,7 @@ public class FhirSearchService
                 var insurances = await _ehr.GetInsurancesAsync(RequirePatient(type, search), search.Status, ct);
                 foreach (var insurance in insurances)
                 {
-                    // the Coverage id is built while mapping (Helpers/CoverageIds) and holds the patient id
+                    // Coverage.id = the EHR's coverage id of the insurance
                     results.Add(_admin.ToCoverage(insurance));
                 }
                 break;

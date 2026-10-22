@@ -62,15 +62,14 @@ public class AdministrativeMapper
 
     /// <summary>
     /// EHR insurance -> CRD Coverage (member id, payer id, plan, group, period).
-    /// The EHR has no insurance id, so Coverage.id is built from patient id + payer id + policy number (member id)
-    /// and is the same on every call (see Helpers/CoverageIds). The policy number is optional.
+    /// Coverage.id is the EHR's coverage id (unique in the EHR). The policy number (member id) is optional.
     /// </summary>
     public Coverage ToCoverage(EhrInsuranceDto source)
     {
         var coverage = new Coverage
         {
-            // CLIENT-EHR: no coverage id in the EHR; built from patient + payer + policy number (Helpers/CoverageIds)
-            Id = CoverageIds.Build(source.PatientId, source.PayerId, source.MemberId),
+            // CLIENT-EHR: the client's own unique coverage id
+            Id = string.IsNullOrWhiteSpace(source.CoverageId) ? null : source.CoverageId.Trim(),
             Status = string.IsNullOrEmpty(source.Status) ? "active" : source.Status.ToLowerInvariant(),
             SubscriberId = string.IsNullOrWhiteSpace(source.MemberId) ? null : source.MemberId,
             Beneficiary = new ResourceReference("Patient", source.PatientId),
