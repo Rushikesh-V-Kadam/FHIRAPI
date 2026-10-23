@@ -39,8 +39,6 @@ var configuration = builder.Configuration;
 // ---------------------------------------------------------------- 1. settings (appsettings.json sections)
 builder.Services.Configure<EhrSettings>(configuration.GetSection(EhrSettings.SectionName));
 builder.Services.Configure<FhirServerSettings>(configuration.GetSection(FhirServerSettings.SectionName));
-var mappingSettings = configuration.GetSection(FhirMappingSettings.SectionName).Get<FhirMappingSettings>() ?? new FhirMappingSettings();
-builder.Services.AddSingleton(mappingSettings);
 var storageSettings = configuration.GetSection(StorageSettings.SectionName).Get<StorageSettings>() ?? new StorageSettings();
 var swaggerSettings = configuration.GetSection(SwaggerSettings.SectionName).Get<SwaggerSettings>() ?? new SwaggerSettings();
 

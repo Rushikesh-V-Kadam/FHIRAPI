@@ -18,7 +18,6 @@ namespace MockEhr.Api.Controllers;
 ///   table                       endpoint under api/prior-auth-data                         row class (Models/Rows)
 ///   PA_PAYER                    GET payers                                                 PayerRow
 ///                               PUT payers/{payerName} (mock only: lets a demo add a payer; the real EHR team maintains the table)
-///   PA_CRD_EVENT                GET / PUT crd-events/{eventId}                             CrdEventRow
 ///   PA_COVERAGE_DECISION        GET / PUT coverage-decisions/{orderId}                     CoverageDecisionRow
 ///   PA_DTR_FORM                 GET / PUT dtr-forms/{formId}                               DtrFormRow
 ///   PA_DTR_LINK                 GET / PUT dtr-links/{linkId}                               DtrLinkRow
@@ -100,39 +99,6 @@ public class PriorAuthDataController : ControllerBase
             _store.Save();
         }
         return NoContent();
-    }
-
-    // ================================================================== PA_CRD_EVENT
-
-    /// <summary>The stored answer of an order-sign event (table PA_CRD_EVENT).</summary>
-    /// <remarks>The gateway calls this first at every order-sign: 404 means the event is new and the payer must be asked.</remarks>
-    /// <param name="eventId" example="evt-20261007-0001">The EHR's id of the signing event, e.g. evt-20261007-0001.</param>
-    /// <response code="200">The row.</response>
-    /// <response code="404">No row with this event id (the event was not answered yet).</response>
-    [Tags(SwaggerGroups.GatewayData)]
-    [HttpGet("crd-events/{eventId}")]
-    [ProducesResponseType(typeof(CrdEventRow), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public IActionResult GetCrdEvent(string eventId)
-    {
-        return GetRow("crd-events", eventId);
-    }
-
-    /// <summary>Saves the answer of an order-sign event (table PA_CRD_EVENT).</summary>
-    /// <remarks>Insert, or update when the event id already exists. Called once at the end of every order-sign.</remarks>
-    /// <param name="eventId" example="evt-20261007-0001">The EHR's id of the signing event (key). Wins over eventId in the body.</param>
-    /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
-    [Tags(SwaggerGroups.GatewayData)]
-    [HttpPut("crd-events/{eventId}")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutCrdEvent(string eventId, [FromBody, Required] CrdEventRow row)
-    {
-        row.EventId = eventId;
-        return PutRow("crd-events", eventId, row);
     }
 
     // ================================================================== PA_COVERAGE_DECISION

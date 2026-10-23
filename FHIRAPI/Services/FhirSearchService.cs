@@ -15,8 +15,8 @@ namespace FHIRAPI.Services;
 /// Required parameters per type (the EHR can only look data up this way):
 ///   Patient, Practitioner, PractitionerRole, Organization, Location,
 ///   ServiceRequest, MedicationRequest .................................. _id
-///   Coverage, Observation, Condition, Procedure, DocumentReference ....... patient
-///   Encounter ........................................................... _id or patient
+///   Observation, Condition, Procedure, DocumentReference ................. patient
+///   Encounter, Coverage ................................................. _id or patient
 /// A search without its required parameter returns 400 with an OperationOutcome that says what is missing.
 /// </summary>
 public class FhirSearchService
@@ -89,13 +89,29 @@ public class FhirSearchService
                 }
                 break;
 
-            // ---- searched by patient
+            // ---- searched by id or by patient
             case "Coverage":
-                var insurances = await _ehr.GetInsurancesAsync(RequirePatient(type, search), search.Status, ct);
-                foreach (var insurance in insurances)
+                if (search.GetIds().Count > 0)
                 {
-                    // Coverage.id = the EHR's coverage id of the insurance
-                    results.Add(_admin.ToCoverage(insurance));
+                    // CLIENT-EHR: the EHR's own unique coverage id, read with GET api/insurances/{coverageId}
+                    // (e.g. the payer prefetch Coverage?_id={{coverageId}}). status and patient, when sent, filter the result.
+                    foreach (var id in search.GetIds())
+                    {
+                        var coverage = await _reader.ReadAsync(type, id, ct) as Coverage;
+                        if (coverage != null && CoverageMatches(coverage, search))
+                        {
+                            results.Add(coverage);
+                        }
+                    }
+                }
+                else
+                {
+                    var insurances = await _ehr.GetInsurancesAsync(RequirePatient(type, search), search.Status, ct);
+                    foreach (var insurance in insurances)
+                    {
+                        // Coverage.id = the EHR's coverage id of the insurance
+                        results.Add(_admin.ToCoverage(insurance));
+                    }
                 }
                 break;
 
@@ -217,6 +233,33 @@ public class FhirSearchService
     };
 
     // ------------------------------------------------------------------ parameter checks
+
+    /// <summary>
+    /// True when a Coverage read by _id also matches the other search parameters that were sent:
+    /// status (Coverage.status) and patient / beneficiary (Coverage.beneficiary).
+    /// </summary>
+    private static bool CoverageMatches(Coverage coverage, FhirSearchParameters search)
+    {
+        if (!string.IsNullOrWhiteSpace(search.Status)
+            && !string.Equals(coverage.Status, search.Status.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+        string? patient = !string.IsNullOrWhiteSpace(search.Patient) ? search.Patient : search.Beneficiary;
+        if (!string.IsNullOrWhiteSpace(patient))
+        {
+            string patientId = patient.Trim();
+            if (patientId.StartsWith("Patient/", StringComparison.Ordinal))
+            {
+                patientId = patientId.Substring("Patient/".Length);
+            }
+            if (coverage.Beneficiary?.GetId() != patientId)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /// <summary>The _id values, or 400 when none were given.</summary>
     private static List<string> RequireIds(string type, FhirSearchParameters search)

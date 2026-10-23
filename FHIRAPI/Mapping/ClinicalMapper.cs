@@ -12,13 +12,11 @@ namespace FHIRAPI.Mapping;
 public class ClinicalMapper
 {
     private readonly CodeSystemMapper _codes;
-    private readonly FhirMappingSettings _settings;
 
     /// <summary>Created by dependency injection.</summary>
-    public ClinicalMapper(CodeSystemMapper codes, FhirMappingSettings settings)
+    public ClinicalMapper(CodeSystemMapper codes)
     {
         _codes = codes;
-        _settings = settings;
     }
 
     /// <summary>EHR encounter -> US Core Encounter.</summary>
@@ -163,7 +161,8 @@ public class ClinicalMapper
         };
         document.AddProfile(FhirProfiles.DocumentReference);
 
-        document.Identifier.Add(new Identifier(_settings.DocumentIdSystem, source.DocumentId));
+        // The EHR document id, sent without a "system" (Identifier.system is 0..1 in FHIR R4)
+        document.Identifier.Add(new Identifier { Value = source.DocumentId });
         var category = string.IsNullOrEmpty(source.Category) ? "clinical-note" : source.Category;
         document.Category.Add(new CodeableConcept(CodeSystems.DocumentCategory, category));
 

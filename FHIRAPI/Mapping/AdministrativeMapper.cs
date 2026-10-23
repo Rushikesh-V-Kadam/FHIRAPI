@@ -13,13 +13,11 @@ namespace FHIRAPI.Mapping;
 public class AdministrativeMapper
 {
     private readonly CodeSystemMapper _codes;
-    private readonly FhirMappingSettings _settings;
 
     /// <summary>Created by dependency injection.</summary>
-    public AdministrativeMapper(CodeSystemMapper codes, FhirMappingSettings settings)
+    public AdministrativeMapper(CodeSystemMapper codes)
     {
         _codes = codes;
-        _settings = settings;
     }
 
     /// <summary>EHR patient -> US Core Patient (MRN, name, contact, address, race, ethnicity).</summary>
@@ -36,9 +34,12 @@ public class AdministrativeMapper
 
         if (!string.IsNullOrEmpty(source.Mrn))
         {
-            patient.Identifier.Add(new Identifier(_settings.MrnSystem, source.Mrn)
+            // CLIENT-EHR: the client has no identifier system for its MRNs, so the MRN is sent without a "system"
+            // (Identifier.system is 0..1 in FHIR R4). TODO: add the system if a real payer requires it (US Core asks for one).
+            patient.Identifier.Add(new Identifier
             {
-                Type = new CodeableConcept(CodeSystems.V2IdentifierType, "MR", "Medical record number")
+                Type = new CodeableConcept(CodeSystems.V2IdentifierType, "MR", "Medical record number"),
+                Value = source.Mrn
             });
         }
 
@@ -81,8 +82,8 @@ public class AdministrativeMapper
         if (source.EffectiveDate != null || source.TerminationDate != null)
             coverage.Period = new Period { Start = source.EffectiveDate, End = source.TerminationDate };
 
-        // Member id (identifier of type MB). Its "system" is sent only when FhirMapping:MemberIdSystem is set;
-        // an insurance without member id gets no identifier (an identifier without value is not valid FHIR).
+        // Member id (identifier of type MB), sent without a "system" (payers do not give one; Identifier.system is 0..1).
+        // An insurance without member id gets no identifier (an identifier without value is not valid FHIR).
         if (!string.IsNullOrWhiteSpace(source.MemberId))
         {
             var memberIdentifier = new Identifier
@@ -90,24 +91,15 @@ public class AdministrativeMapper
                 Type = new CodeableConcept(CodeSystems.V2IdentifierType, "MB", "Member Number"),
                 Value = source.MemberId
             };
-            if (!string.IsNullOrWhiteSpace(_settings.MemberIdSystem))
-            {
-                memberIdentifier.System = _settings.MemberIdSystem;
-            }
             coverage.Identifier.Add(memberIdentifier);
         }
 
         // The payer: its name, and the payer id the EHR keeps with the insurance (sent by the Payer Gateway as the
-        // payer id in PAS and CDex). The "system" of the payer id is sent only when FhirMapping:PayerIdSystem is set;
-        // an insurance without payer id gets only the name.
+        // payer id in PAS and CDex), sent without a "system". An insurance without payer id gets only the name.
         var payor = new ResourceReference { Display = source.PayerName };
         if (!string.IsNullOrWhiteSpace(source.PayerId))
         {
             payor.Identifier = new Identifier { Value = source.PayerId };
-            if (!string.IsNullOrWhiteSpace(_settings.PayerIdSystem))
-            {
-                payor.Identifier.System = _settings.PayerIdSystem;
-            }
         }
         coverage.Payor.Add(payor);
 

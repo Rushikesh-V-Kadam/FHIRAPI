@@ -182,7 +182,7 @@ No parameters, no body, no authentication.
 | type | EHR call | Notes |
 |---|---|---|
 | Patient | `GET api/patients/{id}` | |
-| Coverage | `GET api/insurances/{coverageId}` (read) · `GET api/patients/{patientId}/insurances` (search `Coverage?patient=`) | `Coverage.id` is the EHR's own coverage id, unique in the EHR (see the note below). |
+| Coverage | `GET api/insurances/{coverageId}` (read, and search `Coverage?_id=`) · `GET api/patients/{patientId}/insurances` (search `Coverage?patient=`) | `Coverage.id` is the EHR's own coverage id, unique in the EHR (see the note below). |
 | Practitioner | `GET api/practitioners/{id}` | |
 | PractitionerRole | `GET api/practitioners/{id}` | id is `role-{practitionerId}`, e.g. `role-prac-1` |
 | Organization | `GET api/organizations/{id}` | The client's organizations are parents: name, address and tax id (`http://terminology.hl7.org/NamingSystem/USEIN`, the system of the PAS TIN slice), no NPI. |
@@ -222,7 +222,6 @@ Accept: application/fhir+json
   "meta": { "profile": [ "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient" ] },
   "identifier": [ {
     "type": { "coding": [ { "system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "MR", "display": "Medical record number" } ] },
-    "system": "http://provider.example.org/fhir/sid/mrn",
     "value": "MRN-000123"
   } ],
   "active": true,
@@ -277,7 +276,7 @@ The old version had two problems:
 | type | Required | Optional |
 |---|---|---|
 | Patient, Practitioner, PractitionerRole, Organization, Location, ServiceRequest, MedicationRequest | `_id` (comma-separated list allowed) | `_include` |
-| Coverage | `patient` | `status` (e.g. `active`) |
+| Coverage | `_id` (the EHR's coverage id) or `patient` | `status` (e.g. `active`); with `_id`, `status` and `patient` filter the coverage read |
 | Encounter | `_id` **or** `patient` | `date=ge2026-01-01` |
 | Observation | `patient` | `code`, `category`, `date=ge...` |
 | Condition | `patient` | `code`, `clinical-status` |
@@ -814,7 +813,7 @@ Each class lives in its own file, with the same name as the class.
 | Folder | What's inside |
 |---|---|
 | `Program.cs` | Dependency-injection wiring and the request pipeline, nothing else |
-| `Configuration/` | One settings class per `appsettings.json` section (`EhrSettings`, `FhirServerSettings`, `FhirMappingSettings`, `StorageSettings`). In `FhirMapping`, `MemberIdSystem` and `PayerIdSystem` are optional and empty by default: the member id and the payer id of an insurance are sent without a "system" unless a payer gives one |
+| `Configuration/` | One settings class per `appsettings.json` section (`EhrSettings`, `FhirServerSettings`, `StorageSettings`, `SwaggerSettings`). There are no identifier-system settings: the MRN, document id, member id and payer id are sent without a "system" (`Identifier.system` is 0..1 in FHIR R4); one can be added later if a real payer requires it |
 | `Constants/` | URIs and fixed values: code systems, profiles, DTR extension URLs, issue codes, headers, default scopes |
 | `Controllers/` | One controller per area: `MetadataController`; the FHIR read and search actions, one per resource type, in `FhirAdministrativeController` (Patient, Coverage, Practitioner, PractitionerRole, Organization, Location), `FhirOrderController` (ServiceRequest, MedicationRequest, Encounter) and `FhirClinicalController` (Observation, Condition, Procedure, DocumentReference, Binary), sharing `FhirResourceControllerBase`; `FhirUnsupportedTypeController` (OperationOutcome for other types); `QuestionnaireResponseController`, `SmartAuthController`, `InternalController` |
 | `Middleware/` | `FhirExceptionHandler` (every error → OperationOutcome, so controllers have no try/catch), correlation id middleware and handler |

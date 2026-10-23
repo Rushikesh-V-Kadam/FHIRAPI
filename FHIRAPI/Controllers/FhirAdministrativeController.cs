@@ -75,8 +75,9 @@ public class FhirAdministrativeController : FhirResourceControllerBase
         return await ReadResourceAsync("Coverage", id, ct);
     }
 
-    /// <summary>Searches Coverage and returns a "searchset" Bundle. Required: patient (or beneficiary). GET /fhir/r4/Coverage?...</summary>
-    /// <param name="patient" example="pat-1">Required, or send beneficiary. Patient id, or "Patient/{id}".</param>
+    /// <summary>Searches Coverage and returns a "searchset" Bundle. Required: _id, or patient (or beneficiary). GET /fhir/r4/Coverage?...</summary>
+    /// <param name="id" example="cov-1">Required, or send patient. The EHR's coverage id(s), comma separated; each is read with GET api/insurances/{coverageId}.</param>
+    /// <param name="patient" example="pat-1">Required, or send _id (or beneficiary). Patient id, or "Patient/{id}".</param>
     /// <param name="beneficiary">Optional. Same as patient (Coverage searches may send beneficiary).</param>
     /// <param name="status" example="active">Optional. Insurance status, e.g. active. Empty = every insurance of the patient.</param>
     /// <param name="include">Optional, repeatable. Related resources to add to the Bundle, as Coverage:parameter[:TargetType], e.g. Coverage:patient.</param>
@@ -89,10 +90,11 @@ public class FhirAdministrativeController : FhirResourceControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
-    public async Task<IActionResult> SearchCoverage([FromQuery(Name = "patient")] string? patient, [FromQuery(Name = "beneficiary")] string? beneficiary, [FromQuery(Name = "status")] string? status, [FromQuery(Name = "_include")] List<string>? include,
+    public async Task<IActionResult> SearchCoverage([FromQuery(Name = "_id")] string? id, [FromQuery(Name = "patient")] string? patient, [FromQuery(Name = "beneficiary")] string? beneficiary, [FromQuery(Name = "status")] string? status, [FromQuery(Name = "_include")] List<string>? include,
         CancellationToken ct)
     {
         FhirSearchParameters search = new FhirSearchParameters();
+        search.Id = id;
         search.Patient = patient;
         search.Beneficiary = beneficiary;
         search.Status = status;
