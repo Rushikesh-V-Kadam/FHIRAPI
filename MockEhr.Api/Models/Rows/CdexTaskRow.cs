@@ -4,13 +4,13 @@ namespace MockEhr.Api.Models.Rows;
 
 /// <summary>
 /// One payer information request (a FHIR Task: "send these documents") = one row of table PA_CDEX_TASK.
-/// Body of PUT api/prior-auth-data/cdex-tasks/{payerName}/{taskId}; returned by GET cdex-tasks?requestId=.
+/// Body of PUT api/prior-auth-data/cdex-tasks/{piInsurancePlanId}/{taskId}; returned by GET cdex-tasks?requestId=.
 /// </summary>
 public class CdexTaskRow
 {
-    /// <summary>Key, part 1 (the same value as in the URL; upper / lower case does not matter). Column PAYER_NAME, VARCHAR2(64).</summary>
-    /// <example>MockPayer</example>
-    public string PayerName { get; set; } = string.Empty;
+    /// <summary>Key, part 1 (the same value as in the URL): the EHR's insurance plan id of the payer. Column PI_INSURANCE_PLAN_ID, NUMBER(10).</summary>
+    /// <example>1001</example>
+    public int PiInsurancePlanId { get; set; }
 
     /// <summary>Key, part 2: the payer's Task id (the same value as in the URL). Column TASK_ID, VARCHAR2(100).</summary>
     /// <example>5f367f122eba45caba287738b1cc2a38</example>

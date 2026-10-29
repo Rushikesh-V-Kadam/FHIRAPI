@@ -5,7 +5,7 @@ namespace MockEhr.Api.Models;
 /// <summary>
 /// Prior authorization decision, as the mock EHR prior authorization screen shows it (GET api/prior-auth-requests).
 /// It is read from the decisionJson column of table PA_PRIOR_AUTH: the same structure as the response of the
-/// gateway's POST /api/v1/pas/requests.
+/// gateway's POST /pas/requests.
 /// </summary>
 public class PriorAuthDecisionDto
 {
@@ -17,9 +17,9 @@ public class PriorAuthDecisionDto
     /// <example>PAYER001</example>
     public string? PayerId { get; set; }
 
-    /// <summary>Payer name sent by the Payer Gateway.</summary>
-    /// <example>MockPayer</example>
-    public string? PayerName { get; set; }
+    /// <summary>Insurance plan id of the payer, sent by the Payer Gateway.</summary>
+    /// <example>1001</example>
+    public int? PiInsurancePlanId { get; set; }
 
     /// <summary>EHR patient id.</summary>
     /// <example>pat-1</example>

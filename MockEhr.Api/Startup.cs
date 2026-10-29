@@ -115,7 +115,7 @@ public class Startup
             "- PUT = insert, or update when the key in the URL already exists (Oracle MERGE). Answer 204 (or 200). " +
             "The key in the URL wins over the key in the body. A failed PUT is tried up to 3 times, so PUT must be safe to repeat.\n" +
             "- GET of one row = 200 with the row, or 404 when there is no such row. GET of a list = 200 with a JSON array (`[]` when nothing matches).\n" +
-            "- Compare `payerName` without regard to upper / lower case wherever it is a key or a filter.\n" +
+            "- `piInsurancePlanId` (a whole number) is the payer key everywhere: in PA_PAYER and in every other table, path and filter.\n" +
             "- You may return extra properties (your own audit columns); they are ignored.\n" +
             "- Allow request and response bodies of at least 20 MB (`lastRequestBundle` holds the attached clinical documents).\n\n" +
             "This document is produced by the mock EHR (MockEhr.Api), which implements every endpoint shown here and can be used to test against.";

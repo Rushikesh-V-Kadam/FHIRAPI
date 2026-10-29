@@ -4,13 +4,13 @@ namespace MockEhr.Api.Models.Rows;
 
 /// <summary>
 /// The PAS Subscription the gateway created at a payer for one provider organization = one row of table PA_PAYER_SUBSCRIPTION.
-/// Body of PUT api/prior-auth-data/payer-subscriptions/{payerName}/{organizationNpi}; returned by GET of the same path.
+/// Body of PUT api/prior-auth-data/payer-subscriptions/{piInsurancePlanId}/{organizationNpi}; returned by GET of the same path.
 /// </summary>
 public class PayerSubscriptionRow
 {
-    /// <summary>Key, part 1 (the same value as in the URL; upper / lower case does not matter). Column PAYER_NAME, VARCHAR2(64).</summary>
-    /// <example>MockPayer</example>
-    public string PayerName { get; set; } = string.Empty;
+    /// <summary>Key, part 1 (the same value as in the URL): the EHR's insurance plan id of the payer. Column PI_INSURANCE_PLAN_ID, NUMBER(10).</summary>
+    /// <example>1001</example>
+    public int PiInsurancePlanId { get; set; }
 
     /// <summary>Key, part 2: NPI of the provider organization (the same value as in the URL). Column ORGANIZATION_NPI, VARCHAR2(20).</summary>
     /// <example>1999999992</example>

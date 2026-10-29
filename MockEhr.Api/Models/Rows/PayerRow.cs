@@ -1,22 +1,22 @@
 namespace MockEhr.Api.Models.Rows;
 
 /// <summary>
-/// One payer = one row of table PA_PAYER. Returned by GET api/prior-auth-data/payers.
-/// The EHR team maintains these rows; the Payer Gateway only reads them (at start-up and every few minutes).
-/// One JSON property = one column: payerName = PAYER_NAME, baseUrl = BASE_URL.
-/// Only payerName and baseUrl must be filled. Every other property may be null or left out; the gateway then uses
+/// One payer = one row of table PA_PAYER. Returned by GET api/prior-auth-data/payers/{piInsurancePlanId}.
+/// The EHR team maintains these rows; the Payer Gateway only reads them, one payer at a time (there is no payer list).
+/// One JSON property = one column: piInsurancePlanId = PI_INSURANCE_PLAN_ID, payerName = PAYER_NAME, baseUrl = BASE_URL.
+/// Only piInsurancePlanId, payerName and baseUrl must be filled. Every other property may be null or left out; the gateway then uses
 /// its default. The payer's own id and the member id are not kept here: they come from the patient's insurance
 /// (GET api/patients/{id}/insurances: payerId and memberId).
 /// </summary>
 public class PayerRow
 {
-    /// <summary>Key. The name the EHR sends as "payerName" in every gateway request (upper / lower case does not matter). Column PAYER_NAME, VARCHAR2(64).</summary>
+    /// <summary>Key. The EHR's insurance plan id of this payer; the EHR sends it as "piInsurancePlanId" in every gateway request. Column PI_INSURANCE_PLAN_ID, NUMBER(10).</summary>
+    /// <example>1001</example>
+    public int PiInsurancePlanId { get; set; }
+
+    /// <summary>Name of the payer, shown in the gateway's log lines and messages. Column PAYER_NAME, VARCHAR2(64).</summary>
     /// <example>MockPayer</example>
     public string PayerName { get; set; } = string.Empty;
-
-    /// <summary>Friendly name for messages and logs. Column DISPLAY_NAME, VARCHAR2(200).</summary>
-    /// <example>Mock Da Vinci Payer</example>
-    public string? DisplayName { get; set; }
 
     /// <summary>false = configured but switched off (the gateway answers "payer not configured"). Empty = true. Column ENABLED, NUMBER(1): 1 = true, 0 = false.</summary>
     /// <example>true</example>

@@ -3,7 +3,7 @@ namespace MockEhr.Api.Models;
 /// <summary>
 /// CRD answer for one order, as the mock EHR order screen shows it (GET api/orders/{orderId}/coverage-decision).
 /// It is read from the decisionJson column of table PA_COVERAGE_DECISION: the same structure as one entry of
-/// "decisions" in the response of the gateway's POST /api/v1/crd/order-sign.
+/// "decisions" in the response of the gateway's POST /crd/order-sign.
 /// </summary>
 public class CoverageDecisionDto
 {
@@ -15,9 +15,9 @@ public class CoverageDecisionDto
     /// <example>PAYER001</example>
     public string? PayerId { get; set; }
 
-    /// <summary>Payer name sent by the Payer Gateway.</summary>
-    /// <example>MockPayer</example>
-    public string? PayerName { get; set; }
+    /// <summary>Insurance plan id of the payer, sent by the Payer Gateway.</summary>
+    /// <example>1001</example>
+    public int? PiInsurancePlanId { get; set; }
 
     /// <summary>true = fill in the payer questionnaire (DTR).</summary>
     /// <example>true</example>

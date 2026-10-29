@@ -13,9 +13,9 @@ public class DtrLinkRow
     /// <example>514ff06354c7485a907aec22535743f2</example>
     public string LinkId { get; set; } = string.Empty;
 
-    /// <summary>Payer whose app is opened. Column PAYER_NAME, VARCHAR2(64).</summary>
-    /// <example>MockPayer</example>
-    public string PayerName { get; set; } = string.Empty;
+    /// <summary>Insurance plan id of the payer whose app is opened. Column PI_INSURANCE_PLAN_ID, NUMBER(10).</summary>
+    /// <example>1001</example>
+    public int PiInsurancePlanId { get; set; }
 
     /// <summary>EHR patient id. Column PATIENT_ID, VARCHAR2(64).</summary>
     /// <example>pat-1</example>

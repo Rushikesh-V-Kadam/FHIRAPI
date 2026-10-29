@@ -13,9 +13,9 @@ public class DtrFormRow
     /// <example>frm-235b7ad69e85</example>
     public string FormId { get; set; } = string.Empty;
 
-    /// <summary>Payer the questionnaire came from. Column PAYER_NAME, VARCHAR2(64).</summary>
-    /// <example>MockPayer</example>
-    public string PayerName { get; set; } = string.Empty;
+    /// <summary>Insurance plan id of the payer the questionnaire came from. Column PI_INSURANCE_PLAN_ID, NUMBER(10).</summary>
+    /// <example>1001</example>
+    public int PiInsurancePlanId { get; set; }
 
     /// <summary>EHR patient id. Column PATIENT_ID, VARCHAR2(64).</summary>
     /// <example>pat-1</example>

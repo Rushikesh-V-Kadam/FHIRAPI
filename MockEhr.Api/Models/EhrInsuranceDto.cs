@@ -30,6 +30,13 @@ public class EhrInsuranceDto
     /// <example>Mock Da Vinci Payer</example>
     public string? PayerName { get; set; }
 
+    /// <summary>
+    /// The EHR's insurance plan id of this insurance (PA_PAYER.PI_INSURANCE_PLAN_ID). The EHR sends it as piInsurancePlanId
+    /// in every Payer Gateway request; the gateway reads that payer's configuration. Null = the insurance has no plan id.
+    /// </summary>
+    /// <example>1001</example>
+    public int? PiInsurancePlanId { get; set; }
+
     /// <summary>Plan id (becomes Coverage.class "plan").</summary>
     /// <example>GOLD-PPO</example>
     public string? PlanId { get; set; }

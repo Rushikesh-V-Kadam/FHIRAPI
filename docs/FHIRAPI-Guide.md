@@ -593,11 +593,11 @@ Returns a `searchset` Bundle, newest first.
 
 Our EHR can't launch SMART apps itself, so the Payer Gateway and this API do it for the EHR. This endpoint stores the context (patient, user, encounter, orders, coverage, the payer's `appContext`) and returns a `launchId`.
 
-**When it's needed:** every time a user opens a DTR link from a CRD card. It isn't needed if you only use EHR-rendered forms (`POST /api/v1/pa/dtr/questionnaire-package` on the gateway).
+**When it's needed:** every time a user opens a DTR link from a CRD card. It isn't needed if you only use EHR-rendered forms (`POST /dtr/forms` on the gateway).
 
 **Scenario**
 
-1. CRD returns "documentation needed" for `ord-1-retacrit` with a DTR link (`/api/v1/pa/dtr/launch/{linkId}` on the gateway).
+1. CRD returns "documentation needed" for `ord-1-retacrit` with a DTR link (`/dtr/launch/{linkId}` on the gateway).
 2. The clinician clicks it. The gateway calls this endpoint with `patientId=pat-1`, `fhirContext=["MedicationRequest/ord-1-retacrit","Coverage/cov-1"]` and the card's `appContext`.
 3. The gateway redirects the browser to `https://dtr.example.org/launch?iss=http://localhost:5100/fhir/r4&launch=Xq3...`.
 4. The DTR app continues with sections 3.8 to 3.10.
@@ -785,13 +785,13 @@ The app then:
 When a payer brings its own SMART DTR app (`PA_PAYER.DTR_MODE = SmartApp`), the flow is the standard SMART EHR launch,
 with this API playing the EHR's part:
 
-1. Order-sign: the payer's CRD card has a `smart` link. The gateway saves it and gives the EHR `/api/v1/dtr/launch/{linkId}`.
+1. Order-sign: the payer's CRD card has a `smart` link. The gateway saves it and gives the EHR `/dtr/launch/{linkId}`.
 2. The user opens that link. The gateway calls `POST /internal/smart-launches`, then redirects the browser to the
    payer's app with `iss` (the `/fhir/r4` base URL) and `launch`.
 3. The app reads `{iss}/.well-known/smart-configuration`, calls `auth/authorize`, then `auth/token`, and gets its context.
 4. It reads the chart, calls its payer for the questionnaire, and saves the completed `QuestionnaireResponse` here.
    The form names its order in the DTR `qr-context` extension.
-5. The EHR sees the form through the gateway's `GET /api/v1/dtr/saved-forms`; PAS attaches it automatically.
+5. The EHR sees the form through the gateway's `GET /dtr/saved-forms`; PAS attaches it automatically.
 
 No app registration is needed here (section 2). When authentication is added outside this code, the payer's app
 must be allowed through it.

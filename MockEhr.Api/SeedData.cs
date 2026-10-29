@@ -45,14 +45,20 @@ public static class SeedData
     }
 
     /// <summary>
-    /// The row of table PA_PAYER for the local mock payer (localhost:5080), as GET api/prior-auth-data/payers returns it.
+    /// Insurance plan id of the local mock payer: the piInsurancePlanId of the test insurances (Data/insurances.json)
+    /// and the key of its PA_PAYER row.
+    /// </summary>
+    public const int MockPayerPlanId = 1001;
+
+    /// <summary>
+    /// The row of table PA_PAYER for the local mock payer (localhost:5080), as GET api/prior-auth-data/payers/1001 returns it.
     /// In the real EHR the payers are rows the EHR team inserts; the mock adds this one by itself.
     /// </summary>
     public static Dictionary<string, object?> MockPayerRow()
     {
         Dictionary<string, object?> row = new Dictionary<string, object?>();
+        row["piInsurancePlanId"] = MockPayerPlanId;
         row["payerName"] = "MockPayer";
-        row["displayName"] = "Mock Da Vinci Payer";
         row["enabled"] = true;
         row["baseUrl"] = "http://localhost:5080";
         row["cdsServicesPath"] = "cds-services";
