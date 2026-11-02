@@ -15,10 +15,10 @@ public class StorageSettings
     public string QuestionnaireResponseStore { get; set; } = "InMemory";
 
     /// <summary>
-    /// Where SMART apps, launches, authorization codes and access tokens are kept: "EhrApi" (tables PA_SMART_LAUNCH and,
-    /// with TokenProvider BuiltIn, PA_SMART_CLIENT, PA_SMART_AUTH_CODE, PA_ACCESS_TOKEN through the EHR data API; needed
-    /// when the API runs on more than one server) or "InMemory" (one server only, lost on restart; the SMART apps then
-    /// come from Security:LocalClients). With Keycloak only the launches are used.
+    /// Where SMART apps, SMART launches, authorization codes and access tokens are kept:
+    /// "EhrApi" (tables PA_SMART_CLIENT, PA_SMART_LAUNCH, PA_SMART_AUTH_CODE, PA_ACCESS_TOKEN through the EHR data API;
+    /// needed when the API runs on more than one server) or "InMemory" (one server only, lost on restart; the SMART apps
+    /// then come from Security:LocalClients).
     /// </summary>
     public string SmartStore { get; set; } = "InMemory";
 

@@ -1,12 +1,11 @@
 namespace FHIRAPI.Models.Security;
 
 /// <summary>
-/// What an access token allows. BuiltIn: stored against a hash of the token (PA_ACCESS_TOKEN). Keycloak: read from the
-/// claims of the Keycloak token by KeycloakTokenValidator.
+/// What an access token allows. Stored against a hash of the token by the token service (PA_ACCESS_TOKEN).
 /// </summary>
 public class TokenGrant
 {
-    /// <summary>Who the token was issued to: a payer name / SMART client id (BuiltIn), or the Keycloak client ("azp").</summary>
+    /// <summary>Who the token was issued to: a payer name (from /internal/access-tokens) or a SMART client id (DTR app).</summary>
     public string Subject { get; set; } = string.Empty;
 
     /// <summary>SMART scopes, e.g. "patient/*.rs".</summary>

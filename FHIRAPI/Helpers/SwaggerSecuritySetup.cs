@@ -7,7 +7,7 @@ namespace FHIRAPI.Helpers;
 /// Adds the "Authorize" button to Swagger UI, so calls made from Swagger send the same credentials as real callers
 /// (Middleware/AccessTokenMiddleware.cs):
 ///   ApiKey  X-Api-Key header = Security:InternalApiKey (the Payer Gateway's key; full access)
-///   Bearer  Authorization: Bearer {token} from Security:TokenProvider: this API (auth/token, /internal/access-tokens) or Keycloak
+///   Bearer  Authorization: Bearer {token} from auth/token (SMART app) or /internal/access-tokens (payer)
 /// Either one is enough. Public endpoints (metadata, smart-configuration, authorize, token) ignore them.
 /// </summary>
 public static class SwaggerSecuritySetup
@@ -28,7 +28,7 @@ public static class SwaggerSecuritySetup
         OpenApiSecurityScheme bearer = new OpenApiSecurityScheme();
         bearer.Type = SecuritySchemeType.Http;
         bearer.Scheme = "bearer";
-        bearer.Description = "access_token from POST /fhir/r4/auth/token or POST /internal/access-tokens (BuiltIn), or from Keycloak. A token with a patient reaches that patient only.";
+        bearer.Description = "access_token from POST /fhir/r4/auth/token or POST /internal/access-tokens (one patient only).";
         options.AddSecurityDefinition(BearerScheme, bearer);
 
         // two separate requirements = two alternatives: the API key OR a Bearer token

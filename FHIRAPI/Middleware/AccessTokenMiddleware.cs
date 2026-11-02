@@ -14,11 +14,10 @@ namespace FHIRAPI.Middleware;
 /// Access checks before the controllers run:
 ///   /internal/*   X-Api-Key must equal Security:InternalApiKey (when the key is set).
 ///   /fhir/r4/*    when Security:ValidateAccessTokens is true:
-///                 - public: metadata, .well-known/smart-configuration, auth/authorize, auth/token (BuiltIn sign-in)
+///                 - public: metadata, .well-known/smart-configuration, auth/authorize, auth/token
 ///                 - X-Api-Key = Security:InternalApiKey: full access (the Payer Gateway)
-///                 - otherwise "Authorization: Bearer {token}" from Security:TokenProvider (BuiltInTokenValidator or
-///                   KeycloakTokenValidator: valid, aud = this API, not expired), and a scope that allows the interaction
-///                   on the resource type (GET by id = r, search = s, POST = c,
+///                 - otherwise "Authorization: Bearer {token}" issued by this API: not expired, aud = this API, and a
+///                   scope that allows the interaction on the resource type (GET by id = r, search = s, POST = c,
 ///                   PUT = u, DELETE = d). The grant is kept in HttpContext.Items for PatientAccessGuard, which makes
 ///                   sure a patient token only returns its own patient's data.
 /// Failures: 401 (no or bad token) / 403 (scope) with an OperationOutcome; 401 with an OAuth error on /internal.
@@ -34,7 +33,7 @@ public class AccessTokenMiddleware
     private static readonly PathString FhirRoot = new PathString("/fhir/r4");
     private static readonly PathString InternalRoot = new PathString("/internal");
 
-    /// <summary>Paths under /fhir/r4 that need no token (auth/* answer 404 when Keycloak issues the tokens).</summary>
+    /// <summary>Paths under /fhir/r4 that need no token.</summary>
     private static readonly string[] PublicPaths = { "/metadata", "/.well-known/smart-configuration", "/auth/authorize", "/auth/token" };
 
     private readonly RequestDelegate _next;
@@ -48,7 +47,8 @@ public class AccessTokenMiddleware
     }
 
     /// <summary>Runs the checks, then the rest of the pipeline.</summary>
-    public async Task InvokeAsync(HttpContext context, IAccessTokenValidator tokens, IOptions<SecuritySettings> security)
+    public async Task InvokeAsync(HttpContext context, ITokenService tokens, IOptions<SecuritySettings> security,
+        IOptions<FhirServerSettings> server)
     {
         SecuritySettings settings = security.Value;
         PathString path = context.Request.Path;
@@ -97,8 +97,12 @@ public class AccessTokenMiddleware
         TokenGrant? grant = await tokens.ValidateAsync(token, context.RequestAborted);
         if (grant == null)
         {
-            // bad signature, wrong issuer, not for this server (aud) or expired - the reason is in the log
-            await WriteOutcomeAsync(context, 401, IssueTypes.Security, "The access token is not valid or has expired.", "invalid_token");
+            await WriteOutcomeAsync(context, 401, IssueTypes.Security, "The access token is unknown or expired.", "invalid_token");
+            return;
+        }
+        if (!string.Equals(grant.Audience.TrimEnd('/'), server.Value.BaseUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            await WriteOutcomeAsync(context, 401, IssueTypes.Security, "The access token was not issued for this FHIR server.", "invalid_token");
             return;
         }
 

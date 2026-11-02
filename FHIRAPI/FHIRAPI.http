@@ -124,10 +124,17 @@ X-Api-Key: {{apiKey}}
 
 
 ###############################################################################################
-# Payer Gateway and Keycloak calls (/internal)
+# Payer Gateway calls (/internal)
 ###############################################################################################
 
-### 8. SMART launch for the DTR app (the gateway creates it when the clinician opens the DTR link)
+### 8. fhirAuthorization token for a payer (the gateway sends it in the CRD hook call)
+POST {{root}}/internal/access-tokens
+X-Api-Key: {{apiKey}}
+Content-Type: application/json
+
+{ "subject": "MOCK-DAVINCI", "patientId": "pat-1", "minutes": 5 }
+
+### 9. SMART launch for the DTR app
 # @name launch
 POST {{root}}/internal/smart-launches
 X-Api-Key: {{apiKey}}
@@ -135,74 +142,31 @@ Content-Type: application/json
 
 {
   "patientId": "pat-1",
-  "insurancePlanId": 1001,
   "userPractitionerId": "prac-1",
   "encounterId": "enc-1",
   "fhirContext": [ "MedicationRequest/ord-1-retacrit", "Coverage/cov-1" ],
   "appContext": "{\"questionnaire\":[\"http://example.org/fhir/Questionnaire/retacrit-esa\"]}"
 }
 
-### 9. Keycloak only: the launch context, as the Keycloak SMART launch add-on reads it (client of payer 1001)
-GET {{root}}/internal/smart-launches/{{launch.response.body.launchId}}/context?clientId=mock-payer-dtr-app&insurancePlanId=1001
-X-Api-Key: {{apiKey}}
-
-### 9b. The same launch for another payer's client -> 403
-GET {{root}}/internal/smart-launches/{{launch.response.body.launchId}}/context?clientId=other-app&insurancePlanId=2002
-X-Api-Key: {{apiKey}}
-
-### 10. SMART discovery: the app finds Keycloak's endpoints here
-GET {{fhir}}/.well-known/smart-configuration
-
 
 ###############################################################################################
-# Security:TokenProvider = "BuiltIn" (default): this API issues the tokens.
-# The mock EHR's test app "mock-payer-dtr-app" (PA_SMART_CLIENT, payer 1001, redirect http://localhost:5300/callback)
-# and the RFC 7636 PKCE example pair:
+# SMART EHR launch as a payer DTR app does it. Uses the mock EHR's test app "mock-payer-dtr-app"
+# (PA_SMART_CLIENT, payer 1001, redirect http://localhost:5300/callback) and the RFC 7636 PKCE example pair:
 #   code_verifier  dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
 #   code_challenge E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM   (S256)
-# Run 8 (launch) first.
+# Run 9 (launch) first; add "insurancePlanId": 1001 to its body to test the payer check.
 ###############################################################################################
 
-### B1. fhirAuthorization token for a payer (the gateway sends it in the CRD hook call)
-POST {{root}}/internal/access-tokens
-X-Api-Key: {{apiKey}}
-Content-Type: application/json
-
-{ "subject": "MOCK-DAVINCI", "patientId": "pat-1", "minutes": 5 }
-
-### B2. Authorize -> 302; copy "code" from the Location header into @builtInCode below
+### 10. Authorize -> 302; copy "code" from the Location header into @code below
 # @no-redirect
 GET {{fhir}}/auth/authorize?response_type=code&client_id=mock-payer-dtr-app&redirect_uri=http://localhost:5300/callback&launch={{launch.response.body.launchId}}&scope=launch%20fhirUser%20patient/*.rs%20patient/QuestionnaireResponse.cu&state=abc123&aud={{fhir}}&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256
 
 ###
-@builtInCode = paste-code-here
-
-### B3. Token: code -> access token + patient, encounter, fhirUser, fhirContext, appContext
-# @name builtInToken
-POST {{fhir}}/auth/token
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=authorization_code&code={{builtInCode}}&redirect_uri=http://localhost:5300/callback&client_id=mock-payer-dtr-app&code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
-
-### B4. The app reads its patient with the BuiltIn token -> 200
-GET {{fhir}}/Patient/pat-1
-Authorization: Bearer {{builtInToken.response.body.access_token}}
-
-
-###############################################################################################
-# Security:TokenProvider = "Keycloak": SMART EHR launch as a payer DTR app does it - sign-in and tokens at Keycloak.
-# TODO: http://localhost:8080/realms/ehr is a local test realm; use the realm of Keycloak:Authority.
-# 11. Open this address in a browser (Keycloak signs you in through Azure AD), then copy "code" from the address the
-#     browser is sent to (http://localhost:5300/callback?code=...) into @code below:
-#   http://localhost:8080/realms/ehr/protocol/openid-connect/auth?response_type=code&client_id=mock-payer-dtr-app&redirect_uri=http://localhost:5300/callback&launch=LAUNCH_ID&scope=openid%20launch%20fhirUser%20patient/*.rs%20patient/QuestionnaireResponse.cu&state=abc123&aud=http://localhost:5100/fhir/r4&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256
-# PKCE pair (RFC 7636 example): code_verifier dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
-###############################################################################################
-@keycloak = http://localhost:8080/realms/ehr
 @code = paste-code-here
 
-### 11b. Token at Keycloak: code -> access token + patient, encounter, fhirUser, fhirContext, appContext
+### 11. Token: code -> access token + patient, encounter, fhirUser, fhirContext, appContext
 # @name token
-POST {{keycloak}}/protocol/openid-connect/token
+POST {{fhir}}/auth/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=authorization_code&code={{code}}&redirect_uri=http://localhost:5300/callback&client_id=mock-payer-dtr-app&code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk

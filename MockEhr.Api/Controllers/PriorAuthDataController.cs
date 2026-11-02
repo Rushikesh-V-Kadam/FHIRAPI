@@ -25,10 +25,10 @@ namespace MockEhr.Api.Controllers;
 ///
 /// insurancePlanId (a whole number: the EHR's insurance plan id) is the payer key in every table, path and filter.
 ///   PA_QUESTIONNAIRE_RESPONSE   GET / PUT questionnaire-responses/{id},  GET questionnaire-responses?patientId=   QuestionnaireResponseRow
-///   PA_SMART_CLIENT             GET smart-clients/{clientId}  (PUT mock only)                SmartClientRow     (FHIR API BuiltIn only)
+///   PA_SMART_CLIENT             GET smart-clients/{clientId}  (PUT mock only)                SmartClientRow
 ///   PA_SMART_LAUNCH             GET / PUT smart-launches/{launchId}                          SmartLaunchRow
-///   PA_SMART_AUTH_CODE          PUT / DELETE smart-auth-codes/{codeHash} (DELETE returns the row)   SmartAuthCodeRow   (BuiltIn only)
-///   PA_ACCESS_TOKEN             GET / PUT access-tokens/{tokenHash}                          AccessTokenRow     (BuiltIn only)
+///   PA_SMART_AUTH_CODE          PUT / DELETE smart-auth-codes/{codeHash} (DELETE returns the row)   SmartAuthCodeRow
+///   PA_ACCESS_TOKEN             GET / PUT access-tokens/{tokenHash}                          AccessTokenRow  
 ///
 /// Rules: a row is a flat JSON object (camelCase, one property per column). The row classes describe every property for
 /// Swagger: its meaning, column, example and whether it is always filled.
@@ -358,7 +358,7 @@ public class PriorAuthDataController : ControllerBase
         return ListRows("questionnaire-responses", "patientId", patientId);
     }
 
-    // ================================================================== PA_SMART_CLIENT (FHIR API BuiltIn only; read only: the EHR team maintains it)
+    // ================================================================== PA_SMART_CLIENT (read only: the EHR team maintains it)
 
     /// <summary>One registered SMART app by its client_id (table PA_SMART_CLIENT).</summary>
     /// <remarks>
@@ -445,7 +445,7 @@ public class PriorAuthDataController : ControllerBase
         return PutRow("smart-launches", launchId, row);
     }
 
-    // ================================================================== PA_SMART_AUTH_CODE (FHIR API BuiltIn only)
+    // ================================================================== PA_SMART_AUTH_CODE (FHIR API)
 
     /// <summary>Saves a SMART authorization code (table PA_SMART_AUTH_CODE).</summary>
     /// <param name="codeHash" example="3q2-7wQx0p1mZQ8u0pX6m0nN4l1qkE6m4X0dJ0hKc7Y">Hash of the code (key). Wins over codeHash in the body.</param>
@@ -480,7 +480,7 @@ public class PriorAuthDataController : ControllerBase
         return TakeRow("smart-auth-codes", codeHash);
     }
 
-    // ================================================================== PA_ACCESS_TOKEN (FHIR API BuiltIn only)
+    // ================================================================== PA_ACCESS_TOKEN (FHIR API)
 
     /// <summary>One access token by the hash of the token (table PA_ACCESS_TOKEN).</summary>
     /// <remarks>Called on every checked FHIR call. SQL: WHERE TOKEN_HASH = :tokenHash. The FHIR API checks EXPIRES_AT itself.</remarks>

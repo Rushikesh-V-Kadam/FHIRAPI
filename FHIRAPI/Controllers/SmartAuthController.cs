@@ -10,9 +10,8 @@ using FHIRAPI.Services;
 namespace FHIRAPI.Controllers;
 
 /// <summary>
-/// SMART App Launch "EHR launch" (SMART App Launch 2.x) for a payer's DTR app, when this API issues the tokens itself
-/// (Security:TokenProvider = "BuiltIn"). With "Keycloak" both endpoints answer 404: sign-in and tokens are at Keycloak.
-/// The discovery document (.well-known/smart-configuration) is in SmartConfigurationController.
+/// SMART App Launch "EHR launch" (SMART App Launch 2.x) for a payer's DTR app:
+///   GET       {fhir}/.well-known/smart-configuration   where to authorize and get the token
 ///   GET/POST  {fhir}/auth/authorize                    one-time code sent to the app's redirect_uri
 ///   POST      {fhir}/auth/token                        code -> access token + launch context (patient, encounter, user, orders, appContext)
 /// {fhir} is /fhir/r4 (the "iss" the app was launched with).
@@ -46,22 +45,31 @@ public class SmartAuthController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>SMART discovery document. The app calls this first, with the "iss" it received.</summary>
+    /// <response code="200">The SMART configuration.</response>
+    [HttpGet(".well-known/smart-configuration")]
+    [Produces(FhirMediaTypes.Json)]
+    [ProducesResponseType(typeof(SmartConfigurationResponse), StatusCodes.Status200OK)]
+    public ActionResult<SmartConfigurationResponse> GetConfiguration()
+    {
+        string baseUrl = _server.BaseUrl;
+        SmartConfigurationResponse configuration = new SmartConfigurationResponse();
+        configuration.Issuer = baseUrl;
+        configuration.AuthorizationEndpoint = baseUrl + "/auth/authorize";
+        configuration.TokenEndpoint = baseUrl + "/auth/token";
+        return configuration;
+    }
+
     /// <summary>Authorize (query string). Redirects (302) to redirect_uri?code=...&amp;state=...</summary>
     /// <param name="request">response_type, client_id, redirect_uri, launch, scope, state, aud, code_challenge, code_challenge_method.</param>
     /// <param name="ct">Cancelled when the caller disconnects.</param>
     /// <response code="302">Redirect to the app with a code, or with error / error_description / state.</response>
     /// <response code="400">client_id unknown or disabled, or redirect_uri missing or not registered (not redirected: the address is not trusted).</response>
-    /// <response code="404">Keycloak issues the tokens (Security:TokenProvider = Keycloak).</response>
     [HttpGet("auth/authorize")]
     [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(typeof(OAuthError), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(OAuthError), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Authorize([FromQuery] AuthorizeRequest request, CancellationToken ct)
     {
-        if (_security.UsesKeycloak())
-        {
-            return NotFound(KeycloakIssuesTokens());
-        }
         return await AuthorizeCoreAsync(request, ct);
     }
 
@@ -70,18 +78,12 @@ public class SmartAuthController : ControllerBase
     /// <param name="ct">Cancelled when the caller disconnects.</param>
     /// <response code="302">Redirect to the app with a code, or with an error.</response>
     /// <response code="400">client_id unknown or disabled, or redirect_uri missing or not registered.</response>
-    /// <response code="404">Keycloak issues the tokens (Security:TokenProvider = Keycloak).</response>
     [HttpPost("auth/authorize")]
     [Consumes("application/x-www-form-urlencoded")]
     [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(typeof(OAuthError), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(OAuthError), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AuthorizePost([FromForm] AuthorizeRequest request, CancellationToken ct)
     {
-        if (_security.UsesKeycloak())
-        {
-            return NotFound(KeycloakIssuesTokens());
-        }
         return await AuthorizeCoreAsync(request, ct);
     }
 
@@ -93,23 +95,16 @@ public class SmartAuthController : ControllerBase
     /// <param name="ct">Cancelled when the caller disconnects.</param>
     /// <response code="200">Access token and launch context.</response>
     /// <response code="400">Missing field, wrong grant type, unknown / used / expired code, or a value that does not match authorize.</response>
-    /// <response code="404">Keycloak issues the tokens (Security:TokenProvider = Keycloak).</response>
     [HttpPost("auth/token")]
     [Consumes("application/x-www-form-urlencoded")]
     [Produces(FhirMediaTypes.Json)]
     [ProducesResponseType(typeof(SmartTokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(OAuthError), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(OAuthError), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Token([FromForm] TokenRequest request, CancellationToken ct)
     {
         // SMART / OAuth: token responses must never be cached
         Response.Headers.CacheControl = "no-store";
         Response.Headers.Pragma = "no-cache";
-
-        if (_security.UsesKeycloak())
-        {
-            return NotFound(KeycloakIssuesTokens());
-        }
 
         if (request.GrantType != "authorization_code")
         {
@@ -175,12 +170,6 @@ public class SmartAuthController : ControllerBase
     }
 
     // ================================================================== helpers
-
-    /// <summary>The answer of auth/* when Keycloak issues the tokens.</summary>
-    private static OAuthError KeycloakIssuesTokens()
-    {
-        return new OAuthError("invalid_request", "Sign-in and tokens are at Keycloak (Security:TokenProvider = Keycloak); see .well-known/smart-configuration.");
-    }
 
     /// <summary>Shared by GET and POST authorize: checks the request, then launch id -> one-time code.</summary>
     private async Task<IActionResult> AuthorizeCoreAsync(AuthorizeRequest request, CancellationToken ct)
