@@ -7,7 +7,7 @@ namespace FHIRAPI.Models.Requests;
 /// </summary>
 public class SmartTokenResponse
 {
-    /// <summary>A random value. No endpoint of this API checks it.</summary>
+    /// <summary>Bearer token for the /fhir/r4 calls. Valid for expires_in seconds, for this patient and these scopes only.</summary>
     /// <example>p0Qm3s8dYw1cV7r2Kx9TbA4nL6eJ5hGf</example>
     [JsonPropertyName("access_token")]
     public string AccessToken { get; set; } = string.Empty;
@@ -22,7 +22,7 @@ public class SmartTokenResponse
     [JsonPropertyName("expires_in")]
     public int ExpiresIn { get; set; }
 
-    /// <summary>The scopes the app asked for (or the default DTR scopes).</summary>
+    /// <summary>Scopes granted: the ones asked for, limited to the app's allowed scopes; openid, online_access and offline_access are removed.</summary>
     /// <example>launch patient/*.rs patient/QuestionnaireResponse.cu</example>
     [JsonPropertyName("scope")]
     public string Scope { get; set; } = string.Empty;

@@ -14,9 +14,9 @@ public class PriorAuthRow
     /// <example>PA-2026-0001</example>
     public string RequestId { get; set; } = string.Empty;
 
-    /// <summary>Insurance plan id of the payer the request was sent to. Column PI_INSURANCE_PLAN_ID, NUMBER(10).</summary>
+    /// <summary>Insurance plan id of the payer the request was sent to. Column INSURANCE_PLAN_ID, NUMBER(10).</summary>
     /// <example>1001</example>
-    public int PiInsurancePlanId { get; set; }
+    public int InsurancePlanId { get; set; }
 
     /// <summary>EHR patient id. Column PATIENT_ID, VARCHAR2(64).</summary>
     /// <example>pat-1</example>
@@ -52,7 +52,7 @@ public class PriorAuthRow
 
     /// <summary>
     /// Overall status: approved | partially-approved | denied | pended | not-required | cancelled | contact-payer | error.
-    /// The gateway asks for the rows with status "pended" (GET prior-auths?status=pended). Column STATUS, VARCHAR2(20).
+    /// The client EHR's job reads the rows with status "pended" and calls the gateway's inquire for each. Column STATUS, VARCHAR2(20).
     /// </summary>
     /// <example>pended</example>
     public string Status { get; set; } = string.Empty;
@@ -79,7 +79,7 @@ public class PriorAuthRow
     /// (overallStatus, lines, informationRequests, decisionDueBy ...). The EHR screen reads the line decisions from it.
     /// Store the text unchanged and return it unchanged. Column DECISION_JSON, CLOB.
     /// </summary>
-    /// <example>{"requestId":"PA-2026-0001","piInsurancePlanId":1001,"patientId":"pat-1","orderIds":["ord-1-hd"],"overallStatus":"pended","lines":[{"sequence":1,"orderId":"ord-1-hd","decision":"pended"}],"informationRequests":[],"errors":[]}</example>
+    /// <example>{"requestId":"PA-2026-0001","insurancePlanId":1001,"patientId":"pat-1","orderIds":["ord-1-hd"],"overallStatus":"pended","lines":[{"sequence":1,"orderId":"ord-1-hd","decision":"pended"}],"informationRequests":[],"errors":[]}</example>
     public string? DecisionJson { get; set; }
 
     /// <summary>

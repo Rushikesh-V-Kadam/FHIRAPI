@@ -1,7 +1,7 @@
 namespace FHIRAPI.Configuration;
 
 /// <summary>
-/// Chooses where QuestionnaireResponses are stored (appsettings section "Storage").
+/// Chooses where this API keeps its data (appsettings section "Storage").
 /// </summary>
 public class StorageSettings
 {
@@ -14,6 +14,17 @@ public class StorageSettings
     /// </summary>
     public string QuestionnaireResponseStore { get; set; } = "InMemory";
 
-    /// <summary>True when the EHR data API store is selected.</summary>
+    /// <summary>
+    /// Where SMART apps, launches, authorization codes and access tokens are kept: "EhrApi" (tables PA_SMART_LAUNCH and,
+    /// with TokenProvider BuiltIn, PA_SMART_CLIENT, PA_SMART_AUTH_CODE, PA_ACCESS_TOKEN through the EHR data API; needed
+    /// when the API runs on more than one server) or "InMemory" (one server only, lost on restart; the SMART apps then
+    /// come from Security:LocalClients). With Keycloak only the launches are used.
+    /// </summary>
+    public string SmartStore { get; set; } = "InMemory";
+
+    /// <summary>True when the EHR data API store is selected for forms.</summary>
     public bool UseEhrApi => string.Equals(QuestionnaireResponseStore, "EhrApi", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>True when the EHR data API store is selected for the SMART data.</summary>
+    public bool UseEhrApiForSmart => string.Equals(SmartStore, "EhrApi", StringComparison.OrdinalIgnoreCase);
 }

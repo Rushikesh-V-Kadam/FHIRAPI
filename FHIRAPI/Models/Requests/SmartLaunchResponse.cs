@@ -6,7 +6,7 @@ namespace FHIRAPI.Models.Requests;
 /// </summary>
 public class SmartLaunchResponse
 {
-    /// <summary>Opaque launch id the DTR app sends back to /fhir/r4/auth/authorize.</summary>
+    /// <summary>Opaque launch id the DTR app sends to Keycloak at authorize (or the gateway with its CRD token request).</summary>
     /// <example>6-jM9cmaBKMd4rFPAl-hQp_D</example>
     public string LaunchId { get; set; } = string.Empty;
 

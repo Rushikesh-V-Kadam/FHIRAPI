@@ -7,6 +7,7 @@ using FHIRAPI.Configuration;
 using FHIRAPI.Constants;
 using FHIRAPI.Exceptions;
 using FHIRAPI.Helpers;
+using FHIRAPI.Repositories.Interfaces;
 using FHIRAPI.Services;
 
 namespace FHIRAPI.Controllers;
@@ -17,12 +18,12 @@ namespace FHIRAPI.Controllers;
 ///   PUT  /fhir/r4/QuestionnaireResponse/{id}   create or update with a known id
 ///   GET  /fhir/r4/QuestionnaireResponse/{id}   read one form
 ///   GET  /fhir/r4/QuestionnaireResponse?patient=pat-1   all forms of a patient
-/// Callers: the DTR app saves forms; the Payer Gateway reads them for PAS and CDex.
+/// Callers: the payer SMART DTR app (after SMART App Launch) saves forms; the Payer Gateway reads them for PAS and CDex.
 /// </summary>
 [ApiController]
 [Route("fhir/r4/QuestionnaireResponse")]
 [Produces(FhirMediaTypes.FhirJson)]
-[Tags("DTR forms (QuestionnaireResponse) - saved by the Payer Gateway or a payer DTR app")]
+[Tags("DTR forms (QuestionnaireResponse) - saved by the payer SMART DTR app")]
 public class QuestionnaireResponseController : ControllerBase
 {
     private readonly QuestionnaireResponseService _service;
@@ -52,6 +53,7 @@ public class QuestionnaireResponseController : ControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
     public async Task<IActionResult> Create([FromBody, Required] JsonElement body, CancellationToken ct)
     {
+        PatientAccessGuard.CheckJson(HttpContext, JsonNode.Parse(body.GetRawText()));
         var (record, _) = await _service.SaveAsync(null, body, ct);
         Response.Headers.Location = $"{_server.BaseUrl}/QuestionnaireResponse/{record.Id}";
         return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, StatusCodes.Status201Created);
@@ -77,6 +79,16 @@ public class QuestionnaireResponseController : ControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
     public async Task<IActionResult> Update(string id, [FromBody, Required] JsonElement body, CancellationToken ct)
     {
+        PatientAccessGuard.CheckJson(HttpContext, JsonNode.Parse(body.GetRawText()));
+        // with a patient token, an existing form of another patient may not be overwritten either
+        if (PatientAccessGuard.TokenPatient(HttpContext) != null)
+        {
+            QuestionnaireResponseRecord? existing = await _service.GetAsync(id, ct);
+            if (existing != null)
+            {
+                PatientAccessGuard.CheckJson(HttpContext, JsonNode.Parse(existing.ResourceJson));
+            }
+        }
         var (record, created) = await _service.SaveAsync(id, body, ct);
         Response.Headers.Location = $"{_server.BaseUrl}/QuestionnaireResponse/{record.Id}";
         return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, created ? StatusCodes.Status201Created : StatusCodes.Status200OK);
@@ -96,6 +108,7 @@ public class QuestionnaireResponseController : ControllerBase
     {
         var record = await _service.GetAsync(id, ct)
                      ?? throw new FhirException(404, IssueTypes.NotFound, $"QuestionnaireResponse/{id} was not found.");
+        PatientAccessGuard.CheckJson(HttpContext, JsonNode.Parse(record.ResourceJson));
 
         return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!);
     }
@@ -114,6 +127,7 @@ public class QuestionnaireResponseController : ControllerBase
     {
         var patientId = patient?.Split('/').Last()
                         ?? throw new FhirException(400, IssueTypes.Required, "QuestionnaireResponse search requires the patient parameter.");
+        PatientAccessGuard.CheckPatientParameter(HttpContext, patientId);
 
         return FhirResults.Ok(await _service.SearchByPatientAsync(patientId, ct));
     }

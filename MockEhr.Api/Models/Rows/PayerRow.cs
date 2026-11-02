@@ -1,18 +1,18 @@
 namespace MockEhr.Api.Models.Rows;
 
 /// <summary>
-/// One payer = one row of table PA_PAYER. Returned by GET api/prior-auth-data/payers/{piInsurancePlanId}.
+/// One payer = one row of table PA_PAYER. Returned by GET api/prior-auth-data/payers/{insurancePlanId}.
 /// The EHR team maintains these rows; the Payer Gateway only reads them, one payer at a time (there is no payer list).
-/// One JSON property = one column: piInsurancePlanId = PI_INSURANCE_PLAN_ID, payerName = PAYER_NAME, baseUrl = BASE_URL.
-/// Only piInsurancePlanId, payerName and baseUrl must be filled. Every other property may be null or left out; the gateway then uses
+/// One JSON property = one column: insurancePlanId = INSURANCE_PLAN_ID, payerName = PAYER_NAME, baseUrl = BASE_URL.
+/// Only insurancePlanId, payerName and baseUrl must be filled. Every other property may be null or left out; the gateway then uses
 /// its default. The payer's own id and the member id are not kept here: they come from the patient's insurance
 /// (GET api/patients/{id}/insurances: payerId and memberId).
 /// </summary>
 public class PayerRow
 {
-    /// <summary>Key. The EHR's insurance plan id of this payer; the EHR sends it as "piInsurancePlanId" in every gateway request. Column PI_INSURANCE_PLAN_ID, NUMBER(10).</summary>
+    /// <summary>Key. The EHR's insurance plan id of this payer; the EHR sends it as "insurancePlanId" in every gateway request. Column INSURANCE_PLAN_ID, NUMBER(10).</summary>
     /// <example>1001</example>
-    public int PiInsurancePlanId { get; set; }
+    public int InsurancePlanId { get; set; }
 
     /// <summary>Name of the payer, shown in the gateway's log lines and messages. Column PAYER_NAME, VARCHAR2(64).</summary>
     /// <example>MockPayer</example>
@@ -58,8 +58,8 @@ public class PayerRow
     /// <example>true</example>
     public bool? SignCdsHooksRequests { get; set; }
 
-    /// <summary>true = the gateway asks the payer to notify it about decisions (normally true). Empty = true. Column USE_SUBSCRIPTIONS, NUMBER(1).</summary>
-    /// <example>true</example>
+    /// <summary>Not read by the gateway: it makes no PAS Subscription (the client EHR's job inquires). Default false. Column USE_SUBSCRIPTIONS, NUMBER(1).</summary>
+    /// <example>false</example>
     public bool? UseSubscriptions { get; set; }
 
     /// <summary>Not read by the gateway (kept for the authentication layer): secret the payer sends with notifications. SENSITIVE. Column NOTIFICATION_SECRET, VARCHAR2(200).</summary>
@@ -74,8 +74,8 @@ public class PayerRow
     /// <example>30</example>
     public int? TimeoutSeconds { get; set; }
 
-    /// <summary>Forms (the EHR shows the payer's questions) | SmartApp (the payer's own SMART DTR app). Empty = Forms. Column DTR_MODE, VARCHAR2(10).</summary>
-    /// <example>Forms</example>
+    /// <summary>SmartApp (the payer's own SMART DTR app; the only mode now). Default SmartApp. Column DTR_MODE, VARCHAR2(10). Not read by the gateway.</summary>
+    /// <example>SmartApp</example>
     public string? DtrMode { get; set; }
 
     /// <summary>Launch URL of the payer's SMART DTR app. Empty = the URL on the payer's CRD card. Column DTR_APP_LAUNCH_URL, VARCHAR2(500).</summary>

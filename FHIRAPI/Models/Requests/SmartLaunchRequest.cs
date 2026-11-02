@@ -15,6 +15,13 @@ public class SmartLaunchRequest
     [Required(AllowEmptyStrings = true)]
     public string PatientId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Payer of the DTR link (EHR insurance plan id). When filled, only that payer's registered SMART app may use the
+    /// launch. Empty = any registered app.
+    /// </summary>
+    /// <example>1001</example>
+    public int? InsurancePlanId { get; set; }
+
     /// <summary>Logged-in clinician (becomes fhirUser = Practitioner/{id}).</summary>
     /// <example>prac-1</example>
     public string? UserPractitionerId { get; set; }

@@ -14,7 +14,4 @@ public static class SmartScopes
         "patient/Procedure.rs patient/DocumentReference.rs patient/ServiceRequest.rs " +
         "patient/MedicationRequest.rs user/Practitioner.rs user/PractitionerRole.rs " +
         "user/Organization.rs user/Location.rs";
-
-    /// <summary>Used when the DTR app does not ask for a scope.</summary>
-    public const string DtrDefault = "launch patient/*.rs patient/QuestionnaireResponse.cu";
 }

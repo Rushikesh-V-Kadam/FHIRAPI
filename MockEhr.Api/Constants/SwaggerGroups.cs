@@ -10,7 +10,7 @@ public static class SwaggerGroups
     public const string GatewayData = "1. Data API - called by Payer Gateway (PA_* tables)";
 
     /// <summary>EHR data API: the FHIR API stores the DTR forms (PA_QUESTIONNAIRE_RESPONSE) here.</summary>
-    public const string FhirApiData = "2. Data API - called by FHIR API (DTR forms)";
+    public const string FhirApiData = "2. Data API - called by FHIR API (DTR forms, SMART apps, launches, tokens)";
 
     /// <summary>EHR read APIs the FHIR API turns into FHIR resources (and the copy of a form in the chart).</summary>
     public const string FhirApiRead = "3. EHR API - called by FHIR API (patient data as FHIR)";

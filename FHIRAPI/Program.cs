@@ -8,11 +8,19 @@
 //   /fhir/r4/metadata                          CapabilityStatement (public)
 //   /fhir/r4/Patient/{id}, /fhir/r4/Patient?... (one route per resource type) read / search EHR data as FHIR
 //   /fhir/r4/QuestionnaireResponse[/{id}]      save / read DTR forms
-//   /fhir/r4/.well-known/smart-configuration   SMART discovery (public)
-//   /fhir/r4/auth/authorize, /fhir/r4/auth/token   SMART launch context for DTR apps (ours for demos, the payers' own apps)
-//   /internal/access-tokens, /internal/smart-launches   Payer Gateway only (keep on the internal network)
+//   /fhir/r4/.well-known/smart-configuration   SMART discovery (public): where DTR apps sign in
+//   /fhir/r4/auth/authorize, /fhir/r4/auth/token   BuiltIn only: SMART sign-in and tokens issued by this API
+//   /internal/access-tokens                    BuiltIn only: CRD fhirAuthorization token for the gateway
+//   /internal/smart-launches[/{id}/context]    Payer Gateway (create a launch) and, with Keycloak, the Keycloak add-on
+//                                              (read its context); keep on the internal network
 //
-// No authentication is built in: it is added outside this code.
+// Who issues the tokens: Security:TokenProvider
+//   "BuiltIn"   this API (tables PA_SMART_CLIENT, PA_SMART_AUTH_CODE, PA_ACCESS_TOKEN) - the default for now
+//   "Keycloak"  Keycloak (appsettings "Keycloak"); clinicians sign in through Azure AD, brokered by Keycloak, and the
+//               Keycloak SMART launch add-on (E:\FHIR\KeycloakSmartLaunch) puts the launch context next to the token
+// Access checks (appsettings "Security", Middleware/AccessTokenMiddleware.cs):
+//   /fhir/r4 needs a Bearer token from the TokenProvider, or the gateway's X-Api-Key; /internal needs the X-Api-Key. Security:ValidateAccessTokens = false turns the /fhir/r4 check off
+//   (when it is done in front of this API).
 //
 // FHIR R4 only (4.0.1): the version the Da Vinci guides, CMS-0057-F and the Payer Gateway use.
 //
@@ -39,8 +47,11 @@ var configuration = builder.Configuration;
 // ---------------------------------------------------------------- 1. settings (appsettings.json sections)
 builder.Services.Configure<EhrSettings>(configuration.GetSection(EhrSettings.SectionName));
 builder.Services.Configure<FhirServerSettings>(configuration.GetSection(FhirServerSettings.SectionName));
+builder.Services.Configure<SecuritySettings>(configuration.GetSection(SecuritySettings.SectionName));
+builder.Services.Configure<KeycloakSettings>(configuration.GetSection(KeycloakSettings.SectionName));
+var securitySettings = configuration.GetSection(SecuritySettings.SectionName).Get<SecuritySettings>() ?? new SecuritySettings();
+var keycloakSettings = configuration.GetSection(KeycloakSettings.SectionName).Get<KeycloakSettings>() ?? new KeycloakSettings();
 var storageSettings = configuration.GetSection(StorageSettings.SectionName).Get<StorageSettings>() ?? new StorageSettings();
-var swaggerSettings = configuration.GetSection(SwaggerSettings.SectionName).Get<SwaggerSettings>() ?? new SwaggerSettings();
 
 // ---------------------------------------------------------------- 2. EHR REST client
 builder.Services.AddTransient<CorrelationIdHandler>();
@@ -72,10 +83,33 @@ if (storageSettings.UseEhrApi)
 else
     builder.Services.AddSingleton<IQuestionnaireResponseRepository, InMemoryQuestionnaireResponseRepository>();
 
-// ---------------------------------------------------------------- 6. SMART launches (in memory, a few minutes each)
-builder.Services.AddSingleton<ISmartLaunchStore, InMemorySmartLaunchStore>();
-// fhirAuthorization tokens for payers (issued by /internal/access-tokens; not checked by this API)
-builder.Services.AddSingleton<ITokenService, InMemoryTokenService>();
+// ---------------------------------------------------------------- 6. SMART apps, launches, codes and access tokens
+// Storage:SmartStore = "EhrApi": tables PA_SMART_LAUNCH and (BuiltIn) PA_SMART_CLIENT, PA_SMART_AUTH_CODE, PA_ACCESS_TOKEN
+// through the EHR data API (works with several server instances). "InMemory": one instance only; apps from
+// Security:LocalClients. With Keycloak only the launches are used: apps, codes and tokens are kept by Keycloak.
+if (storageSettings.UseEhrApiForSmart)
+{
+    builder.Services.AddSingleton<EhrDataApi>();
+    builder.Services.AddSingleton<ISmartClientStore, EhrApiSmartClientStore>();
+    builder.Services.AddSingleton<ISmartLaunchStore, EhrApiSmartLaunchStore>();
+    builder.Services.AddSingleton<ITokenService, EhrApiTokenService>();
+}
+else
+{
+    builder.Services.AddSingleton<ISmartClientStore, InMemorySmartClientStore>();
+    builder.Services.AddSingleton<ISmartLaunchStore, InMemorySmartLaunchStore>();
+    builder.Services.AddSingleton<ITokenService, InMemoryTokenService>();
+}
+// Security:TokenProvider decides who checks the Bearer tokens on /fhir/r4
+if (securitySettings.UsesKeycloak())
+{
+    // one instance: it caches Keycloak's public keys (Services/KeycloakTokenValidator.cs)
+    builder.Services.AddSingleton<IAccessTokenValidator, KeycloakTokenValidator>();
+}
+else
+{
+    builder.Services.AddSingleton<IAccessTokenValidator, BuiltInTokenValidator>();
+}
 
 // ---------------------------------------------------------------- 7. MVC, errors, CORS, Swagger
 builder.Services.AddControllers(options =>
@@ -83,11 +117,6 @@ builder.Services.AddControllers(options =>
     // Accept "Content-Type: application/fhir+json" bodies (QuestionnaireResponse POST/PUT)
     var jsonInput = options.InputFormatters.OfType<SystemTextJsonInputFormatter>().First();
     jsonInput.SupportedMediaTypes.Add(FhirMediaTypes.FhirJson);
-    // Swagger:ShowDtrSections = false: the DTR forms and SMART launch sections are left out of Swagger (the endpoints still work)
-    if (!swaggerSettings.ShowDtrSections)
-    {
-        options.Conventions.Add(new HideDtrSectionsConvention());
-    }
 });
 builder.Services.AddExceptionHandler<FhirExceptionHandler>();   // errors -> OperationOutcome
 builder.Services.AddProblemDetails();
@@ -106,6 +135,8 @@ builder.Services.AddSwaggerGen(options =>
     if (File.Exists(xmlFile)) options.IncludeXmlComments(xmlFile);
     // a property that can never be null (C# "string", not "string?") is not shown as "nullable"
     options.SupportNonNullableReferenceTypes();
+    // "Authorize" button: X-Api-Key or Bearer token (Helpers/SwaggerSecuritySetup.cs)
+    SwaggerSecuritySetup.Configure(options);
 });
 
 var app = builder.Build();
@@ -116,7 +147,19 @@ app.UseExceptionHandler();
 app.UseSwagger();
 app.UseSwaggerUI(SwaggerUiSetup.Configure);
 app.UseCors();
+app.UseMiddleware<AccessTokenMiddleware>();   // after CORS (preflight), before the controllers
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+
+if (securitySettings.ValidateAccessTokens && securitySettings.InternalApiKey.Length == 0)
+{
+    // without the key the Payer Gateway has no way in: every /fhir/r4 call would need a patient token
+    app.Logger.LogWarning("Security:ValidateAccessTokens is on but Security:InternalApiKey is empty: the Payer Gateway cannot read the FHIR API.");
+}
+if (securitySettings.UsesKeycloak() && !keycloakSettings.IsConfigured())
+{
+    // without the realm no token can be checked and no app can sign in: those calls answer 503
+    app.Logger.LogWarning("Security:TokenProvider is Keycloak but Keycloak:Authority is empty: SMART sign-in and Bearer tokens do not work.");
+}
 
 app.Run();

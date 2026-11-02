@@ -5,37 +5,42 @@ using FHIRAPI.Models.Security;
 namespace FHIRAPI.Services;
 
 /// <summary>
-/// Keeps tokens in memory (opaque random strings -> grant).
-/// Fine for one server instance. With several instances behind a load balancer, move this to a shared store
-/// (an Oracle table or Redis) or replace it with a real OAuth server.
+/// Keeps tokens in memory (hash of the token -> grant), Storage:SmartStore = "InMemory".
+/// Fine for one server instance. With several instances use "EhrApi" (EhrApiTokenService).
 /// </summary>
 public class InMemoryTokenService : ITokenService
 {
-    private readonly ConcurrentDictionary<string, TokenGrant> _tokens = new();
+    private readonly ConcurrentDictionary<string, TokenGrant> _tokens = new ConcurrentDictionary<string, TokenGrant>();
 
     /// <inheritdoc />
-    public string Issue(TokenGrant grant)
+    public Task<string> IssueAsync(TokenGrant grant, CancellationToken ct)
     {
         RemoveExpired();
-        var token = RandomIds.New(32);
-        _tokens[token] = grant;
-        return token;
+        string token = RandomIds.New(32);
+        _tokens[RandomIds.Sha256Base64Url(token)] = grant;
+        return Task.FromResult(token);
     }
 
     /// <inheritdoc />
-    public TokenGrant? Validate(string token)
+    public Task<TokenGrant?> ValidateAsync(string token, CancellationToken ct)
     {
-        if (_tokens.TryGetValue(token, out var grant) && grant.IsValid)
-            return grant;
-        return null;
+        TokenGrant? grant;
+        if (_tokens.TryGetValue(RandomIds.Sha256Base64Url(token), out grant) && grant.IsValid)
+        {
+            return Task.FromResult<TokenGrant?>(grant);
+        }
+        return Task.FromResult<TokenGrant?>(null);
     }
 
     /// <summary>Deletes expired tokens so memory does not grow forever.</summary>
     private void RemoveExpired()
     {
-        foreach (var entry in _tokens)
+        foreach (KeyValuePair<string, TokenGrant> entry in _tokens)
         {
-            if (!entry.Value.IsValid) _tokens.TryRemove(entry.Key, out _);
+            if (!entry.Value.IsValid)
+            {
+                _tokens.TryRemove(entry.Key, out _);
+            }
         }
     }
 }

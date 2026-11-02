@@ -31,11 +31,11 @@ public class EhrInsuranceDto
     public string? PayerName { get; set; }
 
     /// <summary>
-    /// The EHR's insurance plan id of this insurance (PA_PAYER.PI_INSURANCE_PLAN_ID). The EHR sends it as piInsurancePlanId
+    /// The EHR's insurance plan id of this insurance (PA_PAYER.INSURANCE_PLAN_ID). The EHR sends it as insurancePlanId
     /// in every Payer Gateway request; the gateway reads that payer's configuration. Null = the insurance has no plan id.
     /// </summary>
     /// <example>1001</example>
-    public int? PiInsurancePlanId { get; set; }
+    public int? InsurancePlanId { get; set; }
 
     /// <summary>Plan id (becomes Coverage.class "plan").</summary>
     /// <example>GOLD-PPO</example>

@@ -17,9 +17,9 @@ public class CoverageDecisionRow
     /// <example>evt-20261007-0001</example>
     public string EventId { get; set; } = string.Empty;
 
-    /// <summary>Insurance plan id of the payer that answered. Column PI_INSURANCE_PLAN_ID, NUMBER(10).</summary>
+    /// <summary>Insurance plan id of the payer that answered. Column INSURANCE_PLAN_ID, NUMBER(10).</summary>
     /// <example>1001</example>
-    public int? PiInsurancePlanId { get; set; }
+    public int? InsurancePlanId { get; set; }
 
     /// <summary>EHR patient id. Column PATIENT_ID, VARCHAR2(64).</summary>
     /// <example>pat-1</example>
@@ -46,7 +46,7 @@ public class CoverageDecisionRow
     /// POST /crd/order-sign (callDtr, callPas, questionnaireUrls, messages ...).
     /// Store the text unchanged and return it unchanged. Column DECISION_JSON, CLOB.
     /// </summary>
-    /// <example>{"orderId":"ord-1-hd","piInsurancePlanId":1001,"coverageId":"cov-1","covered":"covered","priorAuthNeeded":"auth-needed","documentationNeeded":"clinical","callDtr":true,"callPas":true,"questionnaireUrls":["http://example.org/fhir/Questionnaire/dialysis-incenter-hd"],"messages":[]}</example>
+    /// <example>{"orderId":"ord-1-hd","insurancePlanId":1001,"coverageId":"cov-1","covered":"covered","priorAuthNeeded":"auth-needed","documentationNeeded":"clinical","callDtr":true,"callPas":true,"questionnaireUrls":["http://example.org/fhir/Questionnaire/dialysis-incenter-hd"],"messages":[]}</example>
     public string DecisionJson { get; set; } = string.Empty;
 
     /// <summary>When the decision was saved (UTC, ISO-8601 with Z). Column UPDATED_AT, TIMESTAMP.</summary>

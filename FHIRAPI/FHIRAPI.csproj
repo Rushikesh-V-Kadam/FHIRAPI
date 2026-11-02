@@ -3,7 +3,7 @@
   <!--
     FHIR API
     Converts the EHR's plain REST/JSON APIs into FHIR R4 (US Core 3.1.1 / Da Vinci CRD profiles)
-    and hosts the SMART on FHIR launch used by the DTR app.
+    and keeps the SMART on FHIR launch context used by the DTR app (Keycloak issues the tokens).
     All FHIR model classes are written in this project (Models/Fhir) - no FHIR SDK package is used.
   -->
   <PropertyGroup>
@@ -19,6 +19,8 @@
   <ItemGroup>
     <!-- Swagger UI (testing and documentation only) -->
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    <!-- Keycloak access tokens: reads the realm's OpenID configuration and keys, checks the JWT (Services/KeycloakTokenValidator.cs) -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
   </ItemGroup>
 
 </Project>

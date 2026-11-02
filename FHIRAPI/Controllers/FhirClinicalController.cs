@@ -9,7 +9,7 @@ namespace FHIRAPI.Controllers;
 /// FHIR R4 read and search of Clinical data and documents.
 /// One action per resource type (GET /fhir/r4/{Type}/{id} and GET /fhir/r4/{Type}?...), so each resource has
 /// its own URL and its own search parameters in Swagger. Everything is fetched live from the EHR and converted;
-/// nothing is stored. Callers: payers during CRD, payer DTR apps and the Payer Gateway. No authentication is built in.
+/// nothing is stored. Callers: payers during CRD, payer DTR apps and the Payer Gateway. Access is checked by AccessTokenMiddleware (token scope) and PatientAccessGuard (token patient).
 /// </summary>
 [ApiController]
 [Route("fhir/r4")]

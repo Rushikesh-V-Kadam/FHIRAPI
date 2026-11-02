@@ -4,18 +4,19 @@ namespace FHIRAPI.Services;
 
 /// <summary>
 /// Stores SMART launches (from /internal/smart-launches) and OAuth authorization codes (from /auth/authorize).
+/// InMemorySmartLaunchStore (one server) or EhrApiSmartLaunchStore (EHR database, several servers): Storage:SmartStore.
 /// </summary>
 public interface ISmartLaunchStore
 {
     /// <summary>Saves a new launch.</summary>
-    void SaveLaunch(SmartLaunch launch);
+    Task SaveLaunchAsync(SmartLaunch launch, CancellationToken ct);
 
     /// <summary>Returns a launch that has not expired, or null.</summary>
-    SmartLaunch? GetLaunch(string launchId);
+    Task<SmartLaunch?> GetLaunchAsync(string launchId, CancellationToken ct);
 
-    /// <summary>Saves a new authorization code.</summary>
-    void SaveCode(AuthorizationCode code);
+    /// <summary>Saves a new authorization code (only a hash of the code is kept).</summary>
+    Task SaveCodeAsync(AuthorizationCode code, CancellationToken ct);
 
-    /// <summary>Returns and deletes a code (codes can be used only once). Null when unknown or expired.</summary>
-    AuthorizationCode? TakeCode(string code);
+    /// <summary>Returns and deletes a code (codes can be used only once). Null when unknown, used or expired.</summary>
+    Task<AuthorizationCode?> TakeCodeAsync(string code, CancellationToken ct);
 }

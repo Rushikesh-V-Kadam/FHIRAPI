@@ -1,4 +1,5 @@
 using MockEhr.Api.Models;
+using MockEhr.Api.Models.Rows;
 using MockEhr.Api.Storage;
 
 namespace MockEhr.Api;
@@ -45,7 +46,7 @@ public static class SeedData
     }
 
     /// <summary>
-    /// Insurance plan id of the local mock payer: the piInsurancePlanId of the test insurances (Data/insurances.json)
+    /// Insurance plan id of the local mock payer: the insurancePlanId of the test insurances (Data/insurances.json)
     /// and the key of its PA_PAYER row.
     /// </summary>
     public const int MockPayerPlanId = 1001;
@@ -57,7 +58,7 @@ public static class SeedData
     public static Dictionary<string, object?> MockPayerRow()
     {
         Dictionary<string, object?> row = new Dictionary<string, object?>();
-        row["piInsurancePlanId"] = MockPayerPlanId;
+        row["insurancePlanId"] = MockPayerPlanId;
         row["payerName"] = "MockPayer";
         row["enabled"] = true;
         row["baseUrl"] = "http://localhost:5080";
@@ -69,12 +70,31 @@ public static class SeedData
         row["authClientSecret"] = null;
         row["authScope"] = null;
         row["signCdsHooksRequests"] = true;
-        row["useSubscriptions"] = true;
+        row["useSubscriptions"] = false;
         row["notificationSecret"] = null;
         row["crdTimeoutSeconds"] = 300;
         row["timeoutSeconds"] = 300;
-        row["dtrMode"] = "Forms";
+        row["dtrMode"] = "SmartApp";
         row["dtrAppLaunchUrl"] = null;
+        return row;
+    }
+
+    /// <summary>
+    /// The row of table PA_SMART_CLIENT for a test SMART DTR app of the mock payer, as GET
+    /// api/prior-auth-data/smart-clients/mock-payer-dtr-app returns it. Lets a tester run the SMART authorize / token
+    /// steps (e.g. with Postman) against the FHIR API. In the real EHR the EHR team inserts one row per payer app.
+    /// The redirect URI is the one of the mock DTR SMART app (E:\FHIR\MockDtrSmartApp, port 5300).
+    /// TODO: http://localhost:5300/callback is a local test address; a real payer app registers its own redirect URIs.
+    /// </summary>
+    public static SmartClientRow MockSmartClientRow()
+    {
+        SmartClientRow row = new SmartClientRow();
+        row.ClientId = "mock-payer-dtr-app";
+        row.InsurancePlanId = MockPayerPlanId;
+        row.ClientName = "Mock payer DTR app (test)";
+        row.Enabled = true;
+        row.RedirectUrisJson = "[\"http://localhost:5300/callback\"]";
+        row.AllowedScopes = null;
         return row;
     }
 

@@ -16,17 +16,19 @@ namespace MockEhr.Api.Controllers;
 /// The real EHR implements the same endpoints on its Oracle tables (PA_*); this mock keeps the rows in the JSON data file.
 ///
 ///   table                       endpoint under api/prior-auth-data                         row class (Models/Rows)
-///   PA_PAYER                    GET payers/{piInsurancePlanId}                             PayerRow
-///                               PUT payers/{piInsurancePlanId} (mock only: lets a demo add a payer; the real EHR team maintains the table)
+///   PA_PAYER                    GET payers/{insurancePlanId}                             PayerRow
+///                               PUT payers/{insurancePlanId} (mock only: lets a demo add a payer; the real EHR team maintains the table)
 ///   PA_COVERAGE_DECISION        GET / PUT coverage-decisions/{orderId}                     CoverageDecisionRow
-///   PA_DTR_FORM                 GET / PUT dtr-forms/{formId}                               DtrFormRow
 ///   PA_DTR_LINK                 GET / PUT dtr-links/{linkId}                               DtrLinkRow
-///   PA_PRIOR_AUTH               GET / PUT prior-auths/{requestId},  GET prior-auths?status=&amp;piInsurancePlanId=   PriorAuthRow
-///   PA_PAYER_SUBSCRIPTION       GET / PUT payer-subscriptions/{piInsurancePlanId}/{organizationNpi} PayerSubscriptionRow
-///   PA_CDEX_TASK                PUT cdex-tasks/{piInsurancePlanId}/{taskId},  GET cdex-tasks?requestId=   CdexTaskRow
+///   PA_PRIOR_AUTH               GET / PUT prior-auths/{requestId}                          PriorAuthRow
+///   PA_CDEX_TASK                PUT cdex-tasks/{insurancePlanId}/{taskId},  GET cdex-tasks?requestId=   CdexTaskRow
 ///
-/// piInsurancePlanId (a whole number: the EHR's insurance plan id) is the payer key in every table, path and filter.
+/// insurancePlanId (a whole number: the EHR's insurance plan id) is the payer key in every table, path and filter.
 ///   PA_QUESTIONNAIRE_RESPONSE   GET / PUT questionnaire-responses/{id},  GET questionnaire-responses?patientId=   QuestionnaireResponseRow
+///   PA_SMART_CLIENT             GET smart-clients/{clientId}  (PUT mock only)                SmartClientRow     (FHIR API BuiltIn only)
+///   PA_SMART_LAUNCH             GET / PUT smart-launches/{launchId}                          SmartLaunchRow
+///   PA_SMART_AUTH_CODE          PUT / DELETE smart-auth-codes/{codeHash} (DELETE returns the row)   SmartAuthCodeRow   (BuiltIn only)
+///   PA_ACCESS_TOKEN             GET / PUT access-tokens/{tokenHash}                          AccessTokenRow     (BuiltIn only)
 ///
 /// Rules: a row is a flat JSON object (camelCase, one property per column). The row classes describe every property for
 /// Swagger: its meaning, column, example and whether it is always filled.
@@ -52,49 +54,89 @@ public class PriorAuthDataController : ControllerBase
 
     // ================================================================== PA_PAYER (read only: the EHR team maintains it)
 
-    /// <summary>One payer's configuration by its insurance plan id (table PA_PAYER).</summary>
+    /// <summary>One payer's configuration by its insurance plan id (table PA_PAYER), in the client EHR's format.</summary>
     /// <remarks>
-    /// The gateway calls this for the piInsurancePlanId of each request and keeps the answer for a few minutes, so a new
+    /// The gateway calls this for the insurancePlanId of each request and keeps the answer for a few minutes, so a new
     /// or changed payer is picked up without a restart. There is no payer list: the gateway always asks for one payer.
-    /// A switched-off payer (enabled = false) is returned too; the gateway decides.
-    /// SQL: WHERE PI_INSURANCE_PLAN_ID = :piInsurancePlanId.
-    /// The mock adds the local mock payer (piInsurancePlanId 1001) the first time the table is empty.
+    /// A switched-off payer (Enabled = false) is returned too; the gateway decides.
+    /// SQL: WHERE INSURANCE_PLAN_ID = :insurancePlanId.
+    ///
+    /// The answer is the client EHR's wrapper: { "PayerDetail": { ...the row... }, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.
+    /// No such payer = 200 with "PayerDetail": null. The row uses the client's property names (InsurancePlanID, BaseURL ...).
+    /// The mock adds the local mock payer (insurancePlanId 1001) the first time the table is empty.
     /// </remarks>
-    /// <param name="piInsurancePlanId" example="1001">The EHR's insurance plan id, e.g. 1001.</param>
-    /// <response code="200">The payer row (one JSON object, not an array).</response>
-    /// <response code="404">No payer has this insurance plan id.</response>
+    /// <param name="insurancePlanId" example="1001">The EHR's insurance plan id, e.g. 1001.</param>
+    /// <response code="200">The wrapper with the payer row in PayerDetail, or PayerDetail null when there is no such payer.</response>
     [Tags(SwaggerGroups.GatewayData)]
-    [HttpGet("payers/{piInsurancePlanId:int}")]
-    [ProducesResponseType(typeof(PayerRow), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public IActionResult GetPayer(int piInsurancePlanId)
+    [HttpGet("payers/{insurancePlanId:int}")]
+    [ProducesResponseType(typeof(PayerDetailResponse), StatusCodes.Status200OK)]
+    public IActionResult GetPayer(int insurancePlanId)
     {
-        lock (_store.Sync)
-        {
-            AddMockPayerWhenEmpty(Table("payers"));
-        }
-        return GetRow("payers", PlanKey(piInsurancePlanId));
-    }
-
-    /// <summary>Mock only: adds or replaces a payer row.</summary>
-    /// <remarks>The real EHR team maintains PA_PAYER with its own screens / scripts, so the real EHR does not need this endpoint.</remarks>
-    /// <param name="piInsurancePlanId" example="1001">The EHR's insurance plan id (key). Wins over piInsurancePlanId in the body.</param>
-    /// <param name="row">Required. The payer row.</param>
-    /// <response code="204">Saved.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
-    [Tags(SwaggerGroups.MockUi)]
-    [HttpPut("payers/{piInsurancePlanId:int}")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutPayer(int piInsurancePlanId, [FromBody, Required] PayerRow row)
-    {
-        row.PiInsurancePlanId = piInsurancePlanId;
+        PayerDetailResponse answer = new PayerDetailResponse();
         lock (_store.Sync)
         {
             Dictionary<string, JsonElement> payers = Table("payers");
             AddMockPayerWhenEmpty(payers);
-            payers[PlanKey(piInsurancePlanId)] = ToJson(row);
+            JsonElement row;
+            if (payers.TryGetValue(PlanKey(insurancePlanId), out row))
+            {
+                answer.PayerDetail = ToClientPayerDetail(row);
+            }
+        }
+        return Ok(answer);
+    }
+
+    /// <summary>
+    /// A stored payer row (camelCase, PayerRow) in the client EHR's property names, e.g. insurancePlanId -> InsurancePlanID,
+    /// baseUrl -> BaseURL. A property the row does not have is returned as null.
+    /// </summary>
+    private static Dictionary<string, JsonElement?> ToClientPayerDetail(JsonElement row)
+    {
+        string[,] names =
+        {
+            { "insurancePlanId", "InsurancePlanID" }, { "payerName", "PayerName" }, { "enabled", "Enabled" },
+            { "baseUrl", "BaseURL" }, { "cdsServicesPath", "CDSServicesPath" }, { "fhirPath", "FHIRPath" },
+            { "authType", "AuthType" }, { "authTokenUrl", "AuthTokenURL" }, { "authClientId", "AuthClientID" },
+            { "authClientSecret", "AuthClientSecret" }, { "authScope", "AuthScope" },
+            { "signCdsHooksRequests", "SignCDSHooksRequests" }, { "useSubscriptions", "UseSubscriptions" },
+            { "notificationSecret", "NotificationSecret" }, { "crdTimeoutSeconds", "CRDTimeoutSeconds" },
+            { "timeoutSeconds", "TimeoutSeconds" }, { "dtrMode", "DTRMode" }, { "dtrAppLaunchUrl", "DTRAppLaunchURL" }
+        };
+        Dictionary<string, JsonElement?> detail = new Dictionary<string, JsonElement?>();
+        for (int i = 0; i < names.GetLength(0); i++)
+        {
+            JsonElement value;
+            if (row.ValueKind == JsonValueKind.Object && row.TryGetProperty(names[i, 0], out value))
+            {
+                detail[names[i, 1]] = value;
+            }
+            else
+            {
+                detail[names[i, 1]] = null;
+            }
+        }
+        return detail;
+    }
+
+    /// <summary>Mock only: adds or replaces a payer row.</summary>
+    /// <remarks>The real EHR team maintains PA_PAYER with its own screens / scripts, so the real EHR does not need this endpoint.</remarks>
+    /// <param name="insurancePlanId" example="1001">The EHR's insurance plan id (key). Wins over insurancePlanId in the body.</param>
+    /// <param name="row">Required. The payer row.</param>
+    /// <response code="204">Saved.</response>
+    /// <response code="400">The body is missing or is not valid JSON.</response>
+    [Tags(SwaggerGroups.MockUi)]
+    [HttpPut("payers/{insurancePlanId:int}")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    public IActionResult PutPayer(int insurancePlanId, [FromBody, Required] PayerRow row)
+    {
+        row.InsurancePlanId = insurancePlanId;
+        lock (_store.Sync)
+        {
+            Dictionary<string, JsonElement> payers = Table("payers");
+            AddMockPayerWhenEmpty(payers);
+            payers[PlanKey(insurancePlanId)] = ToJson(row);
             _store.Save();
         }
         return NoContent();
@@ -111,9 +153,9 @@ public class PriorAuthDataController : ControllerBase
     }
 
     /// <summary>The key of a payer in the mock's tables: the insurance plan id as text.</summary>
-    private static string PlanKey(int piInsurancePlanId)
+    private static string PlanKey(int insurancePlanId)
     {
-        return piInsurancePlanId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return insurancePlanId.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 
     // ================================================================== PA_COVERAGE_DECISION
@@ -155,38 +197,6 @@ public class PriorAuthDataController : ControllerBase
             _store.Save();
         }
         return NoContent();
-    }
-
-    // ================================================================== PA_DTR_FORM
-
-    /// <summary>One DTR form: the payer questionnaire and its answers (table PA_DTR_FORM).</summary>
-    /// <param name="formId" example="frm-235b7ad69e85">Form id created by the gateway, e.g. frm-235b7ad69e85.</param>
-    /// <response code="200">The row.</response>
-    /// <response code="404">No form with this id.</response>
-    [Tags(SwaggerGroups.GatewayData)]
-    [HttpGet("dtr-forms/{formId}")]
-    [ProducesResponseType(typeof(DtrFormRow), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public IActionResult GetDtrForm(string formId)
-    {
-        return GetRow("dtr-forms", formId);
-    }
-
-    /// <summary>Saves a DTR form (table PA_DTR_FORM).</summary>
-    /// <remarks>Insert, or update when the form id exists. Called when the questionnaire is fetched and again each time answers are saved.</remarks>
-    /// <param name="formId" example="frm-235b7ad69e85">Form id (key). Wins over formId in the body.</param>
-    /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
-    [Tags(SwaggerGroups.GatewayData)]
-    [HttpPut("dtr-forms/{formId}")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutDtrForm(string formId, [FromBody, Required] DtrFormRow row)
-    {
-        row.FormId = formId;
-        return PutRow("dtr-forms", formId, row);
     }
 
     // ================================================================== PA_DTR_LINK
@@ -264,90 +274,25 @@ public class PriorAuthDataController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Prior authorization requests with a given status (table PA_PRIOR_AUTH).</summary>
-    /// <remarks>
-    /// When a payer notifies the gateway, the gateway asks for status=pended of that payer to find the requests still waiting for it.
-    /// SQL: WHERE STATUS = :status [AND PI_INSURANCE_PLAN_ID = :piInsurancePlanId].
-    /// </remarks>
-    /// <param name="status">Status to return, e.g. pended. Empty = every status.</param>
-    /// <param name="piInsurancePlanId">Optional: only the requests of the payer with this insurance plan id, e.g. 1001.</param>
-    /// <response code="200">The matching rows as a JSON array ([] when nothing matches).</response>
-    [Tags(SwaggerGroups.GatewayData)]
-    [HttpGet("prior-auths")]
-    [ProducesResponseType(typeof(List<PriorAuthRow>), StatusCodes.Status200OK)]
-    public IActionResult ListPriorAuths([FromQuery] string? status, [FromQuery] int? piInsurancePlanId)
-    {
-        List<JsonElement> result = new List<JsonElement>();
-        lock (_store.Sync)
-        {
-            foreach (JsonElement row in Table("prior-auths").Values)
-            {
-                bool statusMatches = status == null || Text(row, "status") == status;
-                bool payerMatches = piInsurancePlanId == null || Number(row, "piInsurancePlanId") == piInsurancePlanId.Value;
-                if (statusMatches && payerMatches)
-                {
-                    result.Add(row);
-                }
-            }
-        }
-        return Ok(result);
-    }
-
-    // ================================================================== PA_PAYER_SUBSCRIPTION
-
-    /// <summary>The PAS Subscription of a payer + organization NPI (table PA_PAYER_SUBSCRIPTION).</summary>
-    /// <remarks>The gateway asks this after a submit: 404 means it must still subscribe at the payer for this organization.</remarks>
-    /// <param name="piInsurancePlanId" example="1001">Insurance plan id of the payer, e.g. 1001.</param>
-    /// <param name="organizationNpi" example="1999999992">NPI of the provider organization, e.g. 1999999992.</param>
-    /// <response code="200">The row.</response>
-    /// <response code="404">No subscription is stored for this payer and organization.</response>
-    [Tags(SwaggerGroups.GatewayData)]
-    [HttpGet("payer-subscriptions/{piInsurancePlanId:int}/{organizationNpi}")]
-    [ProducesResponseType(typeof(PayerSubscriptionRow), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public IActionResult GetPayerSubscription(int piInsurancePlanId, string organizationNpi)
-    {
-        return GetRow("payer-subscriptions", PlanKey(piInsurancePlanId) + "|" + organizationNpi);
-    }
-
-    /// <summary>Saves the PAS Subscription of a payer + organization NPI (table PA_PAYER_SUBSCRIPTION).</summary>
-    /// <remarks>Insert, or update when the row exists. Called once, the first time a request is submitted for the organization.</remarks>
-    /// <param name="piInsurancePlanId" example="1001">Insurance plan id of the payer (key, part 1). Wins over piInsurancePlanId in the body.</param>
-    /// <param name="organizationNpi" example="1999999992">Organization NPI (key, part 2). Wins over organizationNpi in the body.</param>
-    /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
-    [Tags(SwaggerGroups.GatewayData)]
-    [HttpPut("payer-subscriptions/{piInsurancePlanId:int}/{organizationNpi}")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutPayerSubscription(int piInsurancePlanId, string organizationNpi, [FromBody, Required] PayerSubscriptionRow row)
-    {
-        row.PiInsurancePlanId = piInsurancePlanId;
-        row.OrganizationNpi = organizationNpi;
-        return PutRow("payer-subscriptions", PlanKey(piInsurancePlanId) + "|" + organizationNpi, row);
-    }
-
     // ================================================================== PA_CDEX_TASK
 
     /// <summary>Saves a payer information request, a FHIR Task (table PA_CDEX_TASK).</summary>
     /// <remarks>Insert, or update when the Task exists. Called when the payer asks for more documents and each time the Task changes.</remarks>
-    /// <param name="piInsurancePlanId" example="1001">Insurance plan id of the payer (key, part 1). Wins over piInsurancePlanId in the body.</param>
+    /// <param name="insurancePlanId" example="1001">Insurance plan id of the payer (key, part 1). Wins over insurancePlanId in the body.</param>
     /// <param name="taskId" example="5f367f122eba45caba287738b1cc2a38">The payer's Task id (key, part 2). Wins over taskId in the body.</param>
     /// <param name="row">Required. The row to save.</param>
     /// <response code="204">Saved.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.GatewayData)]
-    [HttpPut("cdex-tasks/{piInsurancePlanId:int}/{taskId}")]
+    [HttpPut("cdex-tasks/{insurancePlanId:int}/{taskId}")]
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutCdexTask(int piInsurancePlanId, string taskId, [FromBody, Required] CdexTaskRow row)
+    public IActionResult PutCdexTask(int insurancePlanId, string taskId, [FromBody, Required] CdexTaskRow row)
     {
-        row.PiInsurancePlanId = piInsurancePlanId;
+        row.InsurancePlanId = insurancePlanId;
         row.TaskId = taskId;
-        return PutRow("cdex-tasks", PlanKey(piInsurancePlanId) + "|" + taskId, row);
+        return PutRow("cdex-tasks", PlanKey(insurancePlanId) + "|" + taskId, row);
     }
 
     /// <summary>All Tasks of one prior authorization request (table PA_CDEX_TASK).</summary>
@@ -413,6 +358,160 @@ public class PriorAuthDataController : ControllerBase
         return ListRows("questionnaire-responses", "patientId", patientId);
     }
 
+    // ================================================================== PA_SMART_CLIENT (FHIR API BuiltIn only; read only: the EHR team maintains it)
+
+    /// <summary>One registered SMART app by its client_id (table PA_SMART_CLIENT).</summary>
+    /// <remarks>
+    /// Read by the FHIR API at every SMART authorize. SQL: WHERE CLIENT_ID = :clientId.
+    /// The mock adds a test app (mock-payer-dtr-app, payer 1001) the first time the table is empty.
+    /// </remarks>
+    /// <param name="clientId" example="mock-payer-dtr-app">The app's client_id.</param>
+    /// <response code="200">The row.</response>
+    /// <response code="404">No app with this client_id.</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpGet("smart-clients/{clientId}")]
+    [ProducesResponseType(typeof(SmartClientRow), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public IActionResult GetSmartClient(string clientId)
+    {
+        lock (_store.Sync)
+        {
+            AddMockSmartClientWhenEmpty(Table("smart-clients"));
+        }
+        return GetRow("smart-clients", clientId);
+    }
+
+    /// <summary>Mock only: adds or replaces a registered SMART app.</summary>
+    /// <remarks>The real EHR team maintains PA_SMART_CLIENT with its own screens / scripts, so the real EHR does not need this endpoint.</remarks>
+    /// <param name="clientId" example="mock-payer-dtr-app">The app's client_id (key). Wins over clientId in the body.</param>
+    /// <param name="row">Required. The app row.</param>
+    /// <response code="204">Saved.</response>
+    /// <response code="400">The body is missing or is not valid JSON.</response>
+    [Tags(SwaggerGroups.MockUi)]
+    [HttpPut("smart-clients/{clientId}")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    public IActionResult PutSmartClient(string clientId, [FromBody, Required] SmartClientRow row)
+    {
+        row.ClientId = clientId;
+        lock (_store.Sync)
+        {
+            AddMockSmartClientWhenEmpty(Table("smart-clients"));
+        }
+        return PutRow("smart-clients", clientId, row);
+    }
+
+    /// <summary>Adds the test SMART app when the table is empty (first start). Call inside lock (_store.Sync).</summary>
+    private void AddMockSmartClientWhenEmpty(Dictionary<string, JsonElement> clients)
+    {
+        if (clients.Count == 0)
+        {
+            SmartClientRow row = SeedData.MockSmartClientRow();
+            clients[row.ClientId] = ToJson(row);
+            _store.Save();
+        }
+    }
+
+    // ================================================================== PA_SMART_LAUNCH (FHIR API)
+
+    /// <summary>One SMART launch (table PA_SMART_LAUNCH).</summary>
+    /// <remarks>SQL: WHERE LAUNCH_ID = :launchId. The FHIR API checks EXPIRES_AT itself.</remarks>
+    /// <param name="launchId" example="6-jM9cmaBKMd4rFPAl-hQp_D">The launch id.</param>
+    /// <response code="200">The row.</response>
+    /// <response code="404">No launch with this id.</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpGet("smart-launches/{launchId}")]
+    [ProducesResponseType(typeof(SmartLaunchRow), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public IActionResult GetSmartLaunch(string launchId)
+    {
+        return GetRow("smart-launches", launchId);
+    }
+
+    /// <summary>Saves a SMART launch (table PA_SMART_LAUNCH). Insert, or update when the id exists.</summary>
+    /// <param name="launchId" example="6-jM9cmaBKMd4rFPAl-hQp_D">The launch id (key). Wins over launchId in the body.</param>
+    /// <param name="row">Required. The row to save.</param>
+    /// <response code="204">Saved.</response>
+    /// <response code="400">The body is missing or is not valid JSON.</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpPut("smart-launches/{launchId}")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    public IActionResult PutSmartLaunch(string launchId, [FromBody, Required] SmartLaunchRow row)
+    {
+        row.LaunchId = launchId;
+        return PutRow("smart-launches", launchId, row);
+    }
+
+    // ================================================================== PA_SMART_AUTH_CODE (FHIR API BuiltIn only)
+
+    /// <summary>Saves a SMART authorization code (table PA_SMART_AUTH_CODE).</summary>
+    /// <param name="codeHash" example="3q2-7wQx0p1mZQ8u0pX6m0nN4l1qkE6m4X0dJ0hKc7Y">Hash of the code (key). Wins over codeHash in the body.</param>
+    /// <param name="row">Required. The row to save.</param>
+    /// <response code="204">Saved.</response>
+    /// <response code="400">The body is missing or is not valid JSON.</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpPut("smart-auth-codes/{codeHash}")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    public IActionResult PutSmartAuthCode(string codeHash, [FromBody, Required] SmartAuthCodeRow row)
+    {
+        row.CodeHash = codeHash;
+        return PutRow("smart-auth-codes", codeHash, row);
+    }
+
+    /// <summary>Takes a SMART authorization code: returns the row and deletes it (table PA_SMART_AUTH_CODE).</summary>
+    /// <remarks>
+    /// Must be ONE step, so two requests can never both get the same code.
+    /// Oracle: DELETE FROM PA_SMART_AUTH_CODE WHERE CODE_HASH = :codeHash RETURNING ... INTO ... (no row = 404).
+    /// </remarks>
+    /// <param name="codeHash" example="3q2-7wQx0p1mZQ8u0pX6m0nN4l1qkE6m4X0dJ0hKc7Y">Hash of the code.</param>
+    /// <response code="200">The deleted row.</response>
+    /// <response code="404">No such code (unknown or already used).</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpDelete("smart-auth-codes/{codeHash}")]
+    [ProducesResponseType(typeof(SmartAuthCodeRow), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public IActionResult TakeSmartAuthCode(string codeHash)
+    {
+        return TakeRow("smart-auth-codes", codeHash);
+    }
+
+    // ================================================================== PA_ACCESS_TOKEN (FHIR API BuiltIn only)
+
+    /// <summary>One access token by the hash of the token (table PA_ACCESS_TOKEN).</summary>
+    /// <remarks>Called on every checked FHIR call. SQL: WHERE TOKEN_HASH = :tokenHash. The FHIR API checks EXPIRES_AT itself.</remarks>
+    /// <param name="tokenHash" example="p9w1Cq8m3uYw4mV2Fh0eQk5s7rT6nB1aXz8dLc2jK4E">Hash of the token.</param>
+    /// <response code="200">The row.</response>
+    /// <response code="404">No such token.</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpGet("access-tokens/{tokenHash}")]
+    [ProducesResponseType(typeof(AccessTokenRow), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public IActionResult GetAccessToken(string tokenHash)
+    {
+        return GetRow("access-tokens", tokenHash);
+    }
+
+    /// <summary>Saves an access token (table PA_ACCESS_TOKEN). Insert, or update when the hash exists.</summary>
+    /// <param name="tokenHash" example="p9w1Cq8m3uYw4mV2Fh0eQk5s7rT6nB1aXz8dLc2jK4E">Hash of the token (key). Wins over tokenHash in the body.</param>
+    /// <param name="row">Required. The row to save.</param>
+    /// <response code="204">Saved.</response>
+    /// <response code="400">The body is missing or is not valid JSON.</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpPut("access-tokens/{tokenHash}")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    public IActionResult PutAccessToken(string tokenHash, [FromBody, Required] AccessTokenRow row)
+    {
+        row.TokenHash = tokenHash;
+        return PutRow("access-tokens", tokenHash, row);
+    }
+
     // ================================================================== helpers
 
     /// <summary>The rows of one table (key -> row); created when it does not exist yet. Call inside lock (_store.Sync).</summary>
@@ -458,6 +557,21 @@ public class PriorAuthDataController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Returns one row and deletes it in the same lock, or 404.</summary>
+    private IActionResult TakeRow(string table, string key)
+    {
+        lock (_store.Sync)
+        {
+            JsonElement row;
+            if (Table(table).Remove(key, out row))
+            {
+                _store.Save();
+                return Ok(row);
+            }
+        }
+        return NotFound(new ErrorResponse("No row " + key + " in " + table + "."));
+    }
+
     /// <summary>The rows whose property has this value.</summary>
     private IActionResult ListRows(string table, string property, string value)
     {
@@ -473,19 +587,6 @@ public class PriorAuthDataController : ControllerBase
             }
         }
         return Ok(result);
-    }
-
-    /// <summary>A whole-number property of a row, or null.</summary>
-    private static int? Number(JsonElement row, string property)
-    {
-        JsonElement value;
-        int number;
-        if (row.ValueKind == JsonValueKind.Object && row.TryGetProperty(property, out value) && value.ValueKind == JsonValueKind.Number
-            && value.TryGetInt32(out number))
-        {
-            return number;
-        }
-        return null;
     }
 
     /// <summary>A text property of a row, or null.</summary>

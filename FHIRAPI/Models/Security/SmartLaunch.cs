@@ -11,6 +11,9 @@ public class SmartLaunch
     /// <summary>Random id the DTR app receives as the "launch" parameter.</summary>
     public string LaunchId { get; set; } = RandomIds.New(18);
 
+    /// <summary>Payer whose app may use the launch (EHR insurance plan id). Null = any registered app.</summary>
+    public int? InsurancePlanId { get; set; }
+
     public string PatientId { get; set; } = string.Empty;
     public string? UserPractitionerId { get; set; }
     public string? EncounterId { get; set; }
@@ -20,7 +23,6 @@ public class SmartLaunch
 
     /// <summary>appContext from the payer's CRD card.</summary>
     public string? AppContext { get; set; }
-
 
     /// <summary>A launch must be used within 15 minutes.</summary>
     public DateTimeOffset ExpiresAt { get; set; } = DateTimeOffset.UtcNow.AddMinutes(15);

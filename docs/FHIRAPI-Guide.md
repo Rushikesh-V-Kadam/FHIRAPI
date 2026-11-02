@@ -31,7 +31,7 @@ There are three callers, and each one uses a different set of endpoints.
 | **Payer** (e.g. the mock Da Vinci payer) | During CRD it may need more data than the prefetch contained | `/fhir/r4/{Type}`, `/fhir/r4/{Type}/{id}` for each resource type |
 | **DTR SMART app** (runs in the clinician's browser) | Pre-fills the payer's questionnaire from the chart and saves the completed form | `.well-known/smart-configuration`, `auth/authorize`, `auth/token`, `/fhir/r4/*`, `QuestionnaireResponse` |
 
-**No authentication is built into this API.** No caller sends a key or token, and nothing is checked. Authentication is added outside this code (section 2).
+**Access is checked** (section 2): the Payer Gateway sends its key (`X-Api-Key`); payers and SMART DTR apps send a Bearer token issued by this API, limited to one patient and to its scopes.
 
 ### Where each endpoint fits in the prior-auth flow
 
@@ -52,7 +52,7 @@ There are three callers, and each one uses a different set of endpoints.
 | `GET /fhir/r4/{Type}` (one endpoint per type, e.g. `/fhir/r4/Coverage`) | Search, e.g. `Coverage?patient=pat-1`. Returns a Bundle | **Yes.** See section 3.3 for why it seemed not to work |
 | `POST /fhir/r4/QuestionnaireResponse` | Saves a new DTR form (server picks the id) | **Yes** (DTR 2.0.1 requires the app to be able to save forms) |
 | `PUT /fhir/r4/QuestionnaireResponse/{id}` | Saves or updates a DTR form with a known id | **Yes** (the DTR app saves again as the user edits) |
-| `POST /internal/access-tokens` | One-patient token the gateway sends to the payer as `fhirAuthorization` during CRD | **Recommended.** Not checked by this API until authentication is added |
+| `POST /internal/access-tokens` | One-patient token the gateway sends to the payer as `fhirAuthorization` during CRD | **Recommended.** Checked on every payer call: its patient, its scopes, until it expires |
 | `POST /internal/smart-launches` | Creates the launch context before the DTR app opens | **Yes** if you use the SMART DTR app; not needed for EHR-rendered forms only |
 | `GET /fhir/r4/.well-known/smart-configuration` | Tells the DTR app where to get its launch context | **Yes** for the SMART DTR app |
 | `GET /fhir/r4/auth/authorize` | SMART step 1: issues a one-time code for the launch | **Yes** for the SMART DTR app |
@@ -84,17 +84,40 @@ There are three callers, and each one uses a different set of endpoints.
 
 ## 2. Authentication
 
-**None is built in.** This API does not check keys, tokens, client ids, redirect URIs, PKCE or scopes, and it does not
-limit a caller to one patient. Authentication (for example Azure AD / Entra ID in front of the API, or an API gateway) is
-added outside this code.
+Settings: `Security` in appsettings.json (or the encrypted settings file). Code: `Middleware/AccessTokenMiddleware.cs`,
+`Services/PatientAccessGuard.cs`, `Controllers/SmartAuthController.cs`.
 
-The SMART endpoints (`.well-known/smart-configuration`, `auth/authorize`, `auth/token`) are still here because a SMART
-DTR app gets its **launch context** through them: patient, encounter, user, orders, coverage and the payer's
-`appContext`. They check nothing; the `access_token` they return is a random value no endpoint checks.
+| Caller | Sends | What it may do |
+|---|---|---|
+| Payer Gateway | `X-Api-Key: {Security:InternalApiKey}` (gateway setting `FhirApi:ApiKey`) | `/internal/*`, and every `/fhir/r4` call for any patient |
+| Payer during CRD | `Authorization: Bearer {fhirAuthorization.access_token}` (from `POST /internal/access-tokens`) | Its patient only, scopes `SmartScopes.PayerDefault`, up to 15 minutes |
+| Payer's SMART DTR app | `Authorization: Bearer {access_token}` (from `auth/token`) | The launch's patient only, the scopes granted at authorize, `Security:SmartTokenSeconds` (1 hour) |
+| Anyone | nothing | `metadata`, `.well-known/smart-configuration`, `auth/authorize`, `auth/token` |
 
-`POST /internal/access-tokens` still issues the short-lived, one-patient token the gateway sends to the payer as CDS Hooks
-`fhirAuthorization` during CRD. The token is kept by `InMemoryTokenService`, but no endpoint checks it yet: when you add
-authentication, that is the token to accept from payers.
+Checks on every other `/fhir/r4` call (`Security:ValidateAccessTokens = true`):
+
+- **401** (`WWW-Authenticate: Bearer`): no token, unknown or expired token, or a token issued for another FHIR base URL (`aud`).
+- **403**: the scope does not allow the call. GET by id needs `r`, search `s`, POST `c`, PUT `u`, DELETE `d`
+  (SMART v2 `patient/Observation.rs`, or v1 `patient/*.read` = `rs`). `Binary/{id}` is also allowed by a DocumentReference
+  read scope. A v2 scope with search limits (`...rs?category=...`) is ignored, because the limits are not enforced.
+- **403**: data of another patient. A patient token only gets resources whose `subject` / `patient` / `beneficiary` is
+  its patient (`Patient/{id}` must be the patient itself); `Binary/{id}` is checked through its DocumentReference;
+  every entry of a search Bundle is checked, and `_include`d types need their own read or search scope.
+  A `QuestionnaireResponse` may only be saved for the token's patient.
+
+`/internal/*` needs the key whenever `Security:InternalApiKey` is set (401 otherwise).
+
+`Security:ValidateAccessTokens = false` turns the `/fhir/r4` checks off (use it only when the same checks are done in
+front of this API). With it on, `Security:InternalApiKey` must be set, or the gateway cannot read anything (a warning is
+logged at start).
+
+Tokens and codes are random values; only `base64url(SHA-256(value))` is stored. Where they are stored:
+`Storage:SmartStore` = `EhrApi` (tables `PA_SMART_CLIENT`, `PA_SMART_LAUNCH`, `PA_SMART_AUTH_CODE`, `PA_ACCESS_TOKEN`
+through the EHR data API, endpoints 16 to 22: needed with more than one server) or `InMemory` (one server; SMART apps from
+`Security:LocalClients`).
+
+Not supported yet: confidential SMART apps (client secret or `private_key_jwt`), `openid` / `id_token`, refresh tokens
+(`online_access`, `offline_access`). Those scopes are left out of the granted scope.
 
 Keep `/internal/*` on the internal network: only the Payer Gateway calls it.
 
@@ -102,7 +125,7 @@ Keep `/internal/*` on the internal network: only the Payer Gateway calls it.
 
 ## 3. Endpoints
 
-> **Swagger sections.** Swagger UI shows the "FHIR APIs - ..." sections, then Internal and Metadata (sorted alphabetically). The sections "DTR forms (QuestionnaireResponse)" and "SMART launch context" are hidden for now (`Swagger:ShowDtrSections = false` in appsettings.json); their endpoints (sections 3.4 to 3.10) still work, because the Payer Gateway and payer DTR apps call them. Set it to `true` to show them again.
+> **Swagger sections.** Swagger UI shows the "FHIR APIs - ..." sections, then the DTR forms, Internal, Metadata and SMART launch context sections (sorted alphabetically). Every section is always shown.
 
 ### 3.1 `GET /fhir/r4/metadata`: CapabilityStatement
 
@@ -677,7 +700,7 @@ No parameters, no authentication.
 
 ### 3.9 `GET /fhir/r4/auth/authorize`: SMART step 1 (get a code)
 
-**Why we use it.** This is the standard SMART / OAuth 2.0 authorization endpoint. The DTR app sends the browser here with the `launch` id and its redirect URI. The API sends the browser back to the app with a **one-time code** (valid 2 minutes). Nothing else is checked (section 2).
+**Why we use it.** This is the standard SMART / OAuth 2.0 authorization endpoint. The DTR app sends the browser here with the `launch` id, its `client_id` and redirect URI, and a PKCE challenge. The API sends the browser back to the app with a **one-time code** (valid 2 minutes).
 
 There's no login page because the clinician is already signed in to the EHR. The launch id proves that the EHR (through the gateway) started this session.
 
@@ -686,50 +709,51 @@ There's no login page because the clinician is already signed in to the EHR. The
 ```
 http://localhost:5100/fhir/r4/auth/authorize
   ?response_type=code
-  &client_id=dtr-app
-  &redirect_uri=https%3A%2F%2Fdtr.example.org%2Fcallback
+  &client_id=mock-payer-dtr-app
+  &redirect_uri=http%3A%2F%2Flocalhost%3A5300%2Fcallback
   &launch=Xq3vT9bK2mWfP0aZrY7c
-  &scope=launch%20openid%20fhirUser%20patient%2F*.rs%20patient%2FQuestionnaireResponse.cu
+  &scope=launch%20fhirUser%20patient%2F*.rs%20patient%2FQuestionnaireResponse.cu
   &state=af0ifjsldkj
+  &aud=http%3A%2F%2Flocalhost%3A5100%2Ffhir%2Fr4
   &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
   &code_challenge_method=S256
 ```
 
-**Query parameters**
+**Query parameters** (all required)
 
-| Name | Required | Notes |
-|---|---|---|
-| `response_type` | yes | must be `code` |
-| `client_id` | sent by apps | not checked |
-| `redirect_uri` | yes | where the code is sent |
-| `launch` | yes | from `/internal/smart-launches` |
-| `scope` | no | default `launch patient/*.rs patient/QuestionnaireResponse.cu` |
-| `state` | recommended | returned unchanged |
-| `aud`, `code_challenge`, `code_challenge_method` | sent by apps | ignored |
+| Name | Check |
+|---|---|
+| `client_id` | registered and enabled (`PA_SMART_CLIENT`) |
+| `redirect_uri` | exactly one of the app's registered redirect URIs |
+| `state` | present; returned unchanged |
+| `response_type` | `code` |
+| `aud` | this API's base URL (`FhirServer:PublicBaseUrl`, the launch's `iss`) |
+| `code_challenge`, `code_challenge_method` | PKCE; the method must be `S256` (`plain` is refused) |
+| `scope` | contains `launch`. Granted: the requested scopes, limited to the app's `ALLOWED_SCOPES` when set; `openid`, `online_access`, `offline_access` are dropped |
+| `launch` | from `/internal/smart-launches`, not expired, and for the app's payer (`INSURANCE_PLAN_ID`) |
 
 The same parameters can be sent as a form post (`POST auth/authorize`, SMART "authorize-post").
 
 **Response: 302 Found** (success)
 
 ```
-Location: https://dtr.example.org/callback?code=Lm8Qf2...&state=af0ifjsldkj
+Location: http://localhost:5300/callback?code=Lm8Qf2...&state=af0ifjsldkj
 ```
 
-**Response: 302** (unknown or expired launch; the error goes to the app)
+**Response: 302** with an error, once the app and redirect URI are verified (`invalid_request`, `unsupported_response_type`, `invalid_scope`, `access_denied`):
 
 ```
-Location: https://dtr.example.org/callback?error=invalid_request&error_description=unknown%20or%20expired%20launch&state=af0ifjsldkj
+Location: http://localhost:5300/callback?error=invalid_request&error_description=unknown%20or%20expired%20launch&state=af0ifjsldkj
 ```
 
-**Response: 400** when `redirect_uri` is missing.
+**Response: 400** (JSON, not redirected) when `client_id` is missing, unknown or disabled (`unauthorized_client`), or
+`redirect_uri` is missing or not registered: the browser is never sent to an address that is not registered.
 
 ---
 
-### 3.10 `POST /fhir/r4/auth/token`: SMART step 2 (get the launch context)
+### 3.10 `POST /fhir/r4/auth/token`: SMART step 2 (get the token and launch context)
 
-**Why we use it.** The DTR app exchanges the one-time code for the **SMART launch context**: the patient, the encounter, the user (`fhirUser`), the orders and coverage (`fhirContext`) and the payer's `appContext`. The `access_token` in the answer is a random value; no endpoint checks it.
-
-**Scenario.** The browser lands on `https://dtr.example.org/callback?code=Lm8Qf2...&state=...`. The app checks `state` and posts the code.
+**Why we use it.** The DTR app exchanges the one-time code for an **access token** and the **SMART launch context**: the patient, the encounter, the user (`fhirUser`), the orders and coverage (`fhirContext`) and the payer's `appContext`. The token is then sent on every `/fhir/r4` call (section 2).
 
 **Request** (form-encoded, as OAuth requires)
 
@@ -737,17 +761,18 @@ Location: https://dtr.example.org/callback?error=invalid_request&error_descripti
 POST /fhir/r4/auth/token
 Content-Type: application/x-www-form-urlencoded
 
-grant_type=authorization_code&code=Lm8Qf2...&redirect_uri=https%3A%2F%2Fdtr.example.org%2Fcallback
+grant_type=authorization_code&code=Lm8Qf2...&redirect_uri=http%3A%2F%2Flocalhost%3A5300%2Fcallback&client_id=mock-payer-dtr-app&code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
 ```
 
-| Field | Required | Notes |
+| Field | Required | Check |
 |---|---|---|
 | `grant_type` | yes | `authorization_code` |
-| `code` | yes | from step 1; single use |
-| `redirect_uri` | sent by apps | not checked |
-| `client_id`, `code_verifier`, client credentials | sent by apps | ignored |
+| `code` | yes | from step 1; single use (taken even when a later check fails) |
+| `redirect_uri` | yes | the same as in step 1 |
+| `client_id` | yes | the same as in step 1 (public apps) |
+| `code_verifier` | yes | 43 to 128 characters; `base64url(SHA-256(code_verifier))` = the `code_challenge` of step 1 |
 
-**Response 200** (header `Cache-Control: no-store`)
+**Response 200** (headers `Cache-Control: no-store`, `Pragma: no-cache`)
 
 ```json
 {
@@ -764,18 +789,20 @@ grant_type=authorization_code&code=Lm8Qf2...&redirect_uri=https%3A%2F%2Fdtr.exam
 }
 ```
 
-The app then:
+The app then, with `Authorization: Bearer {access_token}`:
 
 1. reads `Patient/pat-1`, `MedicationRequest/ord-1-retacrit` and `Coverage/cov-1` here;
-2. calls the gateway's `$questionnaire-package` to get the payer's Questionnaire and CQL;
+2. calls its payer (or the gateway's `$questionnaire-package`) to get the Questionnaire and CQL;
 3. runs the CQL against `/fhir/r4/Observation?...`, `/Condition?...` and so on to pre-fill;
-4. saves with `PUT /fhir/r4/QuestionnaireResponse/{id}`.
+4. saves with `PUT /fhir/r4/QuestionnaireResponse/{id}` (scope `patient/QuestionnaireResponse.cu`).
 
 **Errors (400)**
 
 ```json
+{ "error": "invalid_request", "error_description": "code, redirect_uri, client_id and code_verifier are required." }
 { "error": "invalid_grant", "error_description": "Unknown, used or expired code." }
-{ "error": "unsupported_grant_type" }
+{ "error": "invalid_grant", "error_description": "code_verifier does not match code_challenge." }
+{ "error": "unsupported_grant_type", "error_description": "Only authorization_code is supported." }
 ```
 
 ---
@@ -785,16 +812,17 @@ The app then:
 When a payer brings its own SMART DTR app (`PA_PAYER.DTR_MODE = SmartApp`), the flow is the standard SMART EHR launch,
 with this API playing the EHR's part:
 
+0. Registration (once): the EHR team inserts a `PA_SMART_CLIENT` row (client id, the payer's `INSURANCE_PLAN_ID`, the
+   app's redirect URIs) and gives the payer the `client_id`. `PA_PAYER.DTR_APP_LAUNCH_URL` is the app's launch URL.
 1. Order-sign: the payer's CRD card has a `smart` link. The gateway saves it and gives the EHR `/dtr/launch/{linkId}`.
-2. The user opens that link. The gateway calls `POST /internal/smart-launches`, then redirects the browser to the
-   payer's app with `iss` (the `/fhir/r4` base URL) and `launch`.
-3. The app reads `{iss}/.well-known/smart-configuration`, calls `auth/authorize`, then `auth/token`, and gets its context.
-4. It reads the chart, calls its payer for the questionnaire, and saves the completed `QuestionnaireResponse` here.
-   The form names its order in the DTR `qr-context` extension.
+2. The user opens that link. The gateway calls `POST /internal/smart-launches` (with the payer's `insurancePlanId`),
+   then redirects the browser to the payer's app with `iss` (the `/fhir/r4` base URL) and `launch`.
+3. The app reads `{iss}/.well-known/smart-configuration`, calls `auth/authorize`, then `auth/token`, and gets its token and context.
+4. It reads the chart with the token, calls its payer for the questionnaire, and saves the completed
+   `QuestionnaireResponse` here. The form names its order in the DTR `qr-context` extension.
 5. The EHR sees the form through the gateway's `GET /dtr/saved-forms`; PAS attaches it automatically.
 
-No app registration is needed here (section 2). When authentication is added outside this code, the payer's app
-must be allowed through it.
+Only that payer's registered app can use the launch, and only for the launch's patient.
 
 ## 4. Running and testing
 
@@ -813,7 +841,7 @@ Each class lives in its own file, with the same name as the class.
 | Folder | What's inside |
 |---|---|
 | `Program.cs` | Dependency-injection wiring and the request pipeline, nothing else |
-| `Configuration/` | One settings class per `appsettings.json` section (`EhrSettings`, `FhirServerSettings`, `StorageSettings`, `SwaggerSettings`). There are no identifier-system settings: the MRN, document id, member id and payer id are sent without a "system" (`Identifier.system` is 0..1 in FHIR R4); one can be added later if a real payer requires it |
+| `Configuration/` | One settings class per `appsettings.json` section (`EhrSettings`, `FhirServerSettings`, `StorageSettings`, `SecuritySettings`, `KeycloakSettings`). There are no identifier-system settings: the MRN, document id, member id and payer id are sent without a "system" (`Identifier.system` is 0..1 in FHIR R4); one can be added later if a real payer requires it |
 | `Constants/` | URIs and fixed values: code systems, profiles, DTR extension URLs, issue codes, headers, default scopes |
 | `Controllers/` | One controller per area: `MetadataController`; the FHIR read and search actions, one per resource type, in `FhirAdministrativeController` (Patient, Coverage, Practitioner, PractitionerRole, Organization, Location), `FhirOrderController` (ServiceRequest, MedicationRequest, Encounter) and `FhirClinicalController` (Observation, Condition, Procedure, DocumentReference, Binary), sharing `FhirResourceControllerBase`; `FhirUnsupportedTypeController` (OperationOutcome for other types); `QuestionnaireResponseController`, `SmartAuthController`, `InternalController` |
 | `Middleware/` | `FhirExceptionHandler` (every error → OperationOutcome, so controllers have no try/catch), correlation id middleware and handler |
@@ -849,8 +877,9 @@ Each class lives in its own file, with the same name as the class.
 
 ## 7. Before production
 
-- Add authentication outside this code (section 2), and restrict CORS to the DTR apps' origins.
+- Set `Security:InternalApiKey` (and the gateway's `FhirApi:ApiKey`) to a long random value per environment, keep `Security:ValidateAccessTokens = true`, and restrict CORS to the DTR apps' origins.
+- Register each payer's DTR app in `PA_SMART_CLIENT`, and schedule the clean-up of expired `PA_SMART_LAUNCH`, `PA_SMART_AUTH_CODE` and `PA_ACCESS_TOKEN` rows.
 - Make sure every facility location in the EHR has its NPI (payers identify the requesting facility by it), and every order has the location of its facility.
-- SMART launches are held in memory. That's fine for one instance; with several instances, move them to a shared store such as Redis, or to an EHR data API table (the class sits behind an interface).
+- Use `Storage:SmartStore = EhrApi` when the API runs on more than one server (launches, codes and tokens are then in the EHR database).
 - Expose only `/fhir/r4/*` publicly. Keep `/internal/*` private.
 - Add a small job that re-sends forms with `EHR_SYNC_STATUS = 'FAILED'` to the EHR.

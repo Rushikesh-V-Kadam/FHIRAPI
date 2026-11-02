@@ -19,7 +19,7 @@ public class PriorAuthDecisionDto
 
     /// <summary>Insurance plan id of the payer, sent by the Payer Gateway.</summary>
     /// <example>1001</example>
-    public int? PiInsurancePlanId { get; set; }
+    public int? InsurancePlanId { get; set; }
 
     /// <summary>EHR patient id.</summary>
     /// <example>pat-1</example>

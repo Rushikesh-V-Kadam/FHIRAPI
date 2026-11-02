@@ -12,7 +12,7 @@ namespace FHIRAPI.Controllers;
 ///
 /// Every FHIR server must publish one. It tells a client (payer, DTR app, Payer Gateway) which resource types
 /// can be read and searched, which search parameters work, which writes are allowed (QuestionnaireResponse),
-/// and where the SMART authorize/token endpoints are. It is public: no token is needed to read it.
+/// and where the SMART authorize/token endpoints are (this API's or Keycloak's). It is public: no token is needed to read it.
 /// </summary>
 [ApiController]
 [Route("fhir/r4")]
@@ -32,11 +32,15 @@ public class MetadataController : ControllerBase
         ["QuestionnaireResponse"] = new[] { "patient" }
     };
 
+    private readonly KeycloakSettings _keycloak;
+    private readonly SecuritySettings _security;
     private readonly FhirServerSettings _server;
 
     /// <summary>Created by dependency injection.</summary>
-    public MetadataController(IOptions<FhirServerSettings> server)
+    public MetadataController(IOptions<KeycloakSettings> keycloak, IOptions<SecuritySettings> security, IOptions<FhirServerSettings> server)
     {
+        _keycloak = keycloak.Value;
+        _security = security.Value;
         _server = server.Value;
     }
 
@@ -80,8 +84,8 @@ public class MetadataController : ControllerBase
                                 url = "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
                                 extension = new[]
                                 {
-                                    new { url = "authorize", valueUri = $"{_server.BaseUrl}/auth/authorize" },
-                                    new { url = "token", valueUri = $"{_server.BaseUrl}/auth/token" }
+                                    new { url = "authorize", valueUri = AuthorizeUri() },
+                                    new { url = "token", valueUri = TokenUri() }
                                 }
                             }
                         }
@@ -92,6 +96,26 @@ public class MetadataController : ControllerBase
         };
 
         return FhirResults.Ok(capabilityStatement);
+    }
+
+    /// <summary>The SMART authorize endpoint: this API's (BuiltIn) or Keycloak's.</summary>
+    private string AuthorizeUri()
+    {
+        if (_security.UsesKeycloak())
+        {
+            return _keycloak.GetAuthorizationEndpoint();
+        }
+        return _server.BaseUrl + "/auth/authorize";
+    }
+
+    /// <summary>The SMART token endpoint: this API's (BuiltIn) or Keycloak's.</summary>
+    private string TokenUri()
+    {
+        if (_security.UsesKeycloak())
+        {
+            return _keycloak.GetTokenEndpoint();
+        }
+        return _server.BaseUrl + "/auth/token";
     }
 
     /// <summary>One "rest.resource" entry: type, allowed interactions, search parameters.</summary>

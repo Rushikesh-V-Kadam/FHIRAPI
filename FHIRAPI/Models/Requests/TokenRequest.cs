@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FHIRAPI.Models.Requests;
 
 /// <summary>
-/// Form fields of the token request (application/x-www-form-urlencoded). Only the code is used.
+/// Form fields of the token request (application/x-www-form-urlencoded).
 /// </summary>
 public class TokenRequest
 {
@@ -17,13 +17,18 @@ public class TokenRequest
     [ModelBinder(Name = "code")]
     public string? Code { get; set; }
 
-    /// <summary>The same redirect_uri as in authorize (not checked).</summary>
-    /// <example>http://localhost:5174/callback</example>
+    /// <summary>Required. The same redirect_uri as in authorize.</summary>
+    /// <example>http://localhost:5300/callback</example>
     [ModelBinder(Name = "redirect_uri")]
     public string? RedirectUri { get; set; }
 
+    /// <summary>Required (public apps). The same client_id as in authorize.</summary>
+    /// <example>acme-dtr-app</example>
+    [ModelBinder(Name = "client_id")]
+    public string? ClientId { get; set; }
 
-
-
-
+    /// <summary>Required. PKCE: the secret whose SHA-256 was sent as code_challenge.</summary>
+    /// <example>dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk</example>
+    [ModelBinder(Name = "code_verifier")]
+    public string? CodeVerifier { get; set; }
 }

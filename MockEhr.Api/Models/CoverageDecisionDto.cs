@@ -17,7 +17,7 @@ public class CoverageDecisionDto
 
     /// <summary>Insurance plan id of the payer, sent by the Payer Gateway.</summary>
     /// <example>1001</example>
-    public int? PiInsurancePlanId { get; set; }
+    public int? InsurancePlanId { get; set; }
 
     /// <summary>true = fill in the payer questionnaire (DTR).</summary>
     /// <example>true</example>
