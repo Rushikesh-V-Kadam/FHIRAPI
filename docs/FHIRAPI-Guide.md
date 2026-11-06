@@ -208,14 +208,25 @@ No parameters, no body, no authentication.
 | Coverage | `GET api/insurances/{coverageId}` (read, and search `Coverage?_id=`) · `GET api/patients/{patientId}/insurances` (search `Coverage?patient=`) | `Coverage.id` is the EHR's own coverage id, unique in the EHR (see the note below). |
 | Practitioner | `GET api/practitioners/{id}` | |
 | PractitionerRole | `GET api/practitioners/{id}` | id is `role-{practitionerId}`, e.g. `role-prac-1` |
-| Organization | `GET api/organizations/{id}` | The client's organizations are parents: name, address and tax id (`http://terminology.hl7.org/NamingSystem/USEIN`, the system of the PAS TIN slice), no NPI. |
-| Organization `facility-{locationId}` | `GET api/locations/{locationId}` + `GET api/organizations/{organizationId}` | A **facility**. The client keeps each facility (its own NPI, name, address) as a location. Because a PAS `Claim.provider` can only be an Organization, every location is also served as `Organization/facility-{locationId}`: the location's name and address, the facility NPI, the parent's tax id, and `partOf` = the parent organization. The payer gateway uses it as `Claim.provider`. |
-| Location | `GET api/locations/{id}` | The facility NPI is in `identifier`; `managingOrganization` = `Organization/facility-{locationId}`. |
+| Organization | `GET api/organizations/{id}` | The organization of a location (`OrganizationID`): the facility NPI, tax id (`http://terminology.hl7.org/NamingSystem/USEIN`, the system of the PAS TIN slice), name and address. The client's organization API sends no `OrganizationID`, so the Organization gets the id it was read with. |
+| Location | `GET api/locations/{id}` | The facility NPI is in `identifier`; `managingOrganization` = `Organization/{OrganizationID}` (left out when the location has no organization). The payer gateway reads that Organization (facility NPI, tax id, name, address) as the PAS `Claim.provider`. |
 | ServiceRequest / MedicationRequest | `GET api/orders/{id}` | The EHR `orderType` decides the type. Asking `ServiceRequest/ord-1-retacrit` for a medication order returns 404. The client's orders carry no location, performing organization or place of service, so `locationReference`, `locationCode` and an organization `performer` are not set (all optional in FHIR R4); the facility comes as `orderLocationCode` in the Payer Gateway PAS request. |
 | Encounter | `GET api/encounters/{id}` | |
 | DocumentReference | `GET api/documents/{id}` | `attachment.url` points to `Binary/{id}` |
+| Observation (search only) | `GET Patients/getobslst?patientID={patientId}` (entity `ObservationDetailList`) | Lab results only (`category` laboratory). `LabResultValue` is text: a number becomes `valueQuantity` with `LabUnit` as `unit` (not checked against UCUM, so no `system`/`code`), other text `valueString`, none `dataAbsentReason`. |
+| Condition (search only) | `GET Patients/getconlst?patientID={patientId}` (entity `ConditionDetailList`) | `DiagnosisStatus` becomes `clinicalStatus` when it is a condition-clinical code. The client mixes ICD-10 and ICD-9 codes. |
+| Procedure (search only) | `GET Patients/getproclst?patientID={patientId}` (entity `ProcedureDetailList`) | The performer comes as an NPI, so `performer.actor` is a reference by identifier (`http://hl7.org/fhir/sid/us-npi`). |
 | Binary | `GET api/documents/{id}/content` | The file, base64 encoded |
 | QuestionnaireResponse | EHR data API (`api/prior-auth-data/questionnaire-responses`) | Served by `QuestionnaireResponseController` (section 3.5) |
+
+**Client lab, diagnosis and procedure lists (CLIENT-EHR).** The client's three list APIs take only `patientID` and return
+every row of the patient, so the FHIR search parameters (`code`, `date=ge...`, `category`, `clinical-status`) are applied
+in the FHIR API. Their rows have no code system, so `code.coding` has no `system`; a search `code=http://loinc.org|2502-3`
+also matches a coding without a system. The rows have no id yet (`ProcedureID` is null): the resource is sent without
+`id` and its Bundle entry gets a `urn:uuid:` fullUrl. `subject` is the row's `PatientID` (being added by the client), or
+the searched patient. Dates come in US Central time without a zone (`2026-04-20T00:00:00`); the FHIR API adds the offset
+(`2026-04-20T00:00:00-05:00`), as FHIR needs a zone on a dateTime with a time; a date that cannot be read is left out.
+Status values that are not FHIR codes become `unknown` (Observation, Procedure).
 
 **Coverage ids.** The EHR sends its own coverage id, unique in the EHR (`coverageId` in order-sign, DTR and PAS of the
 Payer Gateway; e.g. `cov-1`). It is `Coverage.id`. `GET Coverage/{id}` reads that one insurance with

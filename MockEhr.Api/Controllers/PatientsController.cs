@@ -270,15 +270,14 @@ public class PatientsController : ControllerBase
 
     /// <summary>Observations (lab results, vital signs) of a patient.</summary>
     /// <remarks>
-    /// The FHIR API turns each row into a FHIR Observation (GET /fhir/r4/Observation?patient={id}).
-    /// Payers and DTR forms read lab values this way, so the codes filter is used a lot.
+    /// Mock UI list. The FHIR API reads lab results from GET Patients/getobslst (the client's format) instead.
     /// </remarks>
     /// <param name="id" example="pat-1">EHR patient id, e.g. pat-1.</param>
     /// <param name="codes">Only these codes, comma separated. A code can have its code system in front: LOINC|33914-3,LOINC|2160-0. Empty = all.</param>
     /// <param name="category">Only this category: laboratory or vital-signs. Empty = all.</param>
     /// <param name="from">Only results measured on or after this date (yyyy-MM-dd or a full UTC date-time). Empty = all.</param>
     /// <response code="200">The observations.</response>
-    [Tags(SwaggerGroups.FhirApiRead, SwaggerGroups.MockUi)]
+    [Tags(SwaggerGroups.MockUi)]
     [HttpGet("{id}/observations")]
     [ProducesResponseType(typeof(EhrList<EhrObservationDto>), StatusCodes.Status200OK)]
     public ActionResult<EhrList<EhrObservationDto>> Observations(string id, [FromQuery] string? codes, [FromQuery] string? category, [FromQuery] string? from)
@@ -345,13 +344,13 @@ public class PatientsController : ControllerBase
 
     /// <summary>Conditions (diagnoses) of a patient.</summary>
     /// <remarks>
-    /// The FHIR API turns each row into a FHIR Condition (GET /fhir/r4/Condition?patient={id}).
+    /// Mock UI list. The FHIR API reads diagnoses from GET Patients/getconlst (the client's format) instead.
     /// </remarks>
     /// <param name="id" example="pat-1">EHR patient id, e.g. pat-1.</param>
     /// <param name="codes">Only these codes, comma separated. A code can have its code system in front: ICD10CM|N18.6. Empty = all.</param>
     /// <param name="status">Only conditions with this clinical status, e.g. active. Empty = all.</param>
     /// <response code="200">The conditions.</response>
-    [Tags(SwaggerGroups.FhirApiRead, SwaggerGroups.MockUi)]
+    [Tags(SwaggerGroups.MockUi)]
     [HttpGet("{id}/conditions")]
     [ProducesResponseType(typeof(EhrList<EhrConditionDto>), StatusCodes.Status200OK)]
     public ActionResult<EhrList<EhrConditionDto>> Conditions(string id, [FromQuery] string? codes, [FromQuery] string? status)
@@ -421,13 +420,13 @@ public class PatientsController : ControllerBase
 
     /// <summary>Procedures done for a patient.</summary>
     /// <remarks>
-    /// The FHIR API turns each row into a FHIR Procedure (GET /fhir/r4/Procedure?patient={id}).
+    /// Not used any more: the FHIR API reads procedures from GET Patients/getproclst (the client's format).
     /// </remarks>
     /// <param name="id" example="pat-1">EHR patient id, e.g. pat-1.</param>
     /// <param name="codes">Only these codes, comma separated. A code can have its code system in front: CPT|36821. Empty = all.</param>
     /// <param name="from">Only procedures done on or after this date (yyyy-MM-dd or a full UTC date-time). Empty = all.</param>
     /// <response code="200">The procedures.</response>
-    [Tags(SwaggerGroups.FhirApiRead)]
+    [Tags(SwaggerGroups.Unused)]
     [HttpGet("{id}/procedures")]
     [ProducesResponseType(typeof(EhrList<EhrProcedureDto>), StatusCodes.Status200OK)]
     public ActionResult<EhrList<EhrProcedureDto>> Procedures(string id, [FromQuery] string? codes, [FromQuery] string? from)

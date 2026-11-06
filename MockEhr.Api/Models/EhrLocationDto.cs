@@ -14,7 +14,7 @@ public class EhrLocationDto
     /// <example>Demo Dialysis Center - Main, in-center unit</example>
     public string? Name { get; set; }
 
-    /// <summary>NPI of the facility at this location. The client keeps facility NPIs on locations, not on organizations.</summary>
+    /// <summary>NPI of the facility at this location (the client sends it on the location and on the location's organization).</summary>
     /// <example>1999999992</example>
     public string? Npi { get; set; }
 

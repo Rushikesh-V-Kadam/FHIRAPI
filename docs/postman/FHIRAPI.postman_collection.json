@@ -799,7 +799,7 @@
 		},
 		{
 			"name": "5. Organization",
-			"description": "Parent organizations (org-1, org-2: tax id, no NPI) and facility organizations (facility-{locationId}: the facility NPI), used as the PAS requesting provider.",
+			"description": "Facility organizations (org-1, org-2: the facility NPI and tax id), the managingOrganization of the locations and the PAS requesting provider.",
 			"item": [
 				{
 					"name": "Read Organization org-1",
@@ -840,7 +840,7 @@
 					}
 				},
 				{
-					"name": "Read facility Organization facility-loc-main",
+					"name": "Read Organization org-2",
 					"event": [
 						{
 							"listen": "test",
@@ -850,8 +850,8 @@
 									"pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
 									"const body = pm.response.json();",
 									"pm.test(\"resourceType is Organization\", function () { pm.expect(body.resourceType).to.eql(\"Organization\"); });",
-									"pm.test(\"id is facility-loc-main\", function () { pm.expect(body.id).to.eql(\"facility-loc-main\"); });",
-									"pm.test(\"facility NPI 1999999992 present\", function () { pm.expect(JSON.stringify(body.identifier)).to.include(\"1999999992\"); });"
+									"pm.test(\"id is org-2\", function () { pm.expect(body.id).to.eql(\"org-2\"); });",
+									"pm.test(\"facility NPI 1888999004 present\", function () { pm.expect(JSON.stringify(body.identifier)).to.include(\"1888999004\"); });"
 								]
 							}
 						}
@@ -865,16 +865,16 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/Organization/facility-loc-main",
+							"raw": "{{baseUrl}}/Organization/org-2",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"Organization",
-								"facility-loc-main"
+								"org-2"
 							]
 						},
-						"description": "The Main in-center unit as an Organization, with its own NPI."
+						"description": "Demo Dialysis Center - Lakeside, with its facility NPI 1888999004."
 					}
 				},
 				{
@@ -917,7 +917,7 @@
 								}
 							]
 						},
-						"description": "Both parent organizations."
+						"description": "Both facility organizations."
 					}
 				}
 			]

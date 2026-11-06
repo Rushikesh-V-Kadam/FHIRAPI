@@ -4,12 +4,12 @@ namespace MockEhr.Api.Models.Rows;
 
 /// <summary>
 /// One payer SMART DTR app link given to the EHR = one row of table PA_DTR_LINK.
-/// Body of PUT api/prior-auth-data/dtr-links/{linkId}; returned by GET of the same path.
+/// Body of POST api/prior-auth-data/dtr-links; returned by GET api/prior-auth-data/dtr-links/{linkId}.
 /// Opening the link at the gateway uses these values to start the payer's DTR app.
 /// </summary>
 public class DtrLinkRow
 {
-    /// <summary>Key. Created by the gateway (the same value as in the URL). Column LINK_ID, VARCHAR2(64).</summary>
+    /// <summary>Key. Created by the gateway and sent in the POST body. Column LINK_ID, VARCHAR2(64).</summary>
     /// <example>514ff06354c7485a907aec22535743f2</example>
     public string LinkId { get; set; } = string.Empty;
 

@@ -38,7 +38,7 @@ public class OrganizationsController : ControllerBase
 
     /// <summary>One organization.</summary>
     /// <remarks>
-    /// The FHIR API turns the answer into a FHIR Organization (GET /fhir/r4/Organization/{id}). Facility NPIs are on the locations (FHIR: Organization/facility-{locationId}).
+    /// The FHIR API turns the answer into a FHIR Organization (GET /fhir/r4/Organization/{id}). A location's organizationId points here; the organization carries the facility's NPI and tax id (PAS Claim.provider).
     /// </remarks>
     /// <param name="id" example="org-1">EHR organization id, e.g. org-1.</param>
     /// <response code="200">The organization.</response>
@@ -64,8 +64,8 @@ public class OrganizationsController : ControllerBase
 
     /// <summary>Adds an organization.</summary>
     /// <remarks>
-    /// name must be filled. npi is optional: the client's organizations are parents with a tax id and no NPI
-    /// (the facility NPIs are on the locations). An empty organizationId gets a new id.
+    /// name must be filled. npi is optional, but PAS needs it: like the client's organization API, the organization of a
+    /// location carries that facility's NPI and tax id. An empty organizationId gets a new id.
     /// </remarks>
     /// <param name="organization">Required. The organization to add.</param>
     /// <response code="201">The organization as stored (with its id).</response>

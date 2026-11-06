@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 using FHIRAPI.Configuration;
 using FHIRAPI.Exceptions;
@@ -11,6 +12,8 @@ namespace FHIRAPI.Repositories.Database;
 /// (one property per column), the same rules as the other PA_* tables (docs/EHR-Data-API.md).
 ///   GET    = one row (404 -> null)
 ///   PUT    = insert, or update when the key exists
+/// Every answer has the client's format { "<EntityName>": row or null, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }
+/// (EhrResponse); a filled TOKEN_EXPIRED / ERROR_MESSAGE is an EhrException.
 ///   DELETE = delete one row and return it (404 -> null); used to take an authorization code exactly once
 /// Every other problem is an EhrException (502).
 /// </summary>
@@ -29,25 +32,26 @@ public class EhrDataApi
         _settings = settings.Value;
     }
 
-    /// <summary>GET one row; null when the API answers 404.</summary>
+    /// <summary>GET one row; null when the entity is null or the API answers 404.</summary>
     public async Task<T?> GetAsync<T>(string path, CancellationToken ct) where T : class
     {
         string? text = await SendAsync(HttpMethod.Get, path, null, ct);
-        return Read<T>(text);
+        return Read<T>(EhrResponse.Unwrap(text, "EHR data API GET " + FirstSegment(path)));
     }
 
-    /// <summary>PUT one row (insert or update).</summary>
+    /// <summary>PUT one row (insert or update). The answer is only checked for TOKEN_EXPIRED / ERROR_MESSAGE.</summary>
     public async Task PutAsync(string path, object row, CancellationToken ct)
     {
         string json = JsonSerializer.Serialize(row, row.GetType(), Json);
-        await SendAsync(HttpMethod.Put, path, json, ct);
+        string? text = await SendAsync(HttpMethod.Put, path, json, ct);
+        EhrResponse.Unwrap(text, "EHR data API PUT " + FirstSegment(path));
     }
 
-    /// <summary>DELETE one row and return it; null when the API answers 404 (no such row, or already deleted).</summary>
+    /// <summary>DELETE one row and return it; null when the entity is null or the API answers 404 (no such row, or already deleted).</summary>
     public async Task<T?> DeleteAsync<T>(string path, CancellationToken ct) where T : class
     {
         string? text = await SendAsync(HttpMethod.Delete, path, null, ct);
-        return Read<T>(text);
+        return Read<T>(EhrResponse.Unwrap(text, "EHR data API DELETE " + FirstSegment(path)));
     }
 
     /// <summary>Sends one call with the timeout and returns the body; null for 404.</summary>
@@ -98,16 +102,16 @@ public class EhrDataApi
         }
     }
 
-    /// <summary>JSON text -> row; empty text -> null; a body that is not the expected JSON -> EhrException.</summary>
-    private static T? Read<T>(string? text) where T : class
+    /// <summary>The entity -> row; null -> null; an entity that does not have the expected shape -> EhrException.</summary>
+    private static T? Read<T>(JsonNode? entity) where T : class
     {
-        if (string.IsNullOrWhiteSpace(text))
+        if (entity == null)
         {
             return null;
         }
         try
         {
-            return JsonSerializer.Deserialize<T>(text, Json);
+            return entity.Deserialize<T>(Json);
         }
         catch (JsonException ex)
         {

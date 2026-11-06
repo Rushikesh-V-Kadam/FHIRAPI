@@ -177,7 +177,7 @@ public class FhirAdministrativeController : FhirResourceControllerBase
     }
 
     /// <summary>Reads one Organization by id. GET /fhir/r4/Organization/{id}</summary>
-    /// <param name="id" example="org-1">Required. EHR organization id, or facility-{locationId} for a facility (a location with its own NPI).</param>
+    /// <param name="id" example="org-1">Required. EHR organization id (the OrganizationID of a location). The client's organization API gives the facility NPI, tax id, name and address.</param>
     /// <param name="ct">Cancelled when the caller disconnects.</param>
     /// <response code="200">The Organization as FHIR JSON (application/fhir+json).</response>
     /// <response code="404">The EHR has no such record. Body: a FHIR OperationOutcome (code not-found).</response>

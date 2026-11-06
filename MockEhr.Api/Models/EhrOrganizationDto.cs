@@ -10,7 +10,7 @@ public class EhrOrganizationDto
     /// <example>org-1</example>
     public string OrganizationId { get; set; } = string.Empty;
 
-    /// <summary>Optional NPI (10 digits). The client's organizations are parents without an NPI; facility NPIs are on the locations.</summary>
+    /// <summary>NPI (10 digits) of the facility. Like the client's organization API, each location's organization carries that facility's NPI and tax id.</summary>
     /// <example>1999999992</example>
     public string? Npi { get; set; }
 

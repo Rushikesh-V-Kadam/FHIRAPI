@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 using FHIRAPI.Configuration;
 using FHIRAPI.Exceptions;
@@ -14,7 +15,8 @@ namespace FHIRAPI.Repositories.Database;
 ///   GET {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses/{id}             one form (404 = not found)
 ///   GET {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses?patientId=...    all forms of a patient
 ///   PUT {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses/{id}             insert or update
-/// The row is the QuestionnaireResponseRecord as camelCase JSON: every property is one column.
+/// The row is the QuestionnaireResponseRecord as camelCase JSON: every property is one column. Every answer has the
+/// client's format { "<EntityName>": row, list or null, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" } (EhrResponse).
 /// Selected with "Storage": { "QuestionnaireResponseStore": "EhrApi" }.
 /// </summary>
 public class EhrApiQuestionnaireResponseRepository : IQuestionnaireResponseRepository
@@ -36,22 +38,28 @@ public class EhrApiQuestionnaireResponseRepository : IQuestionnaireResponseRepos
     public async Task<QuestionnaireResponseRecord?> GetAsync(string id, CancellationToken ct)
     {
         string? text = await SendAsync(HttpMethod.Get, "questionnaire-responses/" + Uri.EscapeDataString(id), null, true, ct);
-        if (string.IsNullOrWhiteSpace(text))
+        JsonNode? entity = EhrResponse.Unwrap(text, "EHR data API GET questionnaire-responses");
+        if (entity == null)
         {
             return null;
         }
-        return Read<QuestionnaireResponseRecord>(text);
+        return Read<QuestionnaireResponseRecord>(entity);
     }
 
     /// <inheritdoc />
     public async Task<List<QuestionnaireResponseRecord>> GetByPatientAsync(string patientId, CancellationToken ct)
     {
         string? text = await SendAsync(HttpMethod.Get, "questionnaire-responses?patientId=" + Uri.EscapeDataString(patientId), null, false, ct);
-        if (string.IsNullOrWhiteSpace(text))
+        JsonNode? entity = EhrResponse.Unwrap(text, "EHR data API GET questionnaire-responses");
+        if (entity == null)
         {
             return new List<QuestionnaireResponseRecord>();
         }
-        List<QuestionnaireResponseRecord>? rows = Read<List<QuestionnaireResponseRecord>>(text);
+        if (!(entity is JsonArray))
+        {
+            throw new EhrException("EHR data API GET questionnaire-responses answered an entity that is not a list.");
+        }
+        List<QuestionnaireResponseRecord>? rows = Read<List<QuestionnaireResponseRecord>>(entity);
         if (rows == null)
         {
             return new List<QuestionnaireResponseRecord>();
@@ -65,7 +73,8 @@ public class EhrApiQuestionnaireResponseRepository : IQuestionnaireResponseRepos
     {
         record.LastUpdatedUtc = DateTime.UtcNow;
         string json = JsonSerializer.Serialize(record, Json);
-        await SendAsync(HttpMethod.Put, "questionnaire-responses/" + Uri.EscapeDataString(record.Id), json, false, ct);
+        string? answer = await SendAsync(HttpMethod.Put, "questionnaire-responses/" + Uri.EscapeDataString(record.Id), json, false, ct);
+        EhrResponse.Unwrap(answer, "EHR data API PUT questionnaire-responses");
     }
 
     // ------------------------------------------------------------------ helpers
@@ -121,12 +130,12 @@ public class EhrApiQuestionnaireResponseRepository : IQuestionnaireResponseRepos
         }
     }
 
-    /// <summary>JSON text -> object; a body that is not the expected JSON becomes EhrException.</summary>
-    private static T? Read<T>(string text)
+    /// <summary>The entity -> object; an entity that does not have the expected shape becomes EhrException.</summary>
+    private static T? Read<T>(JsonNode entity)
     {
         try
         {
-            return JsonSerializer.Deserialize<T>(text, Json);
+            return entity.Deserialize<T>(Json);
         }
         catch (JsonException ex)
         {

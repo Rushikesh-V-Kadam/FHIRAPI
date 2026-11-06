@@ -19,7 +19,7 @@ namespace MockEhr.Api.Controllers;
 ///   PA_PAYER                    GET payers/{insurancePlanId}                             PayerRow
 ///                               PUT payers/{insurancePlanId} (mock only: lets a demo add a payer; the real EHR team maintains the table)
 ///   PA_COVERAGE_DECISION        GET / PUT coverage-decisions/{orderId}                     CoverageDecisionRow
-///   PA_DTR_LINK                 GET / PUT dtr-links/{linkId}                               DtrLinkRow
+///   PA_DTR_LINK                 POST dtr-links,  GET dtr-links/{linkId}                    DtrLinkRow
 ///   PA_PRIOR_AUTH               GET / PUT prior-auths/{requestId}                          PriorAuthRow
 ///   PA_CDEX_TASK                PUT cdex-tasks/{insurancePlanId}/{taskId},  GET cdex-tasks?requestId=   CdexTaskRow
 ///
@@ -122,12 +122,12 @@ public class PriorAuthDataController : ControllerBase
     /// <remarks>The real EHR team maintains PA_PAYER with its own screens / scripts, so the real EHR does not need this endpoint.</remarks>
     /// <param name="insurancePlanId" example="1001">The EHR's insurance plan id (key). Wins over insurancePlanId in the body.</param>
     /// <param name="row">Required. The payer row.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.MockUi)]
     [HttpPut("payers/{insurancePlanId:int}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutPayer(int insurancePlanId, [FromBody, Required] PayerRow row)
     {
@@ -163,7 +163,7 @@ public class PriorAuthDataController : ControllerBase
     /// <summary>The latest coverage decision of an order (table PA_COVERAGE_DECISION).</summary>
     /// <param name="orderId" example="ord-1-hd">EHR order id, e.g. ord-1-hd.</param>
     /// <response code="200">The row.</response>
-    /// <response code="404">No decision is stored for this order.</response>
+    /// <response code="404">No decision is stored for this order. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
     [Tags(SwaggerGroups.GatewayData)]
     [HttpGet("coverage-decisions/{orderId}")]
     [ProducesResponseType(typeof(CoverageDecisionRow), StatusCodes.Status200OK)]
@@ -180,12 +180,12 @@ public class PriorAuthDataController : ControllerBase
     /// </remarks>
     /// <param name="orderId" example="ord-1-hd">EHR order id (key). Wins over orderId in the body.</param>
     /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.GatewayData)]
     [HttpPut("coverage-decisions/{orderId}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutCoverageDecision(string orderId, [FromBody, Required] CoverageDecisionRow row)
     {
@@ -204,7 +204,7 @@ public class PriorAuthDataController : ControllerBase
     /// <summary>One payer SMART DTR app link (table PA_DTR_LINK).</summary>
     /// <param name="linkId" example="514ff06354c7485a907aec22535743f2">Link id created by the gateway.</param>
     /// <response code="200">The row.</response>
-    /// <response code="404">No link with this id.</response>
+    /// <response code="404">No link with this id. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
     [Tags(SwaggerGroups.GatewayData)]
     [HttpGet("dtr-links/{linkId}")]
     [ProducesResponseType(typeof(DtrLinkRow), StatusCodes.Status200OK)]
@@ -214,21 +214,39 @@ public class PriorAuthDataController : ControllerBase
         return GetRow("dtr-links", linkId);
     }
 
-    /// <summary>Saves a payer SMART DTR app link (table PA_DTR_LINK).</summary>
-    /// <remarks>Insert, or update when the link id exists. Called at order-sign when the payer's answer has a DTR app link.</remarks>
-    /// <param name="linkId" example="514ff06354c7485a907aec22535743f2">Link id (key). Wins over linkId in the body.</param>
-    /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
+    /// <summary>Saves a new payer SMART DTR app link (table PA_DTR_LINK).</summary>
+    /// <remarks>
+    /// Insert. The link id is created by the gateway and sent in the body (linkId). Called at order-sign when the payer's
+    /// answer has a DTR app link. A link is never changed after it is saved. When the link id already exists (the
+    /// gateway retried after a timeout), the row is left as it is and 200 is returned, so a retry never fails.
+    /// </remarks>
+    /// <param name="row">Required. The row to save; linkId must be filled.</param>
+    /// <response code="200">Saved, or already saved (repeated call; nothing changed): { "DtrLinkDetail": the row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
+    /// <response code="400">The body is missing, is not valid JSON, or has no linkId.</response>
     [Tags(SwaggerGroups.GatewayData)]
-    [HttpPut("dtr-links/{linkId}")]
+    [HttpPost("dtr-links")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutDtrLink(string linkId, [FromBody, Required] DtrLinkRow row)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    public IActionResult PostDtrLink([FromBody, Required] DtrLinkRow row)
     {
-        row.LinkId = linkId;
-        return PutRow("dtr-links", linkId, row);
+        if (string.IsNullOrWhiteSpace(row.LinkId))
+        {
+            return BadRequest(new ErrorResponse("linkId is required."));
+        }
+        lock (_store.Sync)
+        {
+            Dictionary<string, JsonElement> links = Table("dtr-links");
+            JsonElement existing;
+            if (links.TryGetValue(row.LinkId, out existing))
+            {
+                return Wrapped(DetailName("dtr-links"), existing);   // repeated call: nothing changed
+            }
+            JsonElement saved = ToJson(row);
+            links[row.LinkId] = saved;
+            _store.Save();
+            return Wrapped(DetailName("dtr-links"), saved);
+        }
     }
 
     // ================================================================== PA_PRIOR_AUTH
@@ -236,7 +254,7 @@ public class PriorAuthDataController : ControllerBase
     /// <summary>One prior authorization request (table PA_PRIOR_AUTH).</summary>
     /// <param name="requestId" example="PA-2026-0001">The EHR's request id, e.g. PA-2026-0001.</param>
     /// <response code="200">The row.</response>
-    /// <response code="404">No request with this id.</response>
+    /// <response code="404">No request with this id. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
     [Tags(SwaggerGroups.GatewayData)]
     [HttpGet("prior-auths/{requestId}")]
     [ProducesResponseType(typeof(PriorAuthRow), StatusCodes.Status200OK)]
@@ -255,23 +273,24 @@ public class PriorAuthDataController : ControllerBase
     /// </remarks>
     /// <param name="requestId" example="PA-2026-0001">The EHR's request id (key). Wins over requestId in the body.</param>
     /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.GatewayData)]
     [HttpPut("prior-auths/{requestId}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutPriorAuth(string requestId, [FromBody, Required] PriorAuthRow row)
     {
         row.RequestId = requestId;
+        JsonElement saved = ToJson(row);
         lock (_store.Sync)
         {
-            Table("prior-auths")[requestId] = ToJson(row);
+            Table("prior-auths")[requestId] = saved;
             ShowPriorAuthDecision(requestId, row.DecisionJson);
             _store.Save();
         }
-        return NoContent();
+        return Wrapped(DetailName("prior-auths"), saved);
     }
 
     // ================================================================== PA_CDEX_TASK
@@ -281,12 +300,12 @@ public class PriorAuthDataController : ControllerBase
     /// <param name="insurancePlanId" example="1001">Insurance plan id of the payer (key, part 1). Wins over insurancePlanId in the body.</param>
     /// <param name="taskId" example="5f367f122eba45caba287738b1cc2a38">The payer's Task id (key, part 2). Wins over taskId in the body.</param>
     /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.GatewayData)]
     [HttpPut("cdex-tasks/{insurancePlanId:int}/{taskId}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutCdexTask(int insurancePlanId, string taskId, [FromBody, Required] CdexTaskRow row)
     {
@@ -314,7 +333,7 @@ public class PriorAuthDataController : ControllerBase
     /// <summary>One filled-in DTR form in FHIR format (table PA_QUESTIONNAIRE_RESPONSE).</summary>
     /// <param name="id" example="qr-frm-235b7ad69e85">FHIR id of the form, e.g. qr-frm-235b7ad69e85.</param>
     /// <response code="200">The row.</response>
-    /// <response code="404">No form with this id.</response>
+    /// <response code="404">No form with this id. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpGet("questionnaire-responses/{id}")]
     [ProducesResponseType(typeof(QuestionnaireResponseRow), StatusCodes.Status200OK)]
@@ -331,12 +350,12 @@ public class PriorAuthDataController : ControllerBase
     /// </remarks>
     /// <param name="id" example="qr-frm-235b7ad69e85">FHIR id of the form (key). Wins over id in the body.</param>
     /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpPut("questionnaire-responses/{id}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutQuestionnaireResponse(string id, [FromBody, Required] QuestionnaireResponseRow row)
     {
@@ -367,7 +386,7 @@ public class PriorAuthDataController : ControllerBase
     /// </remarks>
     /// <param name="clientId" example="mock-payer-dtr-app">The app's client_id.</param>
     /// <response code="200">The row.</response>
-    /// <response code="404">No app with this client_id.</response>
+    /// <response code="404">No app with this client_id. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpGet("smart-clients/{clientId}")]
     [ProducesResponseType(typeof(SmartClientRow), StatusCodes.Status200OK)]
@@ -385,12 +404,12 @@ public class PriorAuthDataController : ControllerBase
     /// <remarks>The real EHR team maintains PA_SMART_CLIENT with its own screens / scripts, so the real EHR does not need this endpoint.</remarks>
     /// <param name="clientId" example="mock-payer-dtr-app">The app's client_id (key). Wins over clientId in the body.</param>
     /// <param name="row">Required. The app row.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.MockUi)]
     [HttpPut("smart-clients/{clientId}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutSmartClient(string clientId, [FromBody, Required] SmartClientRow row)
     {
@@ -419,7 +438,7 @@ public class PriorAuthDataController : ControllerBase
     /// <remarks>SQL: WHERE LAUNCH_ID = :launchId. The FHIR API checks EXPIRES_AT itself.</remarks>
     /// <param name="launchId" example="6-jM9cmaBKMd4rFPAl-hQp_D">The launch id.</param>
     /// <response code="200">The row.</response>
-    /// <response code="404">No launch with this id.</response>
+    /// <response code="404">No launch with this id. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpGet("smart-launches/{launchId}")]
     [ProducesResponseType(typeof(SmartLaunchRow), StatusCodes.Status200OK)]
@@ -432,12 +451,12 @@ public class PriorAuthDataController : ControllerBase
     /// <summary>Saves a SMART launch (table PA_SMART_LAUNCH). Insert, or update when the id exists.</summary>
     /// <param name="launchId" example="6-jM9cmaBKMd4rFPAl-hQp_D">The launch id (key). Wins over launchId in the body.</param>
     /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpPut("smart-launches/{launchId}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutSmartLaunch(string launchId, [FromBody, Required] SmartLaunchRow row)
     {
@@ -450,12 +469,12 @@ public class PriorAuthDataController : ControllerBase
     /// <summary>Saves a SMART authorization code (table PA_SMART_AUTH_CODE).</summary>
     /// <param name="codeHash" example="3q2-7wQx0p1mZQ8u0pX6m0nN4l1qkE6m4X0dJ0hKc7Y">Hash of the code (key). Wins over codeHash in the body.</param>
     /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpPut("smart-auth-codes/{codeHash}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutSmartAuthCode(string codeHash, [FromBody, Required] SmartAuthCodeRow row)
     {
@@ -470,7 +489,7 @@ public class PriorAuthDataController : ControllerBase
     /// </remarks>
     /// <param name="codeHash" example="3q2-7wQx0p1mZQ8u0pX6m0nN4l1qkE6m4X0dJ0hKc7Y">Hash of the code.</param>
     /// <response code="200">The deleted row.</response>
-    /// <response code="404">No such code (unknown or already used).</response>
+    /// <response code="404">No such code (unknown or already used). The answer is 200 with the entity null; 404 only when the path is wrong.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpDelete("smart-auth-codes/{codeHash}")]
     [ProducesResponseType(typeof(SmartAuthCodeRow), StatusCodes.Status200OK)]
@@ -486,7 +505,7 @@ public class PriorAuthDataController : ControllerBase
     /// <remarks>Called on every checked FHIR call. SQL: WHERE TOKEN_HASH = :tokenHash. The FHIR API checks EXPIRES_AT itself.</remarks>
     /// <param name="tokenHash" example="p9w1Cq8m3uYw4mV2Fh0eQk5s7rT6nB1aXz8dLc2jK4E">Hash of the token.</param>
     /// <response code="200">The row.</response>
-    /// <response code="404">No such token.</response>
+    /// <response code="404">No such token. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpGet("access-tokens/{tokenHash}")]
     [ProducesResponseType(typeof(AccessTokenRow), StatusCodes.Status200OK)]
@@ -499,12 +518,12 @@ public class PriorAuthDataController : ControllerBase
     /// <summary>Saves an access token (table PA_ACCESS_TOKEN). Insert, or update when the hash exists.</summary>
     /// <param name="tokenHash" example="p9w1Cq8m3uYw4mV2Fh0eQk5s7rT6nB1aXz8dLc2jK4E">Hash of the token (key). Wins over tokenHash in the body.</param>
     /// <param name="row">Required. The row to save.</param>
-    /// <response code="204">Saved.</response>
+    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
     /// <response code="400">The body is missing or is not valid JSON.</response>
     [Tags(SwaggerGroups.FhirApiData)]
     [HttpPut("access-tokens/{tokenHash}")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult PutAccessToken(string tokenHash, [FromBody, Required] AccessTokenRow row)
     {
@@ -532,7 +551,48 @@ public class PriorAuthDataController : ControllerBase
         return JsonSerializer.SerializeToElement(row, row.GetType(), RowJson);
     }
 
-    /// <summary>One row, or 404.</summary>
+    // CLIENT-EHR: every answer of the data API has the client's format:
+    //   { "<EntityName>": <row, list of rows, or null>, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }
+    // with HTTP 200. "No such row" = the entity is null. The gateway and the FHIR API read the one entity property
+    // whatever its name; the names below are the ones in EHR-Data-API-swagger.json.
+
+    /// <summary>Entity name of one row of a table.</summary>
+    private static readonly Dictionary<string, string> DetailNames = new Dictionary<string, string>
+    {
+        { "dtr-links", "DtrLinkDetail" }, { "prior-auths", "PriorAuthDetail" }, { "cdex-tasks", "CdexTaskDetail" },
+        { "questionnaire-responses", "QuestionnaireResponseDetail" }, { "smart-clients", "SmartClientDetail" },
+        { "smart-launches", "SmartLaunchDetail" }, { "smart-auth-codes", "SmartAuthCodeDetail" },
+        { "access-tokens", "AccessTokenDetail" }, { "coverage-decisions", "CoverageDecisionDetail" }
+    };
+
+    /// <summary>Entity name of a list of rows of a table.</summary>
+    private static readonly Dictionary<string, string> ListNames = new Dictionary<string, string>
+    {
+        { "cdex-tasks", "CdexTaskList" }, { "questionnaire-responses", "QuestionnaireResponseList" }
+    };
+
+    /// <summary>200 with { "&lt;entityName&gt;": entity, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</summary>
+    private IActionResult Wrapped(string entityName, object? entity)
+    {
+        Dictionary<string, object?> answer = new Dictionary<string, object?>();
+        answer[entityName] = entity;
+        answer["TOKEN_EXPIRED"] = string.Empty;
+        answer["ERROR_MESSAGE"] = string.Empty;
+        return Ok(answer);
+    }
+
+    /// <summary>The entity name of one row of a table.</summary>
+    private static string DetailName(string table)
+    {
+        string? name;
+        if (DetailNames.TryGetValue(table, out name))
+        {
+            return name;
+        }
+        return "Detail";
+    }
+
+    /// <summary>One row, or the entity null when there is no such row.</summary>
     private IActionResult GetRow(string table, string key)
     {
         lock (_store.Sync)
@@ -540,24 +600,25 @@ public class PriorAuthDataController : ControllerBase
             JsonElement row;
             if (Table(table).TryGetValue(key, out row))
             {
-                return Ok(row);
+                return Wrapped(DetailName(table), row);
             }
         }
-        return NotFound(new ErrorResponse("No row " + key + " in " + table + "."));
+        return Wrapped(DetailName(table), null);
     }
 
-    /// <summary>Inserts or replaces one row.</summary>
+    /// <summary>Inserts or replaces one row; the saved row is returned as the entity.</summary>
     private IActionResult PutRow(string table, string key, object row)
     {
+        JsonElement saved = ToJson(row);
         lock (_store.Sync)
         {
-            Table(table)[key] = ToJson(row);
+            Table(table)[key] = saved;
             _store.Save();
         }
-        return NoContent();
+        return Wrapped(DetailName(table), saved);
     }
 
-    /// <summary>Returns one row and deletes it in the same lock, or 404.</summary>
+    /// <summary>Returns one row and deletes it in the same lock; the entity is null when there is no such row.</summary>
     private IActionResult TakeRow(string table, string key)
     {
         lock (_store.Sync)
@@ -566,10 +627,10 @@ public class PriorAuthDataController : ControllerBase
             if (Table(table).Remove(key, out row))
             {
                 _store.Save();
-                return Ok(row);
+                return Wrapped(DetailName(table), row);
             }
         }
-        return NotFound(new ErrorResponse("No row " + key + " in " + table + "."));
+        return Wrapped(DetailName(table), null);
     }
 
     /// <summary>The rows whose property has this value.</summary>
@@ -586,7 +647,12 @@ public class PriorAuthDataController : ControllerBase
                 }
             }
         }
-        return Ok(result);
+        string? listName;
+        if (!ListNames.TryGetValue(table, out listName))
+        {
+            listName = "List";
+        }
+        return Wrapped(listName, result);
     }
 
     /// <summary>A text property of a row, or null.</summary>

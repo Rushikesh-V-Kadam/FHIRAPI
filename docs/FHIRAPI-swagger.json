@@ -330,7 +330,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "Required. EHR organization id, or facility-{locationId} for a facility (a location with its own NPI).",
+            "description": "Required. EHR organization id (the OrganizationID of a location). The client's organization API gives the facility NPI, tax id, name and address.",
             "required": true,
             "schema": {
               "type": "string"

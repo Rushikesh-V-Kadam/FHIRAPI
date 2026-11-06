@@ -194,8 +194,8 @@ public class AdministrativeMapper
 
     /// <summary>
     /// EHR location -> US Core Location (place-of-service code as the type, the facility NPI as identifier).
-    /// managingOrganization is the facility Organization of this location (Organization/facility-{locationId}), which
-    /// carries the NPI and points to the parent organization (see ToFacilityOrganization).
+    /// managingOrganization is the EHR organization of this location (Organization/{OrganizationID}); the client's
+    /// organization API returns that facility's NPI, tax id, name and address, so it is the PAS Claim.provider.
     /// </summary>
     public Location ToLocation(EhrLocationDto source)
     {
@@ -204,10 +204,13 @@ public class AdministrativeMapper
             Id = source.LocationId,
             Status = "active",
             Name = source.Name,
-            Address = ToAddress(source.Address),
-            // CLIENT-EHR: points to the facility Organization (with the facility NPI), not to the parent organization
-            ManagingOrganization = new ResourceReference("Organization", FacilityIds.ToOrganizationId(source.LocationId))
+            Address = ToAddress(source.Address)
         };
+        // managingOrganization (0..1): the location's organization, read by the gateway as the PAS requesting facility.
+        if (!string.IsNullOrWhiteSpace(source.OrganizationId))
+        {
+            location.ManagingOrganization = new ResourceReference("Organization", source.OrganizationId);
+        }
         location.AddProfile(FhirProfiles.Location);
 
         if (!string.IsNullOrEmpty(source.Npi))
@@ -218,43 +221,6 @@ public class AdministrativeMapper
         if (!string.IsNullOrEmpty(source.PlaceOfServiceCode))
             location.Type.Add(new CodeableConcept(CodeSystems.PlaceOfService, source.PlaceOfServiceCode));
         return location;
-    }
-
-    /// <summary>
-    /// EHR location (+ its parent organization) -> facility Organization (Organization/facility-{locationId}).
-    /// The client keeps each facility's NPI, name and address on the location and only the tax id on the parent
-    /// organization. The facility Organization has: the location's name and address, the facility NPI, the parent's
-    /// tax id (facilities bill under the parent's tax id), and partOf = the parent organization.
-    /// It is what a PAS request uses as Claim.provider. parent may be null (no parent, or not found in the EHR).
-    /// </summary>
-    public Organization ToFacilityOrganization(EhrLocationDto location, EhrOrganizationDto? parent)
-    {
-        // CLIENT-EHR: the facility NPI comes from the location; the parent organization gives only its tax id.
-        Organization organization = new Organization();
-        organization.Id = FacilityIds.ToOrganizationId(location.LocationId);
-        organization.Active = true;
-        organization.Name = location.Name;
-        organization.AddProfile(FhirProfiles.Organization);
-
-        if (!string.IsNullOrEmpty(location.Npi))
-        {
-            organization.Identifier.Add(new Identifier(CodeSystems.Npi, location.Npi));
-        }
-        if (parent != null && !string.IsNullOrEmpty(parent.TaxId))
-        {
-            organization.Identifier.Add(new Identifier(CodeSystems.TaxId, parent.TaxId));
-        }
-
-        Address? address = ToAddress(location.Address);
-        if (address != null)
-        {
-            organization.Address.Add(address);
-        }
-        if (!string.IsNullOrEmpty(location.OrganizationId))
-        {
-            organization.PartOf = new ResourceReference("Organization", location.OrganizationId);
-        }
-        return organization;
     }
 
     // ------------------------------------------------------------------ helpers

@@ -2,7 +2,6 @@ using Microsoft.Extensions.Options;
 using FHIRAPI.Configuration;
 using FHIRAPI.Constants;
 using FHIRAPI.Exceptions;
-using FHIRAPI.Helpers;
 using FHIRAPI.Mapping;
 using FHIRAPI.Models.Ehr;
 using FHIRAPI.Models.Fhir;
@@ -67,13 +66,18 @@ public class FhirReadService
                 return rolePractitioner == null ? null : _admin.ToPractitionerRole(rolePractitioner);
 
             case "Organization":
-                // CLIENT-EHR: a facility (Organization/facility-{locationId}) is built from the EHR location + its parent organization
-                if (FacilityIds.IsFacility(id))
-                {
-                    return await ReadFacilityAsync(FacilityIds.ToLocationId(id), ct);
-                }
                 var organization = await _ehr.GetOrganizationAsync(id, ct);
-                return organization == null ? null : _admin.ToOrganization(organization);
+                if (organization == null)
+                {
+                    return null;
+                }
+                // CLIENT-EHR: the client's organization API sends no OrganizationID (only a LocationID), so the
+                // organization gets the id it was read with.
+                if (string.IsNullOrWhiteSpace(organization.OrganizationId))
+                {
+                    organization.OrganizationId = id;
+                }
+                return _admin.ToOrganization(organization);
 
             case "Location":
                 var location = await _ehr.GetLocationAsync(id, ct);
@@ -114,30 +118,6 @@ public class FhirReadService
         if (order == null || OrderMapper.GetResourceType(order.OrderType) != type) return null;
 
         return _orders.ToFhir(order);
-    }
-
-    /// <summary>
-    /// The facility Organization of an EHR location: the location (name, address, facility NPI) plus the tax id of
-    /// its parent organization. Null when the EHR has no such location. A missing parent organization is not an
-    /// error: the facility is then returned without tax id and without partOf.
-    /// </summary>
-    private async Task<Resource?> ReadFacilityAsync(string locationId, CancellationToken ct)
-    {
-        EhrLocationDto? location = await _ehr.GetLocationAsync(locationId, ct);
-        if (location == null)
-        {
-            return null;
-        }
-        EhrOrganizationDto? parent = null;
-        if (!string.IsNullOrEmpty(location.OrganizationId))
-        {
-            parent = await _ehr.GetOrganizationAsync(location.OrganizationId, ct);
-        }
-        if (parent == null)
-        {
-            location.OrganizationId = null;
-        }
-        return _admin.ToFacilityOrganization(location, parent);
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using FHIRAPI.Constants;
 using FHIRAPI.Exceptions;
 using FHIRAPI.Helpers;
 using FHIRAPI.Mapping;
+using FHIRAPI.Models.Ehr;
 using FHIRAPI.Models.Fhir;
 using FHIRAPI.Models.Requests;
 
@@ -116,21 +117,18 @@ public class FhirSearchService
                 break;
 
             case "Observation":
-                var observations = await _ehr.GetObservationsAsync(RequirePatient(type, search),
-                    _codes.ToEhrCodeList(search.Code), search.Category, search.GetDateFrom(), ct);
-                results.AddRange(observations.Select(_clinical.ToObservation));
+                AddObservations(results, RequirePatient(type, search),
+                    await _ehr.GetObservationsAsync(RequirePatient(type, search), ct), search);
                 break;
 
             case "Condition":
-                var conditions = await _ehr.GetConditionsAsync(RequirePatient(type, search),
-                    _codes.ToEhrCodeList(search.Code), search.ClinicalStatus, ct);
-                results.AddRange(conditions.Select(_clinical.ToCondition));
+                AddConditions(results, RequirePatient(type, search),
+                    await _ehr.GetConditionsAsync(RequirePatient(type, search), ct), search);
                 break;
 
             case "Procedure":
-                var procedures = await _ehr.GetProceduresAsync(RequirePatient(type, search),
-                    _codes.ToEhrCodeList(search.Code), search.GetDateFrom(), ct);
-                results.AddRange(procedures.Select(_clinical.ToProcedure));
+                AddProcedures(results, RequirePatient(type, search),
+                    await _ehr.GetProceduresAsync(RequirePatient(type, search), ct), search);
                 break;
 
             case "DocumentReference":
@@ -146,6 +144,56 @@ public class FhirSearchService
         }
 
         return results;
+    }
+
+    // ------------------------------------------------------------------ client list filters
+
+    // CLIENT-EHR: the client's list APIs return every row of the patient, so code, date, category and clinical-status
+    // are applied to the FHIR resources here.
+
+    /// <summary>Adds the lab results that match code, category and date.</summary>
+    private void AddObservations(List<Resource> results, string patientId, List<EhrObservationDto> rows, FhirSearchParameters search)
+    {
+        string? from = search.GetDateFrom();
+        foreach (EhrObservationDto row in rows)
+        {
+            Observation observation = _clinical.ToObservation(row, patientId);
+            if (SearchFilter.CodeMatches(observation.Code, search.Code)
+                && SearchFilter.AnyCodeMatches(observation.Category, search.Category)
+                && SearchFilter.OnOrAfter(observation.EffectiveDateTime, from))
+            {
+                results.Add(observation);
+            }
+        }
+    }
+
+    /// <summary>Adds the diagnoses that match code and clinical-status.</summary>
+    private void AddConditions(List<Resource> results, string patientId, List<EhrConditionDto> rows, FhirSearchParameters search)
+    {
+        foreach (EhrConditionDto row in rows)
+        {
+            Condition condition = _clinical.ToCondition(row, patientId);
+            if (SearchFilter.CodeMatches(condition.Code, search.Code)
+                && SearchFilter.CodeMatches(condition.ClinicalStatus, search.ClinicalStatus))
+            {
+                results.Add(condition);
+            }
+        }
+    }
+
+    /// <summary>Adds the procedures that match code and date.</summary>
+    private void AddProcedures(List<Resource> results, string patientId, List<EhrProcedureDto> rows, FhirSearchParameters search)
+    {
+        string? from = search.GetDateFrom();
+        foreach (EhrProcedureDto row in rows)
+        {
+            Procedure procedure = _clinical.ToProcedure(row, patientId);
+            if (SearchFilter.CodeMatches(procedure.Code, search.Code)
+                && SearchFilter.OnOrAfter(procedure.PerformedDateTime, from))
+            {
+                results.Add(procedure);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ step 2: _include
@@ -224,13 +272,28 @@ public class FhirSearchService
         return bundle;
     }
 
-    /// <summary>One Bundle entry with its absolute fullUrl.</summary>
-    private BundleEntry NewEntry(Resource resource, string mode) => new()
+    /// <summary>
+    /// One Bundle entry with its absolute fullUrl. A resource without an id (the client's lab, diagnosis and procedure
+    /// rows have none yet) gets a urn:uuid fullUrl, as FHIR allows for resources that have no server id.
+    /// </summary>
+    private BundleEntry NewEntry(Resource resource, string mode)
     {
-        FullUrl = $"{_server.BaseUrl}/{resource.ResourceType}/{resource.Id}",
-        Resource = resource,
-        Search = new BundleEntrySearch { Mode = mode }
-    };
+        BundleEntry entry = new BundleEntry();
+        if (string.IsNullOrEmpty(resource.Id))
+        {
+            // CLIENT-EHR: TODO remove when the client sends ids for these rows.
+            entry.FullUrl = "urn:uuid:" + Guid.NewGuid().ToString("D");
+        }
+        else
+        {
+            entry.FullUrl = _server.BaseUrl + "/" + resource.ResourceType + "/" + resource.Id;
+        }
+        entry.Resource = resource;
+        BundleEntrySearch entrySearch = new BundleEntrySearch();
+        entrySearch.Mode = mode;
+        entry.Search = entrySearch;
+        return entry;
+    }
 
     // ------------------------------------------------------------------ parameter checks
 
