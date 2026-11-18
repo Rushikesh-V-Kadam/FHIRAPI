@@ -5,7 +5,6 @@
 // Only DTR forms (QuestionnaireResponse) are stored by this API - in the EHR's Oracle database, through the EHR data API
 // (table PA_QUESTIONNAIRE_RESPONSE). Every other read goes live to the EHR. This API has no database connection of its own.
 //
-//   /fhir/r4/metadata                          CapabilityStatement (public)
 //   /fhir/r4/Patient/{id}, /fhir/r4/Patient?... (one route per resource type) read / search EHR data as FHIR
 //   /fhir/r4/QuestionnaireResponse[/{id}]      save / read DTR forms
 //

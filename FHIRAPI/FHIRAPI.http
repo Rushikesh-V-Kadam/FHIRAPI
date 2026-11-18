@@ -6,10 +6,7 @@
 @fhir = http://localhost:5100/fhir/r4
 # No authentication: no X-Api-Key or Bearer token is needed (authentication is not decided yet).
 
-### 1. CapabilityStatement
-GET {{fhir}}/metadata
-
-### 3. Read one resource
+### 1. Read one resource
 GET {{fhir}}/Patient/pat-1
 
 ###
@@ -28,7 +25,7 @@ GET {{fhir}}/DocumentReference/doc-knee-xray
 ###
 GET {{fhir}}/Binary/doc-knee-xray
 
-### 4. Search
+### 2. Search
 GET {{fhir}}/Coverage?patient=pat-1&status=active
 
 ###
@@ -49,7 +46,7 @@ GET {{fhir}}/DocumentReference?patient=pat-1&type=http://loinc.org|18748-4
 ### Missing parameter -> 400 OperationOutcome that says what to add
 GET {{fhir}}/Observation
 
-### 5. Save a DTR form with a known id (201 first time, 200 after)
+### 3. Save a DTR form with a known id (201 first time, 200 after)
 PUT {{fhir}}/QuestionnaireResponse/qr-retacrit-1
 Content-Type: application/fhir+json
 
@@ -78,7 +75,7 @@ Content-Type: application/fhir+json
   ]
 }
 
-### 6. Create a DTR form, server assigns the id (201 + Location)
+### 4. Create a DTR form, server assigns the id (201 + Location)
 POST {{fhir}}/QuestionnaireResponse
 Content-Type: application/fhir+json
 
@@ -90,7 +87,7 @@ Content-Type: application/fhir+json
   "item": [ { "linkId": "face-to-face", "answer": [ { "valueBoolean": true } ] } ]
 }
 
-### 7. Read a form / all forms of a patient
+### 5. Read a form / all forms of a patient
 GET {{fhir}}/QuestionnaireResponse/qr-retacrit-1
 
 ###

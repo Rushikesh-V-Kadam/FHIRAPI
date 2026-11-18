@@ -15,7 +15,7 @@ namespace FHIRAPI.Services;
 /// </summary>
 public class FhirReadService
 {
-    /// <summary>Resource types that can be read and searched (listed in the CapabilityStatement).</summary>
+    /// <summary>Resource types that can be read and searched.</summary>
     public static readonly string[] SupportedTypes =
     {
         "Patient", "Coverage", "Practitioner", "PractitionerRole", "Organization", "Location",
