@@ -4,72 +4,53 @@
 ###############################################################################################
 
 @fhir = http://localhost:5100/fhir/r4
-@root = http://localhost:5100
-# Security:InternalApiKey of the FHIR API (the Payer Gateway sends it). Needed on /internal and on /fhir/r4 without a token.
-@apiKey = local-test-internal-key
+# No authentication: no X-Api-Key or Bearer token is needed (authentication is not decided yet).
 
-### 1. CapabilityStatement (public)
+### 1. CapabilityStatement
 GET {{fhir}}/metadata
-
-### 2. SMART discovery (public)
-GET {{fhir}}/.well-known/smart-configuration
 
 ### 3. Read one resource
 GET {{fhir}}/Patient/pat-1
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/MedicationRequest/ord-1-retacrit
-X-Api-Key: {{apiKey}}
 
 ### Coverage by id works after the order (or a Coverage search) was read - see CoveragePatientIndex
 # Coverage ids are built by the API (Helpers/CoverageIds): copy the id from a Coverage?patient= search first.
 GET {{fhir}}/Coverage/cov-1
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/PractitionerRole/role-prac-1
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/DocumentReference/doc-knee-xray
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/Binary/doc-knee-xray
-X-Api-Key: {{apiKey}}
 
 ### 4. Search
 GET {{fhir}}/Coverage?patient=pat-1&status=active
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/MedicationRequest?_id=ord-1-retacrit&_include=MedicationRequest:patient&_include=MedicationRequest:requester&_include=MedicationRequest:insurance
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/ServiceRequest?_id=ord-mri-lumbar,ord-mri-brain&_include=ServiceRequest:requester:PractitionerRole
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/Observation?patient=pat-1&code=http://loinc.org|39156-5,http://loinc.org|59408-5
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/Condition?patient=pat-1&clinical-status=active
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/DocumentReference?patient=pat-1&type=http://loinc.org|18748-4
-X-Api-Key: {{apiKey}}
 
 ### Missing parameter -> 400 OperationOutcome that says what to add
 GET {{fhir}}/Observation
-X-Api-Key: {{apiKey}}
 
 ### 5. Save a DTR form with a known id (201 first time, 200 after)
 PUT {{fhir}}/QuestionnaireResponse/qr-retacrit-1
-X-Api-Key: {{apiKey}}
 Content-Type: application/fhir+json
 
 {
@@ -99,7 +80,6 @@ Content-Type: application/fhir+json
 
 ### 6. Create a DTR form, server assigns the id (201 + Location)
 POST {{fhir}}/QuestionnaireResponse
-X-Api-Key: {{apiKey}}
 Content-Type: application/fhir+json
 
 {
@@ -112,72 +92,10 @@ Content-Type: application/fhir+json
 
 ### 7. Read a form / all forms of a patient
 GET {{fhir}}/QuestionnaireResponse/qr-retacrit-1
-X-Api-Key: {{apiKey}}
 
 ###
 GET {{fhir}}/QuestionnaireResponse?patient=pat-1
-X-Api-Key: {{apiKey}}
 
 ### What the EHR received (mock EHR)
 GET http://localhost:5090/api/patients/pat-1/questionnaire-responses
-X-Api-Key: {{apiKey}}
 
-
-###############################################################################################
-# Payer Gateway calls (/internal)
-###############################################################################################
-
-### 8. fhirAuthorization token for a payer (the gateway sends it in the CRD hook call)
-POST {{root}}/internal/access-tokens
-X-Api-Key: {{apiKey}}
-Content-Type: application/json
-
-{ "subject": "MOCK-DAVINCI", "patientId": "pat-1", "minutes": 5 }
-
-### 9. SMART launch for the DTR app
-# @name launch
-POST {{root}}/internal/smart-launches
-X-Api-Key: {{apiKey}}
-Content-Type: application/json
-
-{
-  "patientId": "pat-1",
-  "userPractitionerId": "prac-1",
-  "encounterId": "enc-1",
-  "fhirContext": [ "MedicationRequest/ord-1-retacrit", "Coverage/cov-1" ],
-  "appContext": "{\"questionnaire\":[\"http://example.org/fhir/Questionnaire/retacrit-esa\"]}"
-}
-
-
-###############################################################################################
-# SMART EHR launch as a payer DTR app does it. Uses the mock EHR's test app "mock-payer-dtr-app"
-# (PA_SMART_CLIENT, payer 1001, redirect http://localhost:5300/callback) and the RFC 7636 PKCE example pair:
-#   code_verifier  dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
-#   code_challenge E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM   (S256)
-# Run 9 (launch) first; add "insurancePlanId": 1001 to its body to test the payer check.
-###############################################################################################
-
-### 10. Authorize -> 302; copy "code" from the Location header into @code below
-# @no-redirect
-GET {{fhir}}/auth/authorize?response_type=code&client_id=mock-payer-dtr-app&redirect_uri=http://localhost:5300/callback&launch={{launch.response.body.launchId}}&scope=launch%20fhirUser%20patient/*.rs%20patient/QuestionnaireResponse.cu&state=abc123&aud={{fhir}}&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256
-
-###
-@code = paste-code-here
-
-### 11. Token: code -> access token + patient, encounter, fhirUser, fhirContext, appContext
-# @name token
-POST {{fhir}}/auth/token
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=authorization_code&code={{code}}&redirect_uri=http://localhost:5300/callback&client_id=mock-payer-dtr-app&code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
-
-### 12. The app reads its patient with the token -> 200
-GET {{fhir}}/Patient/pat-1
-Authorization: Bearer {{token.response.body.access_token}}
-
-### 13. Another patient with the same token -> 403 (forbidden)
-GET {{fhir}}/Patient/pat-2
-Authorization: Bearer {{token.response.body.access_token}}
-
-### 14. No token, no key -> 401
-GET {{fhir}}/Patient/pat-1

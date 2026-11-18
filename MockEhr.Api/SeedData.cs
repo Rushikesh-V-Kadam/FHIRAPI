@@ -80,25 +80,6 @@ public static class SeedData
     }
 
     /// <summary>
-    /// The row of table PA_SMART_CLIENT for a test SMART DTR app of the mock payer, as GET
-    /// api/prior-auth-data/smart-clients/mock-payer-dtr-app returns it. Lets a tester run the SMART authorize / token
-    /// steps (e.g. with Postman) against the FHIR API. In the real EHR the EHR team inserts one row per payer app.
-    /// The redirect URI is the one of the mock DTR SMART app (E:\FHIR\MockDtrSmartApp, port 5300).
-    /// TODO: http://localhost:5300/callback is a local test address; a real payer app registers its own redirect URIs.
-    /// </summary>
-    public static SmartClientRow MockSmartClientRow()
-    {
-        SmartClientRow row = new SmartClientRow();
-        row.ClientId = "mock-payer-dtr-app";
-        row.InsurancePlanId = MockPayerPlanId;
-        row.ClientName = "Mock payer DTR app (test)";
-        row.Enabled = true;
-        row.RedirectUrisJson = "[\"http://localhost:5300/callback\"]";
-        row.AllowedScopes = null;
-        return row;
-    }
-
-    /// <summary>
     /// Adds a document and its file content (Base64). Sets size and contentUrl. Also used by DocumentsController.
     /// </summary>
     public static void AddDocument(EhrData s, EhrDocumentDto document, string contentBase64)

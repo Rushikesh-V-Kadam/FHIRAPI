@@ -8,14 +8,9 @@
 //   /fhir/r4/metadata                          CapabilityStatement (public)
 //   /fhir/r4/Patient/{id}, /fhir/r4/Patient?... (one route per resource type) read / search EHR data as FHIR
 //   /fhir/r4/QuestionnaireResponse[/{id}]      save / read DTR forms
-//   /fhir/r4/.well-known/smart-configuration   SMART discovery (public)
-//   /fhir/r4/auth/authorize, /fhir/r4/auth/token   SMART launch context for DTR apps (ours for demos, the payers' own apps)
-//   /internal/access-tokens, /internal/smart-launches   Payer Gateway only (keep on the internal network)
 //
-// Access checks (appsettings "Security", Middleware/AccessTokenMiddleware.cs):
-//   /fhir/r4 needs a Bearer token issued by this API (SMART auth/token or /internal/access-tokens), or the gateway's
-//   X-Api-Key; /internal needs the X-Api-Key. Security:ValidateAccessTokens = false turns the /fhir/r4 check off
-//   (when it is done in front of this API).
+// No authentication: there are no access checks, tokens or SMART login in this API. TODO: the authentication
+// mechanism is not decided yet; add it here when it is (keep the API on the internal network until then).
 //
 // FHIR R4 only (4.0.1): the version the Da Vinci guides, CMS-0057-F and the Payer Gateway use.
 //
@@ -42,8 +37,6 @@ var configuration = builder.Configuration;
 // ---------------------------------------------------------------- 1. settings (appsettings.json sections)
 builder.Services.Configure<EhrSettings>(configuration.GetSection(EhrSettings.SectionName));
 builder.Services.Configure<FhirServerSettings>(configuration.GetSection(FhirServerSettings.SectionName));
-builder.Services.Configure<SecuritySettings>(configuration.GetSection(SecuritySettings.SectionName));
-var securitySettings = configuration.GetSection(SecuritySettings.SectionName).Get<SecuritySettings>() ?? new SecuritySettings();
 var storageSettings = configuration.GetSection(StorageSettings.SectionName).Get<StorageSettings>() ?? new StorageSettings();
 
 // ---------------------------------------------------------------- 2. EHR REST client
@@ -76,25 +69,7 @@ if (storageSettings.UseEhrApi)
 else
     builder.Services.AddSingleton<IQuestionnaireResponseRepository, InMemoryQuestionnaireResponseRepository>();
 
-// ---------------------------------------------------------------- 6. SMART apps, launches, codes and access tokens
-// Storage:SmartStore = "EhrApi": tables PA_SMART_CLIENT, PA_SMART_LAUNCH, PA_SMART_AUTH_CODE, PA_ACCESS_TOKEN through the
-// EHR data API (works with several server instances). "InMemory": one instance only; apps from Security:LocalClients.
-// Tokens: SMART app tokens (auth/token) and payer fhirAuthorization tokens (/internal/access-tokens).
-if (storageSettings.UseEhrApiForSmart)
-{
-    builder.Services.AddSingleton<EhrDataApi>();
-    builder.Services.AddSingleton<ISmartClientStore, EhrApiSmartClientStore>();
-    builder.Services.AddSingleton<ISmartLaunchStore, EhrApiSmartLaunchStore>();
-    builder.Services.AddSingleton<ITokenService, EhrApiTokenService>();
-}
-else
-{
-    builder.Services.AddSingleton<ISmartClientStore, InMemorySmartClientStore>();
-    builder.Services.AddSingleton<ISmartLaunchStore, InMemorySmartLaunchStore>();
-    builder.Services.AddSingleton<ITokenService, InMemoryTokenService>();
-}
-
-// ---------------------------------------------------------------- 7. MVC, errors, CORS, Swagger
+// ---------------------------------------------------------------- 6. MVC, errors, CORS, Swagger
 builder.Services.AddControllers(options =>
 {
     // Accept "Content-Type: application/fhir+json" bodies (QuestionnaireResponse POST/PUT)
@@ -112,14 +87,12 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "FHIR API",
         Version = "v1",
-        Description = "FHIR R4 view of the EHR. Sections show who calls each endpoint: payers during CRD, payer DTR apps, and the Payer Gateway (/internal)."
+        Description = "FHIR R4 view of the EHR. Sections show who calls each endpoint: payers during CRD, payer DTR apps, and the Payer Gateway. No authentication."
     });
     var xmlFile = Path.Combine(AppContext.BaseDirectory, "FHIRAPI.xml");
     if (File.Exists(xmlFile)) options.IncludeXmlComments(xmlFile);
     // a property that can never be null (C# "string", not "string?") is not shown as "nullable"
     options.SupportNonNullableReferenceTypes();
-    // "Authorize" button: X-Api-Key or Bearer token (Helpers/SwaggerSecuritySetup.cs)
-    SwaggerSecuritySetup.Configure(options);
 });
 
 var app = builder.Build();
@@ -130,14 +103,7 @@ app.UseExceptionHandler();
 app.UseSwagger();
 app.UseSwaggerUI(SwaggerUiSetup.Configure);
 app.UseCors();
-app.UseMiddleware<AccessTokenMiddleware>();   // after CORS (preflight), before the controllers
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
-
-if (securitySettings.ValidateAccessTokens && securitySettings.InternalApiKey.Length == 0)
-{
-    // without the key the Payer Gateway has no way in: every /fhir/r4 call would need a patient token
-    app.Logger.LogWarning("Security:ValidateAccessTokens is on but Security:InternalApiKey is empty: the Payer Gateway cannot read the FHIR API.");
-}
 
 app.Run();

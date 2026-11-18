@@ -25,10 +25,6 @@ namespace MockEhr.Api.Controllers;
 ///
 /// insurancePlanId (a whole number: the EHR's insurance plan id) is the payer key in every table, path and filter.
 ///   PA_QUESTIONNAIRE_RESPONSE   GET / PUT questionnaire-responses/{id},  GET questionnaire-responses?patientId=   QuestionnaireResponseRow
-///   PA_SMART_CLIENT             GET smart-clients/{clientId}  (PUT mock only)                SmartClientRow
-///   PA_SMART_LAUNCH             GET / PUT smart-launches/{launchId}                          SmartLaunchRow
-///   PA_SMART_AUTH_CODE          PUT / DELETE smart-auth-codes/{codeHash} (DELETE returns the row)   SmartAuthCodeRow
-///   PA_ACCESS_TOKEN             GET / PUT access-tokens/{tokenHash}                          AccessTokenRow  
 ///
 /// Rules: a row is a flat JSON object (camelCase, one property per column). The row classes describe every property for
 /// Swagger: its meaning, column, example and whether it is always filled.
@@ -377,160 +373,6 @@ public class PriorAuthDataController : ControllerBase
         return ListRows("questionnaire-responses", "patientId", patientId);
     }
 
-    // ================================================================== PA_SMART_CLIENT (read only: the EHR team maintains it)
-
-    /// <summary>One registered SMART app by its client_id (table PA_SMART_CLIENT).</summary>
-    /// <remarks>
-    /// Read by the FHIR API at every SMART authorize. SQL: WHERE CLIENT_ID = :clientId.
-    /// The mock adds a test app (mock-payer-dtr-app, payer 1001) the first time the table is empty.
-    /// </remarks>
-    /// <param name="clientId" example="mock-payer-dtr-app">The app's client_id.</param>
-    /// <response code="200">The row.</response>
-    /// <response code="404">No app with this client_id. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
-    [Tags(SwaggerGroups.FhirApiData)]
-    [HttpGet("smart-clients/{clientId}")]
-    [ProducesResponseType(typeof(SmartClientRow), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public IActionResult GetSmartClient(string clientId)
-    {
-        lock (_store.Sync)
-        {
-            AddMockSmartClientWhenEmpty(Table("smart-clients"));
-        }
-        return GetRow("smart-clients", clientId);
-    }
-
-    /// <summary>Mock only: adds or replaces a registered SMART app.</summary>
-    /// <remarks>The real EHR team maintains PA_SMART_CLIENT with its own screens / scripts, so the real EHR does not need this endpoint.</remarks>
-    /// <param name="clientId" example="mock-payer-dtr-app">The app's client_id (key). Wins over clientId in the body.</param>
-    /// <param name="row">Required. The app row.</param>
-    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
-    [Tags(SwaggerGroups.MockUi)]
-    [HttpPut("smart-clients/{clientId}")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutSmartClient(string clientId, [FromBody, Required] SmartClientRow row)
-    {
-        row.ClientId = clientId;
-        lock (_store.Sync)
-        {
-            AddMockSmartClientWhenEmpty(Table("smart-clients"));
-        }
-        return PutRow("smart-clients", clientId, row);
-    }
-
-    /// <summary>Adds the test SMART app when the table is empty (first start). Call inside lock (_store.Sync).</summary>
-    private void AddMockSmartClientWhenEmpty(Dictionary<string, JsonElement> clients)
-    {
-        if (clients.Count == 0)
-        {
-            SmartClientRow row = SeedData.MockSmartClientRow();
-            clients[row.ClientId] = ToJson(row);
-            _store.Save();
-        }
-    }
-
-    // ================================================================== PA_SMART_LAUNCH (FHIR API)
-
-    /// <summary>One SMART launch (table PA_SMART_LAUNCH).</summary>
-    /// <remarks>SQL: WHERE LAUNCH_ID = :launchId. The FHIR API checks EXPIRES_AT itself.</remarks>
-    /// <param name="launchId" example="6-jM9cmaBKMd4rFPAl-hQp_D">The launch id.</param>
-    /// <response code="200">The row.</response>
-    /// <response code="404">No launch with this id. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
-    [Tags(SwaggerGroups.FhirApiData)]
-    [HttpGet("smart-launches/{launchId}")]
-    [ProducesResponseType(typeof(SmartLaunchRow), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public IActionResult GetSmartLaunch(string launchId)
-    {
-        return GetRow("smart-launches", launchId);
-    }
-
-    /// <summary>Saves a SMART launch (table PA_SMART_LAUNCH). Insert, or update when the id exists.</summary>
-    /// <param name="launchId" example="6-jM9cmaBKMd4rFPAl-hQp_D">The launch id (key). Wins over launchId in the body.</param>
-    /// <param name="row">Required. The row to save.</param>
-    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
-    [Tags(SwaggerGroups.FhirApiData)]
-    [HttpPut("smart-launches/{launchId}")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutSmartLaunch(string launchId, [FromBody, Required] SmartLaunchRow row)
-    {
-        row.LaunchId = launchId;
-        return PutRow("smart-launches", launchId, row);
-    }
-
-    // ================================================================== PA_SMART_AUTH_CODE (FHIR API)
-
-    /// <summary>Saves a SMART authorization code (table PA_SMART_AUTH_CODE).</summary>
-    /// <param name="codeHash" example="3q2-7wQx0p1mZQ8u0pX6m0nN4l1qkE6m4X0dJ0hKc7Y">Hash of the code (key). Wins over codeHash in the body.</param>
-    /// <param name="row">Required. The row to save.</param>
-    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
-    [Tags(SwaggerGroups.FhirApiData)]
-    [HttpPut("smart-auth-codes/{codeHash}")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutSmartAuthCode(string codeHash, [FromBody, Required] SmartAuthCodeRow row)
-    {
-        row.CodeHash = codeHash;
-        return PutRow("smart-auth-codes", codeHash, row);
-    }
-
-    /// <summary>Takes a SMART authorization code: returns the row and deletes it (table PA_SMART_AUTH_CODE).</summary>
-    /// <remarks>
-    /// Must be ONE step, so two requests can never both get the same code.
-    /// Oracle: DELETE FROM PA_SMART_AUTH_CODE WHERE CODE_HASH = :codeHash RETURNING ... INTO ... (no row = 404).
-    /// </remarks>
-    /// <param name="codeHash" example="3q2-7wQx0p1mZQ8u0pX6m0nN4l1qkE6m4X0dJ0hKc7Y">Hash of the code.</param>
-    /// <response code="200">The deleted row.</response>
-    /// <response code="404">No such code (unknown or already used). The answer is 200 with the entity null; 404 only when the path is wrong.</response>
-    [Tags(SwaggerGroups.FhirApiData)]
-    [HttpDelete("smart-auth-codes/{codeHash}")]
-    [ProducesResponseType(typeof(SmartAuthCodeRow), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public IActionResult TakeSmartAuthCode(string codeHash)
-    {
-        return TakeRow("smart-auth-codes", codeHash);
-    }
-
-    // ================================================================== PA_ACCESS_TOKEN (FHIR API)
-
-    /// <summary>One access token by the hash of the token (table PA_ACCESS_TOKEN).</summary>
-    /// <remarks>Called on every checked FHIR call. SQL: WHERE TOKEN_HASH = :tokenHash. The FHIR API checks EXPIRES_AT itself.</remarks>
-    /// <param name="tokenHash" example="p9w1Cq8m3uYw4mV2Fh0eQk5s7rT6nB1aXz8dLc2jK4E">Hash of the token.</param>
-    /// <response code="200">The row.</response>
-    /// <response code="404">No such token. The answer is 200 with the entity null; 404 only when the path is wrong.</response>
-    [Tags(SwaggerGroups.FhirApiData)]
-    [HttpGet("access-tokens/{tokenHash}")]
-    [ProducesResponseType(typeof(AccessTokenRow), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public IActionResult GetAccessToken(string tokenHash)
-    {
-        return GetRow("access-tokens", tokenHash);
-    }
-
-    /// <summary>Saves an access token (table PA_ACCESS_TOKEN). Insert, or update when the hash exists.</summary>
-    /// <param name="tokenHash" example="p9w1Cq8m3uYw4mV2Fh0eQk5s7rT6nB1aXz8dLc2jK4E">Hash of the token (key). Wins over tokenHash in the body.</param>
-    /// <param name="row">Required. The row to save.</param>
-    /// <response code="200">Saved: { "&lt;Entity&gt;Detail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
-    /// <response code="400">The body is missing or is not valid JSON.</response>
-    [Tags(SwaggerGroups.FhirApiData)]
-    [HttpPut("access-tokens/{tokenHash}")]
-    [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public IActionResult PutAccessToken(string tokenHash, [FromBody, Required] AccessTokenRow row)
-    {
-        row.TokenHash = tokenHash;
-        return PutRow("access-tokens", tokenHash, row);
-    }
-
     // ================================================================== helpers
 
     /// <summary>The rows of one table (key -> row); created when it does not exist yet. Call inside lock (_store.Sync).</summary>
@@ -560,9 +402,7 @@ public class PriorAuthDataController : ControllerBase
     private static readonly Dictionary<string, string> DetailNames = new Dictionary<string, string>
     {
         { "dtr-links", "DtrLinkDetail" }, { "prior-auths", "PriorAuthDetail" }, { "cdex-tasks", "CdexTaskDetail" },
-        { "questionnaire-responses", "QuestionnaireResponseDetail" }, { "smart-clients", "SmartClientDetail" },
-        { "smart-launches", "SmartLaunchDetail" }, { "smart-auth-codes", "SmartAuthCodeDetail" },
-        { "access-tokens", "AccessTokenDetail" }, { "coverage-decisions", "CoverageDecisionDetail" }
+        { "questionnaire-responses", "QuestionnaireResponseDetail" }, { "coverage-decisions", "CoverageDecisionDetail" }
     };
 
     /// <summary>Entity name of a list of rows of a table.</summary>

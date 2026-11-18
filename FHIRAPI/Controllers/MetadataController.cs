@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using FHIRAPI.Configuration;
 using FHIRAPI.Constants;
 using FHIRAPI.Helpers;
 using FHIRAPI.Services;
@@ -11,8 +9,8 @@ namespace FHIRAPI.Controllers;
 /// GET /fhir/r4/metadata - the CapabilityStatement.
 ///
 /// Every FHIR server must publish one. It tells a client (payer, DTR app, Payer Gateway) which resource types
-/// can be read and searched, which search parameters work, which writes are allowed (QuestionnaireResponse),
-/// and where the SMART authorize/token endpoints are. It is public: no token is needed to read it.
+/// can be read and searched, which search parameters work and which writes are allowed (QuestionnaireResponse).
+/// It has no security section: the API has no authentication for now.
 /// </summary>
 [ApiController]
 [Route("fhir/r4")]
@@ -32,16 +30,8 @@ public class MetadataController : ControllerBase
         ["QuestionnaireResponse"] = new[] { "patient" }
     };
 
-    private readonly FhirServerSettings _server;
-
-    /// <summary>Created by dependency injection.</summary>
-    public MetadataController(IOptions<FhirServerSettings> server)
-    {
-        _server = server.Value;
-    }
-
     /// <summary>Returns the CapabilityStatement of this FHIR server.</summary>
-    /// <response code="200">A FHIR CapabilityStatement (content type application/fhir+json): the resource types, their search parameters and the SMART authorize / token URLs.</response>
+    /// <response code="200">A FHIR CapabilityStatement (content type application/fhir+json): the resource types and their search parameters (no security section: no authentication).</response>
     [HttpGet("metadata")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     public IActionResult GetCapabilityStatement()
@@ -67,25 +57,6 @@ public class MetadataController : ControllerBase
                 new
                 {
                     mode = "server",
-                    security = new
-                    {
-                        service = new[]
-                        {
-                            new { coding = new[] { new { system = "http://terminology.hl7.org/CodeSystem/restful-security-service", code = "SMART-on-FHIR" } } }
-                        },
-                        extension = new[]
-                        {
-                            new
-                            {
-                                url = "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
-                                extension = new[]
-                                {
-                                    new { url = "authorize", valueUri = $"{_server.BaseUrl}/auth/authorize" },
-                                    new { url = "token", valueUri = $"{_server.BaseUrl}/auth/token" }
-                                }
-                            }
-                        }
-                    },
                     resource = resources
                 }
             }

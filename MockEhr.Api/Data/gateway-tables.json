@@ -141,57 +141,5 @@
       "submittedAt": "2026-10-09T13:55:47.3441981Z",
       "updatedAt": "2026-10-09T13:55:47.3699301Z"
     }
-  },
-  "smart-launches": {
-    "u8vF6OCU4AxFT9WcHxEJF9WJ": {
-      "launchId": "u8vF6OCU4AxFT9WcHxEJF9WJ",
-      "insurancePlanId": 1001,
-      "patientId": "pat-1",
-      "encounterId": "enc-1",
-      "userPractitionerId": "prac-1",
-      "fhirContextJson": "[\"ServiceRequest/ord-1-hd\",\"Coverage/cov-1\"]",
-      "appContext": "{\"coverage-assertion-id\":\"270afe9658484c11b50af443f279c8cf\",\"questionnaire\":[\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\"],\"order\":\"ServiceRequest/ord-1-hd\",\"coverage\":\"Coverage/cov-1\"}",
-      "expiresAt": "2026-10-31T10:19:12.2818885Z"
-    },
-    "i3OL1_v1xkhA25PNVEs4vMsL": {
-      "launchId": "i3OL1_v1xkhA25PNVEs4vMsL",
-      "insurancePlanId": 1001,
-      "patientId": "pat-1",
-      "encounterId": "enc-1",
-      "userPractitionerId": "prac-1",
-      "fhirContextJson": "[\"ServiceRequest/ord-1-hd\",\"Coverage/cov-1\"]",
-      "appContext": "{\"coverage-assertion-id\":\"3f1d80c4a86e4e4290c151db712fec24\",\"questionnaire\":[\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\"],\"order\":\"ServiceRequest/ord-1-hd\",\"coverage\":\"Coverage/cov-1\"}",
-      "expiresAt": "2026-10-31T10:21:08.62645Z"
-    },
-    "MdQ__WhUS2u67chEwueUs77w": {
-      "launchId": "MdQ__WhUS2u67chEwueUs77w",
-      "insurancePlanId": 1001,
-      "patientId": "pat-1",
-      "encounterId": "enc-1",
-      "userPractitionerId": "prac-1",
-      "fhirContextJson": "[\"ServiceRequest/ord-1-hd\",\"Coverage/cov-1\"]",
-      "appContext": "{\"coverage-assertion-id\":\"3f1d80c4a86e4e4290c151db712fec24\",\"questionnaire\":[\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\"],\"order\":\"ServiceRequest/ord-1-hd\",\"coverage\":\"Coverage/cov-1\"}",
-      "expiresAt": "2026-10-31T10:22:59.6404344Z"
-    },
-    "9ioLD_BVUWJhpgpYQ-PB2z7z": {
-      "launchId": "9ioLD_BVUWJhpgpYQ-PB2z7z",
-      "insurancePlanId": 1001,
-      "patientId": "pat-1",
-      "encounterId": "enc-1",
-      "userPractitionerId": "prac-1",
-      "fhirContextJson": "[\"ServiceRequest/ord-1-hd\",\"Coverage/cov-1\"]",
-      "appContext": "{\"coverage-assertion-id\":\"47d6053675d54b729b478b0ea8d122be\",\"questionnaire\":[\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\"],\"order\":\"ServiceRequest/ord-1-hd\",\"coverage\":\"Coverage/cov-1\"}",
-      "expiresAt": "2026-10-31T10:28:17.594048Z"
-    },
-    "kI2kcnzusqUQR0VwoFUsup8p": {
-      "launchId": "kI2kcnzusqUQR0VwoFUsup8p",
-      "insurancePlanId": 1001,
-      "patientId": "pat-1",
-      "encounterId": "enc-1",
-      "userPractitionerId": "prac-1",
-      "fhirContextJson": "[\"ServiceRequest/ord-1-hd\",\"Coverage/cov-1\"]",
-      "appContext": "{\"coverage-assertion-id\":\"47d6053675d54b729b478b0ea8d122be\",\"questionnaire\":[\"http://example.org/fhir/Questionnaire/dialysis-incenter-hd\"],\"order\":\"ServiceRequest/ord-1-hd\",\"coverage\":\"Coverage/cov-1\"}",
-      "expiresAt": "2026-10-31T10:52:07.7474039Z"
-    }
   }
 }

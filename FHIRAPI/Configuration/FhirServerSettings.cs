@@ -10,7 +10,7 @@ public class FhirServerSettings
 
     /// <summary>
     /// Public base URL of the FHIR API, e.g. https://fhir.provider.example/fhir/r4.
-    /// Used in Bundle fullUrls, Binary links and the SMART configuration.
+    /// Used in Bundle fullUrls and Binary links.
     /// </summary>
     public string PublicBaseUrl { get; set; } = "http://localhost:5100/fhir/r4";
 

@@ -53,7 +53,6 @@ public class QuestionnaireResponseController : ControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
     public async Task<IActionResult> Create([FromBody, Required] JsonElement body, CancellationToken ct)
     {
-        PatientAccessGuard.CheckJson(HttpContext, JsonNode.Parse(body.GetRawText()));
         var (record, _) = await _service.SaveAsync(null, body, ct);
         Response.Headers.Location = $"{_server.BaseUrl}/QuestionnaireResponse/{record.Id}";
         return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, StatusCodes.Status201Created);
@@ -79,16 +78,6 @@ public class QuestionnaireResponseController : ControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
     public async Task<IActionResult> Update(string id, [FromBody, Required] JsonElement body, CancellationToken ct)
     {
-        PatientAccessGuard.CheckJson(HttpContext, JsonNode.Parse(body.GetRawText()));
-        // with a patient token, an existing form of another patient may not be overwritten either
-        if (PatientAccessGuard.TokenPatient(HttpContext) != null)
-        {
-            QuestionnaireResponseRecord? existing = await _service.GetAsync(id, ct);
-            if (existing != null)
-            {
-                PatientAccessGuard.CheckJson(HttpContext, JsonNode.Parse(existing.ResourceJson));
-            }
-        }
         var (record, created) = await _service.SaveAsync(id, body, ct);
         Response.Headers.Location = $"{_server.BaseUrl}/QuestionnaireResponse/{record.Id}";
         return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!, created ? StatusCodes.Status201Created : StatusCodes.Status200OK);
@@ -108,8 +97,6 @@ public class QuestionnaireResponseController : ControllerBase
     {
         var record = await _service.GetAsync(id, ct)
                      ?? throw new FhirException(404, IssueTypes.NotFound, $"QuestionnaireResponse/{id} was not found.");
-        PatientAccessGuard.CheckJson(HttpContext, JsonNode.Parse(record.ResourceJson));
-
         return FhirResults.Ok(JsonNode.Parse(record.ResourceJson)!);
     }
 
@@ -127,8 +114,6 @@ public class QuestionnaireResponseController : ControllerBase
     {
         var patientId = patient?.Split('/').Last()
                         ?? throw new FhirException(400, IssueTypes.Required, "QuestionnaireResponse search requires the patient parameter.");
-        PatientAccessGuard.CheckPatientParameter(HttpContext, patientId);
-
         return FhirResults.Ok(await _service.SearchByPatientAsync(patientId, ct));
     }
 }

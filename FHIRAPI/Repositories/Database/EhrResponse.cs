@@ -8,7 +8,7 @@ namespace FHIRAPI.Repositories.Database;
 //   { "<EntityName>": <row, list of rows, or null>, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }
 /// <summary>
 /// Reads the client EHR's answer format. The entity is the one property that is not TOKEN_EXPIRED or ERROR_MESSAGE,
-/// whatever its name (SmartLaunchDetail, QuestionnaireResponseList ...), so a different entity name does not break the
+/// whatever its name (QuestionnaireResponseDetail, QuestionnaireResponseList ...), so a different entity name does not break the
 /// FHIR API. A body without TOKEN_EXPIRED and ERROR_MESSAGE is taken as the data itself.
 ///   TOKEN_EXPIRED or ERROR_MESSAGE filled -> EhrException (502 for the caller; the text is in the log)
 ///   entity null                           -> null (no such row)
