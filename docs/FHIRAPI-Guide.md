@@ -677,9 +677,11 @@ The launch must be used within **15 minutes**.
 
 ### 3.8 `GET /fhir/r4/.well-known/smart-configuration`: SMART discovery
 
-**What it's for.** A SMART app knows only `iss` (our FHIR base URL). The SMART App Launch spec says the app finds everything else at `{iss}/.well-known/smart-configuration`: the authorize URL, the token URL, supported scopes, PKCE methods and capabilities. Without it, a standard SMART DTR app can't start.
+**What it's for.** When the EHR opens a payer's SMART DTR app, it passes only `iss` (this FHIR base URL) and `launch`. The SMART App Launch spec says the app finds everything else at `{iss}/.well-known/smart-configuration`: the authorize URL, the token URL, supported scopes, PKCE methods and capabilities. Without it, a standard SMART app can't start.
 
-**Scenario.** The DTR app is opened with `iss=http://localhost:5100/fhir/r4&launch=Xq3...`. Its first call is this endpoint.
+This API does not log anyone in itself: the URLs point to the client's IdP, **Azure Entra ID**. The answer is the same for every payer (it describes this FHIR server, not a payer).
+
+**Scenario.** The DTR app is opened with `iss=http://localhost:5100/fhir/r4&launch=...`. Its first call is this endpoint; then it sends the user to `authorization_endpoint` and gets the token from `token_endpoint`.
 
 **Request**
 
@@ -687,25 +689,30 @@ The launch must be used within **15 minutes**.
 GET /fhir/r4/.well-known/smart-configuration
 ```
 
-No parameters, no authentication.
+No parameters, no authentication (the spec requires it to be public). Content type of the answer: `application/json`.
 
-**Response 200**
+**Response 200** (values from the `SmartConfiguration` appsettings section; empty optional values are left out)
 
 ```json
 {
-  "issuer": "http://localhost:5100/fhir/r4",
-  "authorization_endpoint": "http://localhost:5100/fhir/r4/auth/authorize",
-  "token_endpoint": "http://localhost:5100/fhir/r4/auth/token",
+  "issuer": "https://login.microsoftonline.com/TENANT-ID/v2.0",
+  "jwks_uri": "https://login.microsoftonline.com/TENANT-ID/discovery/v2.0/keys",
+  "authorization_endpoint": "https://login.microsoftonline.com/TENANT-ID/oauth2/v2.0/authorize",
+  "token_endpoint": "https://login.microsoftonline.com/TENANT-ID/oauth2/v2.0/token",
   "grant_types_supported": [ "authorization_code" ],
-  "token_endpoint_auth_methods_supported": [ "none" ],
-  "code_challenge_methods_supported": [ "S256" ],
+  "token_endpoint_auth_methods_supported": [ "client_secret_post", "client_secret_basic", "private_key_jwt" ],
+  "scopes_supported": [ "openid", "fhirUser", "launch", "patient/Patient.rs", "...", "patient/QuestionnaireResponse.cru" ],
   "response_types_supported": [ "code" ],
-  "scopes_supported": [ "launch", "openid", "fhirUser", "patient/*.rs", "user/*.rs", "patient/QuestionnaireResponse.cu" ],
-  "capabilities": [ "launch-ehr", "client-public", "context-ehr-patient", "context-ehr-encounter", "permission-v2", "permission-patient", "permission-user" ]
+  "capabilities": [ "launch-ehr", "client-public", "client-confidential-symmetric", "client-confidential-asymmetric", "sso-openid-connect", "context-ehr-patient", "context-ehr-encounter", "permission-patient", "permission-v2" ],
+  "code_challenge_methods_supported": [ "S256" ]
 }
 ```
 
-**Code:** `Controllers/SmartAuthController.cs` → `GetConfiguration`
+**Response 500** when a value the spec requires is missing in settings (`TokenEndpoint`, `GrantTypesSupported`, `Capabilities`, `CodeChallengeMethodsSupported` with `S256`; `AuthorizationEndpoint` for `launch-ehr`; `Issuer` and `JwksUri` for `sso-openid-connect`). The OperationOutcome names the missing settings.
+
+**Settings** (`appsettings.json` → `SmartConfiguration`): replace `TENANT-ID` with the client's Entra tenant id. Every URL and list is a setting, so another IdP (or a SMART proxy in front of Entra) needs no code change.
+
+**Code:** `Controllers/SmartConfigurationController.cs`, `Configuration/SmartConfigurationSettings.cs`, `Models/Smart/SmartConfiguration.cs`
 
 ---
 

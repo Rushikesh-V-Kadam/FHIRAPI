@@ -6,6 +6,9 @@
 @fhir = http://localhost:5100/fhir/r4
 # No authentication: no X-Api-Key or Bearer token is needed (authentication is not decided yet).
 
+### 0. SMART App Launch discovery (first call a payer's SMART DTR app makes; values from appsettings "SmartConfiguration")
+GET {{fhir}}/.well-known/smart-configuration
+
 ### 1. Read one resource
 GET {{fhir}}/Patient/pat-1
 

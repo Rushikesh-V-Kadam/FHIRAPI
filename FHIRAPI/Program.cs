@@ -7,6 +7,7 @@
 //
 //   /fhir/r4/Patient/{id}, /fhir/r4/Patient?... (one route per resource type) read / search EHR data as FHIR
 //   /fhir/r4/QuestionnaireResponse[/{id}]      save / read DTR forms
+//   /fhir/r4/.well-known/smart-configuration   SMART App Launch discovery (points SMART DTR apps to the IdP)
 //
 // No authentication: there are no access checks, tokens or SMART login in this API. TODO: the authentication
 // mechanism is not decided yet; add it here when it is (keep the API on the internal network until then).
@@ -36,6 +37,8 @@ var configuration = builder.Configuration;
 // ---------------------------------------------------------------- 1. settings (appsettings.json sections)
 builder.Services.Configure<EhrSettings>(configuration.GetSection(EhrSettings.SectionName));
 builder.Services.Configure<FhirServerSettings>(configuration.GetSection(FhirServerSettings.SectionName));
+// SMART discovery values served at /fhir/r4/.well-known/smart-configuration (client's IdP: Azure Entra ID)
+builder.Services.Configure<SmartConfigurationSettings>(configuration.GetSection(SmartConfigurationSettings.SectionName));
 var storageSettings = configuration.GetSection(StorageSettings.SectionName).Get<StorageSettings>() ?? new StorageSettings();
 
 // ---------------------------------------------------------------- 2. EHR REST client
