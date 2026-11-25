@@ -217,7 +217,7 @@ No parameters, no body, no authentication.
 | Condition (search only) | `GET Patients/getconlst?patientID={patientId}` (entity `ConditionDetailList`) | `DiagnosisStatus` becomes `clinicalStatus` when it is a condition-clinical code. The client mixes ICD-10 and ICD-9 codes. |
 | Procedure (search only) | `GET Patients/getproclst?patientID={patientId}` (entity `ProcedureDetailList`) | The performer comes as an NPI, so `performer.actor` is a reference by identifier (`http://hl7.org/fhir/sid/us-npi`). |
 | Binary | `GET api/documents/{id}/content` | The file, base64 encoded |
-| QuestionnaireResponse | EHR data API (`api/prior-auth-data/questionnaire-responses`) | Served by `QuestionnaireResponseController` (section 3.5) |
+| QuestionnaireResponse | Client EHR APIs `GET Enterprise/getpasquestdtl`, `POST Enterprise/savepasquest` | Served by `QuestionnaireResponseController` (section 3.5) |
 
 **Client lab, diagnosis and procedure lists (CLIENT-EHR).** The client's three list APIs take only `patientID` and return
 every row of the patient, so the FHIR search parameters (`code`, `date=ge...`, `category`, `clinical-status`) are applied
@@ -439,9 +439,13 @@ Web API the Payer Gateway uses for its tables (the EHR data API, see the gateway
 
 | Call | Purpose |
 |---|---|
-| `GET  {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses/{id}` | one form (`404` = not found) |
-| `GET  {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses?patientId=...` | all forms of a patient |
-| `PUT  {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses/{id}` | insert or update |
+| `GET  {Ehr:BaseUrl}/{Ehr:QuestionnaireGetPath}?responseID={id}` (default `Enterprise/getpasquestdtl`) | one form; `QuestionnaireDetail: null` = not found (FHIR 404) |
+| `POST {Ehr:BaseUrl}/{Ehr:QuestionnaireSavePath}` (default `Enterprise/savepasquest`) | insert or update by `ResponseID` |
+| *(none yet)* | forms of a patient: `GET /fhir/r4/QuestionnaireResponse?patient=` answers `501 not-supported` until the client adds a list API |
+
+Field mapping (FHIR QuestionnaireResponse -> client body): `id` -> `ResponseID`, `subject` (Patient/{id}) -> `PatientID`,
+DTR `qr-context` order reference -> `OrderID`, `qr-context` Coverage reference -> `CoverageID`, `questionnaire` (without `|version`) -> `QuestionnaireURL`,
+`status` -> `Status`, the whole resource JSON -> `ResourceJSON`, chart copy id / state -> `EHRResponseID` / `EHRSyncStatus`, save time (UTC) -> `LastUpdatedUTC`.
 
 The row is `QuestionnaireResponseRecord` as camelCase JSON; every property is one column (`resourceJson` ↔ `RESOURCE_JSON`).
 The complete FHIR JSON is kept as text in a CLOB because the payer must receive the form **unchanged** (PAS / CDex);
@@ -466,7 +470,7 @@ Settings:
 
 ```json
 "Storage": { "QuestionnaireResponseStore": "EhrApi" },
-"Ehr": { "BaseUrl": "https://ehr-host", "DataPath": "api/prior-auth-data", "TimeoutSeconds": 30 }
+"Ehr": { "BaseUrl": "https://ehr-host", "QuestionnaireGetPath": "Enterprise/getpasquestdtl", "QuestionnaireSavePath": "Enterprise/savepasquest", "TimeoutSeconds": 30 }
 ```
 
 `"QuestionnaireResponseStore": "InMemory"` keeps the forms in memory instead (local testing without the data API).

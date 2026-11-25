@@ -3,25 +3,26 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 using FHIRAPI.Configuration;
+using FHIRAPI.Constants;
 using FHIRAPI.Exceptions;
 using FHIRAPI.Repositories.Interfaces;
 
 namespace FHIRAPI.Repositories.Database;
 
 /// <summary>
-/// Stores forms in the EHR's Oracle database (table PA_QUESTIONNAIRE_RESPONSE) through the EHR data API, the same
-/// Web API the Payer Gateway uses for its tables (see the gateway's docs/EHR-Data-API.md). This API has no database
-/// connection of its own.
-///   GET {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses/{id}             one form (404 = not found)
-///   GET {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses?patientId=...    all forms of a patient
-///   PUT {Ehr:BaseUrl}/{Ehr:DataPath}/questionnaire-responses/{id}             insert or update
-/// The row is the QuestionnaireResponseRecord as camelCase JSON: every property is one column. Every answer has the
-/// client's format { "<EntityName>": row, list or null, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" } (EhrResponse).
+/// Stores forms in the EHR's Oracle database (table PA_QUESTIONNAIRE_RESPONSE) through the two REST APIs the client
+/// EHR team provides. This API has no database connection of its own.
+///   GET  {Ehr:BaseUrl}/{Ehr:QuestionnaireGetPath}?responseID={id}   one form   (default Enterprise/getpasquestdtl)
+///   POST {Ehr:BaseUrl}/{Ehr:QuestionnaireSavePath}                  insert or update by ResponseID (default Enterprise/savepasquest)
+/// Both use the client's property names, which QuestionnaireResponseRecord carries itself ([JsonPropertyName]: ResponseID,
+/// PatientID, ResourceJSON ...), so the record is sent and read as it is.
+/// Every answer has the client's format { "QuestionnaireDetail": row or null, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }
+/// (EhrResponse); QuestionnaireDetail null = no such form.
 /// Selected with "Storage": { "QuestionnaireResponseStore": "EhrApi" }.
 /// </summary>
 public class EhrApiQuestionnaireResponseRepository : IQuestionnaireResponseRepository
 {
-    /// <summary>The data API uses camelCase JSON.</summary>
+    /// <summary>JSON settings for the client's rows (property names come from [JsonPropertyName] on QuestionnaireResponseRecord).</summary>
     private static readonly JsonSerializerOptions Json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
     private readonly IHttpClientFactory _httpFactory;
@@ -37,35 +38,34 @@ public class EhrApiQuestionnaireResponseRepository : IQuestionnaireResponseRepos
     /// <inheritdoc />
     public async Task<QuestionnaireResponseRecord?> GetAsync(string id, CancellationToken ct)
     {
-        string? text = await SendAsync(HttpMethod.Get, "questionnaire-responses/" + Uri.EscapeDataString(id), null, true, ct);
-        JsonNode? entity = EhrResponse.Unwrap(text, "EHR data API GET questionnaire-responses");
+        string path = _settings.QuestionnaireGetPath.Trim('/') + "?responseID=" + Uri.EscapeDataString(id);
+        string? text = await SendAsync(HttpMethod.Get, path, null, true, ct);
+        JsonNode? entity = EhrResponse.Unwrap(text, "EHR GET " + _settings.QuestionnaireGetPath);
         if (entity == null)
+        {
+            return null;   // QuestionnaireDetail null: no form with this id
+        }
+
+        QuestionnaireResponseRecord? record = Read<QuestionnaireResponseRecord>(entity);
+        if (record == null)
         {
             return null;
         }
-        return Read<QuestionnaireResponseRecord>(entity);
+        if (string.IsNullOrEmpty(record.ResourceJson))
+        {
+            // Without the stored FHIR JSON there is nothing to return to the caller.
+            throw new EhrException("EHR GET " + _settings.QuestionnaireGetPath + " returned form '" + id + "' without ResourceJSON.");
+        }
+        return record;
     }
 
     /// <inheritdoc />
-    public async Task<List<QuestionnaireResponseRecord>> GetByPatientAsync(string patientId, CancellationToken ct)
+    public Task<List<QuestionnaireResponseRecord>> GetByPatientAsync(string patientId, CancellationToken ct)
     {
-        string? text = await SendAsync(HttpMethod.Get, "questionnaire-responses?patientId=" + Uri.EscapeDataString(patientId), null, false, ct);
-        JsonNode? entity = EhrResponse.Unwrap(text, "EHR data API GET questionnaire-responses");
-        if (entity == null)
-        {
-            return new List<QuestionnaireResponseRecord>();
-        }
-        if (!(entity is JsonArray))
-        {
-            throw new EhrException("EHR data API GET questionnaire-responses answered an entity that is not a list.");
-        }
-        List<QuestionnaireResponseRecord>? rows = Read<List<QuestionnaireResponseRecord>>(entity);
-        if (rows == null)
-        {
-            return new List<QuestionnaireResponseRecord>();
-        }
-        rows.Sort(NewestFirst);
-        return rows;
+        // CLIENT-EHR: the client provides only "get by responseID" and "save"; there is no "forms of a patient" API.
+        // TODO: when the client EHR team adds a list API (e.g. by PatientID / OrderID), call it here.
+        throw new FhirException(501, IssueTypes.NotSupported,
+            "QuestionnaireResponse search by patient is not supported yet: the EHR has no API that lists the forms of a patient. Read a form by its id instead.");
     }
 
     /// <inheritdoc />
@@ -73,20 +73,23 @@ public class EhrApiQuestionnaireResponseRepository : IQuestionnaireResponseRepos
     {
         record.LastUpdatedUtc = DateTime.UtcNow;
         string json = JsonSerializer.Serialize(record, Json);
-        string? answer = await SendAsync(HttpMethod.Put, "questionnaire-responses/" + Uri.EscapeDataString(record.Id), json, false, ct);
-        EhrResponse.Unwrap(answer, "EHR data API PUT questionnaire-responses");
+        string? answer = await SendAsync(HttpMethod.Post, _settings.QuestionnaireSavePath.Trim('/'), json, false, ct);
+
+        // TODO: confirm with the EHR team what savepasquest answers; for now only TOKEN_EXPIRED / ERROR_MESSAGE are checked
+        // (EhrResponse.Unwrap throws when one of them is filled) and the rest of the answer is not used.
+        EhrResponse.Unwrap(answer, "EHR POST " + _settings.QuestionnaireSavePath);
     }
 
     // ------------------------------------------------------------------ helpers
 
     /// <summary>
-    /// Sends one call with the API key and timeout and returns the body. Returns null for 404 when
+    /// Sends one call with the timeout and returns the body. Returns null for 404 when
     /// <paramref name="notFoundIsNull"/> is true; every other problem is an EhrException (502).
     /// </summary>
     private async Task<string?> SendAsync(HttpMethod method, string path, string? json, bool notFoundIsNull, CancellationToken ct)
     {
-        string url = _settings.BaseUrl.TrimEnd('/') + "/" + _settings.DataPath.Trim('/') + "/" + path;
-        string label = "EHR data API " + method.Method + " " + path;
+        string url = _settings.BaseUrl.TrimEnd('/') + "/" + path;
+        string label = "EHR " + method.Method + " " + path;
 
         using (HttpRequestMessage request = new HttpRequestMessage(method, url))
         using (CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(ct))
@@ -141,11 +144,5 @@ public class EhrApiQuestionnaireResponseRepository : IQuestionnaireResponseRepos
         {
             throw new EhrException("The EHR data API returned a body that could not be read: " + ex.Message, ex);
         }
-    }
-
-    /// <summary>Sort order of GetByPatientAsync: the form changed last comes first.</summary>
-    private static int NewestFirst(QuestionnaireResponseRecord a, QuestionnaireResponseRecord b)
-    {
-        return b.LastUpdatedUtc.CompareTo(a.LastUpdatedUtc);
     }
 }

@@ -13,11 +13,12 @@ using FHIRAPI.Services;
 namespace FHIRAPI.Controllers;
 
 /// <summary>
-/// DTR forms (FHIR QuestionnaireResponse), stored by this API in the EHR database (table PA_QUESTIONNAIRE_RESPONSE) and copied to the EHR chart:
+/// DTR forms (FHIR QuestionnaireResponse), stored by this API in the EHR database (table PA_QUESTIONNAIRE_RESPONSE) through the
+/// client EHR's APIs GET Enterprise/getpasquestdtl and POST Enterprise/savepasquest, and copied to the EHR chart:
 ///   POST /fhir/r4/QuestionnaireResponse        create (server assigns the id)
 ///   PUT  /fhir/r4/QuestionnaireResponse/{id}   create or update with a known id
 ///   GET  /fhir/r4/QuestionnaireResponse/{id}   read one form
-///   GET  /fhir/r4/QuestionnaireResponse?patient=pat-1   all forms of a patient
+///   GET  /fhir/r4/QuestionnaireResponse?patient=pat-1   all forms of a patient (501 with the EHR store: the EHR has no list API yet)
 /// Callers: the payer SMART DTR app (after SMART App Launch) saves forms; the Payer Gateway reads them for PAS and CDex.
 /// </summary>
 [ApiController]
@@ -45,7 +46,7 @@ public class QuestionnaireResponseController : ControllerBase
     /// <param name="ct">Cancelled when the caller disconnects.</param>
     /// <response code="201">Saved. Body: the form as stored, with its new id; the Location header has its URL.</response>
     /// <response code="400">The body is not a QuestionnaireResponse, or subject does not point to a patient. Body: a FHIR OperationOutcome, e.g. { "resourceType": "OperationOutcome", "issue": [ { "severity": "error", "code": "required", "diagnostics": "QuestionnaireResponse.subject must reference a Patient, e.g. 'Patient/pat-1'." } ] }.</response>
-    /// <response code="502">The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
+    /// <response code="502">The EHR API could not be reached or answered with an error (also when TOKEN_EXPIRED or ERROR_MESSAGE is filled). Body: a FHIR OperationOutcome.</response>
     [HttpPost]
     [Consumes(FhirMediaTypes.FhirJson, FhirMediaTypes.Json)]
     [ProducesResponseType(typeof(void), StatusCodes.Status201Created)]
@@ -69,7 +70,7 @@ public class QuestionnaireResponseController : ControllerBase
     /// <response code="200">Replaced. Body: the form as stored.</response>
     /// <response code="201">Created (the id was new). Body: the form as stored.</response>
     /// <response code="400">The body is not a QuestionnaireResponse, or subject does not point to a patient, or the id in the body is not the id in the URL. Body: a FHIR OperationOutcome, e.g. { "resourceType": "OperationOutcome", "issue": [ { "severity": "error", "code": "required", "diagnostics": "QuestionnaireResponse.subject must reference a Patient, e.g. 'Patient/pat-1'." } ] }.</response>
-    /// <response code="502">The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
+    /// <response code="502">The EHR API could not be reached or answered with an error (also when TOKEN_EXPIRED or ERROR_MESSAGE is filled). Body: a FHIR OperationOutcome.</response>
     [HttpPut("{id}")]
     [Consumes(FhirMediaTypes.FhirJson, FhirMediaTypes.Json)]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
@@ -88,7 +89,7 @@ public class QuestionnaireResponseController : ControllerBase
     /// <param name="ct">Cancelled when the caller disconnects.</param>
     /// <response code="200">The FHIR QuestionnaireResponse (content type application/fhir+json).</response>
     /// <response code="404">No form with this id. Body: a FHIR OperationOutcome, e.g. { "resourceType": "OperationOutcome", "issue": [ { "severity": "error", "code": "not-found", "diagnostics": "QuestionnaireResponse/qr-9 was not found." } ] }.</response>
-    /// <response code="502">The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
+    /// <response code="502">The EHR API could not be reached or answered with an error (also when TOKEN_EXPIRED or ERROR_MESSAGE is filled). Body: a FHIR OperationOutcome.</response>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
@@ -105,10 +106,12 @@ public class QuestionnaireResponseController : ControllerBase
     /// <param name="ct">Cancelled when the caller disconnects.</param>
     /// <response code="200">A FHIR Bundle of type "searchset" with the forms of the patient (total 0 and no entry when there are none).</response>
     /// <response code="400">The patient parameter is missing. Body: a FHIR OperationOutcome, e.g. { "resourceType": "OperationOutcome", "issue": [ { "severity": "error", "code": "required", "diagnostics": "QuestionnaireResponse search requires the patient parameter." } ] }.</response>
-    /// <response code="502">The EHR data API could not be reached or answered with an error. Body: a FHIR OperationOutcome.</response>
+    /// <response code="501">Storage is the EHR (Storage:QuestionnaireResponseStore = "EhrApi"): the client EHR has no API that lists the forms of a patient yet. Body: a FHIR OperationOutcome with code "not-supported".</response>
+    /// <response code="502">The EHR API could not be reached or answered with an error (also when TOKEN_EXPIRED or ERROR_MESSAGE is filled). Body: a FHIR OperationOutcome.</response>
     [HttpGet]
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status501NotImplemented)]
     [ProducesResponseType(typeof(void), StatusCodes.Status502BadGateway)]
     public async Task<IActionResult> Search([FromQuery] string? patient, CancellationToken ct)
     {

@@ -25,6 +25,7 @@ namespace MockEhr.Api.Controllers;
 ///
 /// insurancePlanId (a whole number: the EHR's insurance plan id) is the payer key in every table, path and filter.
 ///   PA_QUESTIONNAIRE_RESPONSE   GET / PUT questionnaire-responses/{id},  GET questionnaire-responses?patientId=   QuestionnaireResponseRow
+///                               client names (used by the FHIR API): GET /Enterprise/getpasquestdtl?responseID=, POST /Enterprise/savepasquest   QuestionnaireResponseRow (client JSON names)
 ///
 /// Rules: a row is a flat JSON object (camelCase, one property per column). The row classes describe every property for
 /// Swagger: its meaning, column, example and whether it is always filled.
@@ -370,7 +371,45 @@ public class PriorAuthDataController : ControllerBase
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public IActionResult ListQuestionnaireResponses([FromQuery, Required] string patientId)
     {
-        return ListRows("questionnaire-responses", "patientId", patientId);
+        return ListRows("questionnaire-responses", "PatientID", patientId);
+    }
+
+    // ================================================================== PA_QUESTIONNAIRE_RESPONSE - client EHR API names
+
+    /// <summary>One filled-in DTR form by its id, with the client EHR's path and property names (table PA_QUESTIONNAIRE_RESPONSE).</summary>
+    /// <remarks>
+    /// Answer: { "QuestionnaireDetail": { ResponseID, PatientID, ... ResourceJSON ... }, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.
+    /// No such form = 200 with "QuestionnaireDetail": null. SQL: WHERE ID = :responseID.
+    /// </remarks>
+    /// <param name="responseID" example="qr-frm-235b7ad69e85">Required. FHIR id of the form.</param>
+    /// <response code="200">The wrapper with the row in QuestionnaireDetail, or QuestionnaireDetail null.</response>
+    /// <response code="400">responseID is missing.</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpGet("/Enterprise/getpasquestdtl")]
+    [ProducesResponseType(typeof(QuestionnaireResponseRow), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    public IActionResult GetPasQuestionnaire([FromQuery, Required] string responseID)
+    {
+        return GetRow("questionnaire-responses", responseID);
+    }
+
+    /// <summary>Saves a filled-in DTR form, with the client EHR's path and property names (table PA_QUESTIONNAIRE_RESPONSE).</summary>
+    /// <remarks>Insert, or update when ResponseID exists. ResourceJSON must come back exactly as it was saved.</remarks>
+    /// <param name="row">Required. The row; ResponseID is required.</param>
+    /// <response code="200">Saved: { "QuestionnaireDetail": the saved row, "TOKEN_EXPIRED": "", "ERROR_MESSAGE": "" }.</response>
+    /// <response code="400">The body is missing or ResponseID is empty.</response>
+    [Tags(SwaggerGroups.FhirApiData)]
+    [HttpPost("/Enterprise/savepasquest")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+    public IActionResult SavePasQuestionnaire([FromBody, Required] QuestionnaireResponseRow row)
+    {
+        if (string.IsNullOrWhiteSpace(row.Id))
+        {
+            return BadRequest(new ErrorResponse("ResponseID is required."));
+        }
+        return PutRow("questionnaire-responses", row.Id, row);
     }
 
     // ================================================================== helpers
@@ -402,7 +441,7 @@ public class PriorAuthDataController : ControllerBase
     private static readonly Dictionary<string, string> DetailNames = new Dictionary<string, string>
     {
         { "dtr-links", "DtrLinkDetail" }, { "prior-auths", "PriorAuthDetail" }, { "cdex-tasks", "CdexTaskDetail" },
-        { "questionnaire-responses", "QuestionnaireResponseDetail" }, { "coverage-decisions", "CoverageDecisionDetail" }
+        { "questionnaire-responses", "QuestionnaireDetail" }, { "coverage-decisions", "CoverageDecisionDetail" }
     };
 
     /// <summary>Entity name of a list of rows of a table.</summary>
